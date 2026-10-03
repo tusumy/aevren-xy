@@ -47,3 +47,7 @@ body:after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;bac
 .endpoint-card strong{display:block;font-size:13px;font-weight:600}.endpoint-card small{display:block;margin-top:4px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.endpoint-card .endpoint-actions{position:absolute;right:7px;top:8px;display:flex;flex-direction:column}.endpoint-card .endpoint-actions button{border:0;background:transparent;color:#8a857e;cursor:pointer}
 .endpoint-form{margin-top:12px}.endpoint-form input{width:100%;margin:0 0 8px;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.55);padding:10px 11px;border-radius:11px;outline:0}.endpoint-form input:focus{box-shadow:0 0 0 2px rgba(54,93,74,.1)}
 @media(max-width:760px){body:before{top:-330px;left:15%}.main header{background:rgba(248,248,244,.48)}.composer{box-shadow:0 14px 40px rgba(45,58,49,.11),inset 0 1px 0 #fff}}
+
+.model-row{display:flex;gap:7px}.model-row input{margin-bottom:8px}.model-row button{flex:0 0 auto;height:40px;border:1px solid rgba(255,255,255,.9);background:rgba(236,244,238,.7);border-radius:11px;padding:0 11px;color:#405448;cursor:pointer}
+.model-select{width:100%;margin:0 0 8px;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.65);padding:10px 11px;border-radius:11px;outline:0;color:var(--ink)}
+.fetch-status{font-size:10px;color:var(--muted);margin:-2px 2px 9px;min-height:14px}
