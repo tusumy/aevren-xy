@@ -25,7 +25,10 @@ $("#chatList").onclick=e=>{const b=e.target.closest("[data-id]");if(b){current=N
 document.querySelectorAll("[data-panel]").forEach(b=>b.onclick=()=>openPanel(b.dataset.panel));$("#memoryBtn").onclick=()=>openPanel("memory");
 function close(){ $("#panel").classList.remove("open");$("#sidebar").classList.remove("open");$("#scrim").classList.remove("show")}
 function closeSidebar(){const side=$("#sidebar"),panel=$("#panel");side.classList.remove("open");if(!panel.classList.contains("open"))$("#scrim").classList.remove("show")}
-$("#closePanel").onclick=close;$("#sidebarClose").addEventListener("click",e=>{e.preventDefault();e.stopPropagation();closeSidebar()});$("#scrim").onclick=close;$("#menuBtn").onclick=()=>{$("#panel").classList.remove("open");$("#sidebar").classList.add("open");$("#scrim").classList.add("show")};
+$("#closePanel")?.addEventListener("click",close);
+$("#sidebarClose")?.addEventListener("click",e=>{e.preventDefault();e.stopPropagation();closeSidebar()});
+$("#scrim")?.addEventListener("click",close);
+$("#menuBtn")?.addEventListener("click",()=>{$("#panel").classList.remove("open");$("#sidebar").classList.add("open");$("#scrim").classList.add("show")});
 $("#panelBody").onclick=e=>{if(e.target.id==="addMemory"){const text=prompt("想让我记住什么？");if(text){memories.unshift({text,tag:"手动"});save();openPanel("memory");renderChats()}}if(e.target.classList.contains("del-memory")){memories.splice(Number(e.target.dataset.i),1);save();openPanel("memory");renderChats()}if(e.target.closest(".endpoint-card")&&!e.target.matches("button")){const i=Number(e.target.closest(".endpoint-card").dataset.endpoint);endpoints.forEach((x,n)=>x.active=n===i);settings.apiBase=endpoints[i].base;settings.model=endpoints[i].model;save();openPanel("settings")}
 if(e.target.id==="addEndpoint"){e.currentTarget.querySelector("#endpointForm").hidden=false;e.currentTarget.querySelector("#endpointForm").dataset.edit=""}
 if(e.target.classList.contains("edit-endpoint")){const i=Number(e.target.dataset.i),x=endpoints[i],f=e.currentTarget.querySelector("#endpointForm");f.hidden=false;f.dataset.edit=i;$("#endpointName").value=x.name;$("#endpointBase").value=x.base;$("#endpointModel").value=x.model}
