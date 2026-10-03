@@ -51,3 +51,5 @@ body:after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;bac
 .model-row{display:flex;gap:7px}.model-row input{margin-bottom:8px}.model-row button{flex:0 0 auto;height:40px;border:1px solid rgba(255,255,255,.9);background:rgba(236,244,238,.7);border-radius:11px;padding:0 11px;color:#405448;cursor:pointer}
 .model-select{width:100%;margin:0 0 8px;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.65);padding:10px 11px;border-radius:11px;outline:0;color:var(--ink)}
 .fetch-status{font-size:10px;color:var(--muted);margin:-2px 2px 9px;min-height:14px}
+
+.model-row{display:flex;gap:7px}.model-row input{flex:1}.model-row button{height:40px;border:1px solid rgba(255,255,255,.9);background:rgba(236,244,238,.7);border-radius:11px;padding:0 11px;color:#405448;cursor:pointer}.model-select{width:100%;margin:0 0 8px;border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.65);padding:10px 11px;border-radius:11px;color:var(--ink)}.fetch-status{font-size:10px;color:var(--muted);margin:0 2px 9px;min-height:14px}
