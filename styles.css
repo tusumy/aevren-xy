@@ -74,3 +74,10 @@ body:after{content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;bac
  .sidebar .sidebar-close span{position:absolute;left:10px;top:16px;width:13px;height:1px;background:#55514c;border-radius:2px}
  .sidebar .sidebar-close span:first-child{transform:rotate(45deg)}.sidebar .sidebar-close span:last-child{transform:rotate(-45deg)}
 }
+/* interaction recovery */
+@media(max-width:760px){
+ .scrim{z-index:5!important;pointer-events:auto}
+ .sidebar{z-index:20!important;pointer-events:auto}
+ .panel{z-index:30!important;pointer-events:auto}
+ .sidebar button,.panel button,.main header button,.composer button{pointer-events:auto!important}
+}
