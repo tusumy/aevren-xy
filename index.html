@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#f6f2ec" />
+  <title>Aevren · XY</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><div class="brand-mark">砚</div><div><strong>Aevren</strong><span>XY · private space</span></div></div>
+      <button class="new-chat" id="newChat">＋ 新对话</button>
+      <div class="section-label">最近</div>
+      <nav class="chats" id="chatList"></nav>
+      <div class="sidebar-bottom">
+        <button class="nav-btn" data-panel="memory">⌁ <span>记忆</span><b id="memoryCount">0</b></button>
+        <button class="nav-btn" data-panel="journal">◌ <span>日记</span></button>
+        <button class="nav-btn" data-panel="settings">⚙ <span>设置</span></button>
+      </div>
+    </aside>
+    <main class="main">
+      <header>
+        <button class="icon-btn mobile-only" id="menuBtn">☰</button>
+        <div class="presence"><i></i><div><strong>玄砚</strong><span>在这里</span></div></div>
+        <button class="icon-btn" id="memoryBtn" title="记忆">⌁</button>
+      </header>
+      <section class="messages" id="messages"></section>
+      <div class="composer-wrap">
+        <div class="composer">
+          <button class="attach" title="附件">＋</button>
+          <textarea id="input" rows="1" placeholder="说点什么…"></textarea>
+          <button class="send" id="sendBtn" aria-label="发送">↑</button>
+        </div>
+        <small>Enter 发送 · Shift + Enter 换行</small>
+      </div>
+    </main>
+    <aside class="panel" id="panel">
+      <div class="panel-head"><div><span id="panelEyebrow">MEMORY</span><h2 id="panelTitle">记忆</h2></div><button class="icon-btn" id="closePanel">×</button></div>
+      <div id="panelBody"></div>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
