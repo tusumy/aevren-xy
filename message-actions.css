@@ -1,17 +1,19 @@
-.bubble{position:relative}
-.xy-msg-more{position:absolute;top:50%;transform:translateY(-50%);border:0;background:transparent;color:rgba(50,64,57,.46);font:700 11px/1 system-ui;padding:8px 7px;letter-spacing:-1px;cursor:pointer;z-index:2}
-.message.user .xy-msg-more{right:100%;margin-right:2px}
-.message.assistant .xy-msg-more{left:100%;margin-left:2px}
-.xy-msg-edited{font-size:10px;opacity:.5;margin-left:6px;white-space:nowrap}
-.xy-msg-sheet-backdrop,.xy-msg-editor-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(24,28,26,.22);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom));backdrop-filter:blur(5px)}
-.xy-msg-sheet,.xy-msg-editor{width:min(460px,100%);background:rgba(250,248,244,.97);border:1px solid rgba(70,92,80,.12);box-shadow:0 18px 60px rgba(30,38,34,.18);border-radius:22px;padding:10px}
-.xy-msg-sheet-title{font-size:12px;font-weight:700;letter-spacing:.08em;opacity:.48;padding:8px 10px 10px}
-.xy-msg-sheet>button,.xy-msg-editor-actions button{width:100%;border:0;background:transparent;border-radius:15px;padding:13px 14px;text-align:left;font:500 15px/1.2 system-ui;color:inherit}
-.xy-msg-sheet>button:active,.xy-msg-editor-actions button:active{background:rgba(54,93,74,.08)}
-.xy-msg-editor textarea{box-sizing:border-box;width:100%;resize:vertical;min-height:130px;border:1px solid rgba(70,92,80,.15);border-radius:16px;padding:13px;background:rgba(255,255,255,.72);font:15px/1.55 system-ui;color:inherit;outline:none}
-.xy-msg-editor textarea:focus{border-color:rgba(54,93,74,.42);box-shadow:0 0 0 3px rgba(54,93,74,.08)}
-.xy-msg-editor-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
-.xy-msg-editor-actions button{text-align:center}
-.xy-msg-editor-actions .primary{background:var(--theme-accent,#365d4a);color:white}
-html[data-theme="dark"] .xy-msg-sheet,html[data-theme="dark"] .xy-msg-editor{background:rgba(33,37,35,.97)}
-@media (max-width:680px){.xy-msg-more{opacity:.72}}
+.xy-msg-tools{display:flex;gap:5px;margin:4px 4px 0;opacity:.46;transition:opacity .15s ease}
+.message.assistant:hover .xy-msg-tools,.xy-msg-tools:focus-within{opacity:.88}
+.xy-msg-tools button,.xy-branch-pager button{border:0;background:transparent;color:inherit;font:600 13px/1 system-ui;padding:5px 7px;border-radius:9px;cursor:pointer}
+.xy-msg-tools button:active,.xy-branch-pager button:active{background:rgba(54,93,74,.09)}
+.xy-branch-pager{display:flex;align-items:center;gap:2px;margin:1px 4px 0;font:500 11px/1 system-ui;opacity:.62}
+.xy-branch-pager span{min-width:28px;text-align:center;font-variant-numeric:tabular-nums}
+.xy-branch-pager button:disabled{opacity:.25;cursor:default}
+.xy-edit-backdrop{position:fixed;inset:0;z-index:12000;background:rgba(24,28,26,.24);display:flex;align-items:flex-end;justify-content:center;padding:16px;padding-bottom:max(16px,env(safe-area-inset-bottom));backdrop-filter:blur(5px)}
+.xy-edit-card{box-sizing:border-box;width:min(520px,100%);background:rgba(250,248,244,.98);border:1px solid rgba(70,92,80,.13);box-shadow:0 18px 60px rgba(30,38,34,.2);border-radius:22px;padding:12px}
+.xy-edit-title{font-size:12px;font-weight:700;letter-spacing:.07em;opacity:.5;padding:5px 4px 10px}
+.xy-edit-card textarea{box-sizing:border-box;width:100%;min-height:150px;max-height:46vh;resize:vertical;border:1px solid rgba(70,92,80,.16);border-radius:15px;padding:13px;background:rgba(255,255,255,.76);font:15px/1.55 system-ui;color:inherit;outline:none}
+.xy-edit-card textarea:focus{border-color:rgba(54,93,74,.42);box-shadow:0 0 0 3px rgba(54,93,74,.08)}
+.xy-edit-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.xy-edit-actions button{border:0;border-radius:14px;padding:12px;background:transparent;color:inherit;font:600 14px/1 system-ui}
+.xy-edit-actions .primary{background:var(--theme-accent,#365d4a);color:white}
+.xy-msg-notice{position:fixed;left:50%;bottom:max(92px,calc(env(safe-area-inset-bottom) + 76px));transform:translateX(-50%);z-index:13000;max-width:min(86vw,460px);padding:9px 13px;border-radius:13px;background:rgba(39,48,43,.9);color:white;font:500 12px/1.35 system-ui;box-shadow:0 8px 28px rgba(0,0,0,.16)}
+.xy-msg-notice.error{background:rgba(112,54,54,.94)}
+html[data-theme="dark"] .xy-edit-card{background:rgba(33,37,35,.98)}
+@media (max-width:680px){.xy-msg-tools{opacity:.62;margin-top:2px}.xy-msg-tools button{padding:6px 8px}}
