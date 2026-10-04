@@ -60,8 +60,9 @@
   const baseSend=send;
   send=async function(){
     syncPrompt();
-    const full=allMemories,ch=currentCharacter();
-    memories=ch?memoriesFor(ch.id):full;
+    const full=allMemories,ch=currentCharacter(),query=document.querySelector("#input")?.value.trim()||"";
+    const selected=ch&&window.xySelectMemories?window.xySelectMemories(ch,query):ch?memoriesFor(ch.id):full;
+    memories=Array.isArray(selected)?selected:ch?memoriesFor(ch.id):full;
     try{return await baseSend()}
     finally{memories=full;updateMemoryCount()}
   };
@@ -82,7 +83,7 @@
     document.querySelector("#panelTitle").textContent="记忆";
     const body=document.querySelector("#panelBody"),ch=currentCharacter();
     const scoped=allMemories.map((m,i)=>({m,i})).filter(x=>x.m.characterId===ch.id);
-    body.innerHTML=`<p class="setting-note">当前角色：${esc(ch.name)}。这里的记忆只会注入这个角色的聊天。</p>${scoped.map(({m,i})=>`<div class="memory-card"><span class="tag">${esc(m.tag||"手动")}</span><p>${esc(m.text)}</p><button class="icon-btn char-del-memory" data-i="${i}" title="删除">×</button></div>`).join("")}<button class="panel-action" id="charAddMemory">＋ 写下一条 ${esc(ch.name)} 的记忆</button>`;
+    body.innerHTML=`<p class="setting-note">当前角色：${esc(ch.name)}。记忆会按需召回，也会从这个角色的旧聊天里找相关片段。</p>${scoped.map(({m,i})=>`<div class="memory-card"><span class="tag">${esc(m.tag||"手动")}</span><p>${esc(m.text)}</p><button class="icon-btn char-del-memory" data-i="${i}" title="删除">×</button></div>`).join("")}<button class="panel-action" id="charAddMemory">＋ 写下一条 ${esc(ch.name)} 的记忆</button>`;
     document.querySelector("#panel").classList.add("open");
     document.querySelector("#scrim").classList.add("show");
     updateMemoryCount();
