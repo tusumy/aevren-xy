@@ -9,6 +9,7 @@ body.theme-has-image:after{opacity:.06}
 .presence i{background:var(--theme-accent,#365d4a)!important;box-shadow:0 0 0 4px color-mix(in srgb,var(--theme-accent,#365d4a) 16%,transparent)!important}
 .send{background:var(--theme-accent,#365d4a)!important}
 .user .bubble{background:color-mix(in srgb,var(--theme-user-bubble,#d9e7dd) 88%,white 12%)!important;border-color:color-mix(in srgb,var(--theme-user-bubble,#d9e7dd) 68%,white 32%)!important;color:#344039!important;box-shadow:0 9px 26px rgba(58,67,61,.12),inset 0 1px 0 rgba(255,255,255,.74)!important}
+.assistant .bubble{background:color-mix(in srgb,var(--theme-assistant-bubble,#f3f1eb) 90%,white 10%)!important;border:1px solid color-mix(in srgb,var(--theme-assistant-bubble,#f3f1eb) 72%,white 28%)!important;color:#353b37!important;box-shadow:0 8px 24px rgba(58,67,61,.085),inset 0 1px 0 rgba(255,255,255,.7)!important}
 .theme-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:0 0 12px}
 .theme-presets button,.theme-small-btn,.theme-upload-button{border:1px solid rgba(255,255,255,.86);background:rgba(255,255,255,.5);color:#5e5a55;border-radius:11px;min-height:38px;padding:0 10px;cursor:pointer;display:grid;place-items:center;font-size:11px}
 .theme-presets button:hover,.theme-small-btn:hover,.theme-upload-button:hover{background:rgba(255,255,255,.75)}
