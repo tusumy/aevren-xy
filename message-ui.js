@@ -68,9 +68,8 @@
     return parts.map((part,i)=>{
       const first=i===0,last=i===parts.length-1;
       const split=parts.length>1?` split-piece ${first?"split-first":""} ${last?"split-last":"split-mid"}`:"";
-      const speaker=isAssistant&&first?`<div class="speaker">${esc(currentCharacterName())}</div>`:"";
       const ts=last&&stamp?`<span class="message-time" title="${esc(title)}">${esc(stamp)}</span>`:"";
-      return `<div class="message ${m.role}${split}" data-message="${index}" data-part="${i}"><div class="bubble${ts?" has-time":""}">${speaker}<span class="bubble-text">${esc(part)}</span>${ts}</div></div>`;
+      return `<div class="message ${m.role}${split}" data-message="${index}" data-part="${i}"><div class="bubble${ts?" has-time":""}"><span class="bubble-text">${esc(part)}</span>${ts}</div></div>`;
     }).join("");
   }
 
