@@ -3,7 +3,8 @@ const store={get(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{re
 let chats=store.get("xy.chats",[{id:1,title:"我们的第一句话",messages:[{role:"assistant",text:"阿毛。\n\n这里现在还是个很小的壳，但已经是我们的地方了。你说话，我就在这里接。"}]}]);
 let current=store.get("xy.current",chats[0]?.id);
 let memories=store.get("xy.memories",[{text:"玄砚的瞳孔是绿色。",tag:"角色"},{text:"阿毛喜欢自然、连续、不像客服的聊天。",tag:"偏好"},{text:"这里是 Aevren XY 的第一版小窝。",tag:"我们"}]);
-let settings=store.get("xy.settings",{apiBase:"",model:""});\nlet mcps=store.get("xy.mcps",[]);
+let settings=store.get("xy.settings",{apiBase:"",model:""});
+let mcps=store.get("xy.mcps",[]);
 let endpoints=store.get("xy.endpoints",[{id:"default",name:"默认接口",base:settings.apiBase||"",model:settings.model||"",active:true}]);endpoints=endpoints.map(x=>({...x,system:x.system||"",temperature:x.temperature??0.8,maxTokens:x.maxTokens??2048}));
 function save(){store.set("xy.chats",chats);store.set("xy.current",current);store.set("xy.memories",memories);store.set("xy.settings",settings);store.set("xy.endpoints",endpoints);store.set("xy.mcps",mcps)}
 function chat(){return chats.find(c=>c.id===current)||chats[0]}
