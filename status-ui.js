@@ -1,21 +1,59 @@
 (()=>{
   let activeTrace=null;
+  let traceBefore=0;
+  let pendingActive=false;
   let pendingStatus='正在想…';
 
   const escLocal=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-  const pushTrace=(type,text)=>{
-    if(!activeTrace)return;
-    activeTrace.push({type,text:String(text||''),at:Date.now()});
-  };
-  const setStatus=text=>{
-    pendingStatus=String(text||'正在想…');
-    const el=document.querySelector('#typing .xy-status-text');
-    if(el)el.textContent=pendingStatus;
-  };
+  const box=()=>document.querySelector('#messages');
+  const sendBtn=()=>document.querySelector('#sendBtn');
+  const pushTrace=(type,text)=>{if(activeTrace)activeTrace.push({type,text:String(text||''),at:Date.now()})};
+
+  function statusHtml(){
+    return `<div class="message assistant xy-status-message" id="typing"><div class="bubble xy-status-bubble"><span class="xy-status-text">${escLocal(pendingStatus)}</span><span class="xy-status-dots"><i></i><i></i><i></i></span></div></div>`;
+  }
+  function renderStatus(){
+    if(!pendingActive)return;
+    const host=box();if(!host)return;
+    const existing=document.querySelector('#typing');
+    if(existing){const text=existing.querySelector('.xy-status-text');if(text)text.textContent=pendingStatus;return}
+    host.insertAdjacentHTML('beforeend',statusHtml());
+    host.scrollTop=host.scrollHeight;
+  }
+  function removeStatus(){document.querySelector('#typing')?.remove()}
+  function setStatus(text){pendingStatus=String(text||'正在想…');renderStatus()}
+
+  function beginTrace(){
+    if(activeTrace)return;
+    activeTrace=[];
+    traceBefore=chat?.()?.messages?.length||0;
+    pendingStatus='正在想…';
+    pendingActive=true;
+    requestAnimationFrame(renderStatus);
+  }
+  function finishTrace(){
+    if(!activeTrace&&!pendingActive)return;
+    const c=chat?.();
+    if(c&&activeTrace?.length){
+      for(let i=c.messages.length-1;i>=traceBefore;i--){
+        if(c.messages[i]?.role==='assistant'){
+          c.messages[i].xyTrace=activeTrace.map(x=>({...x}));
+          break;
+        }
+      }
+      try{save()}catch{}
+    }
+    activeTrace=null;
+    pendingActive=false;
+    pendingStatus='正在想…';
+    removeStatus();
+    try{renderMessages()}catch{}
+  }
 
   const baseSelect=window.xySelectMemories;
   if(typeof baseSelect==='function'){
     window.xySelectMemories=function(ch,query){
+      if(!activeTrace)beginTrace();
       const selected=baseSelect(ch,query);
       const list=Array.isArray(selected)?selected:[];
       const recalled=list.filter(x=>!['角色','身份','规则','核心'].includes(x?.tag));
@@ -33,6 +71,7 @@
   const baseMcp=window.callMcpTool;
   if(typeof baseMcp==='function'){
     window.callMcpTool=async function(server,tool,args){
+      if(!activeTrace)beginTrace();
       const serverName=server?.name||'MCP';
       setStatus(`正在用 ${serverName}…`);
       pushTrace('tool',`调用 ${serverName} / ${tool}`);
@@ -48,16 +87,6 @@
     };
   }
 
-  showTyping=function(){
-    const box=document.querySelector('#messages');
-    if(!box)return;
-    document.querySelector('#typing')?.remove();
-    box.insertAdjacentHTML('beforeend',`<div class="message assistant xy-status-message" id="typing"><div class="bubble xy-status-bubble"><span class="xy-status-text">${escLocal(pendingStatus)}</span><span class="xy-status-dots"><i></i><i></i><i></i></span></div></div>`);
-    box.scrollTop=box.scrollHeight;
-  };
-
-  hideTyping=function(){document.querySelector('#typing')?.remove()};
-
   function decorateProcesses(){
     const c=chat?.();if(!c)return;
     c.messages.forEach((m,index)=>{
@@ -70,40 +99,33 @@
   }
 
   const baseRender=renderMessages;
-  renderMessages=function(){baseRender();decorateProcesses()};
-
-  document.addEventListener('click',e=>{
-    const btn=e.target.closest?.('.xy-process-toggle');
-    if(!btn)return;
-    const details=btn.nextElementSibling;if(!details)return;
-    details.hidden=!details.hidden;
-    btn.setAttribute('aria-expanded',details.hidden?'false':'true');
-  });
-
-  const baseSend=send;
-  send=async function(){
-    const c=chat?.();
-    const before=c?.messages?.length||0;
-    activeTrace=[];
-    pendingStatus='正在想…';
-    try{return await baseSend()}
-    finally{
-      if(c&&activeTrace.length){
-        for(let i=c.messages.length-1;i>=before;i--){
-          if(c.messages[i]?.role==='assistant'){
-            c.messages[i].xyTrace=activeTrace.map(x=>({...x}));
-            break;
-          }
-        }
-        try{save()}catch{}
-      }
-      activeTrace=null;
-      pendingStatus='正在想…';
-      try{renderMessages()}catch{}
-    }
+  renderMessages=function(){
+    baseRender();
+    decorateProcesses();
+    if(pendingActive)requestAnimationFrame(renderStatus);
   };
 
-  const btn=document.querySelector('#sendBtn');
-  if(btn)btn.onclick=e=>{e.preventDefault();e.stopPropagation();send()};
+  document.addEventListener('click',e=>{
+    const toggle=e.target.closest?.('.xy-process-toggle');
+    if(toggle){
+      const details=toggle.nextElementSibling;if(!details)return;
+      details.hidden=!details.hidden;
+      toggle.setAttribute('aria-expanded',details.hidden?'false':'true');
+      return;
+    }
+    if(e.target.closest?.('#sendBtn'))beginTrace();
+  },true);
+  document.querySelector('#input')?.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey)beginTrace();
+  },true);
+
+  const btn=sendBtn();
+  if(btn){
+    new MutationObserver(()=>{
+      if(btn.disabled){beginTrace();renderStatus()}
+      else if(pendingActive)requestAnimationFrame(finishTrace);
+    }).observe(btn,{attributes:true,attributeFilter:['disabled']});
+  }
+
   decorateProcesses();
 })();
