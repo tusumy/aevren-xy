@@ -1,0 +1,5 @@
+.composer-wrap{position:relative!important;z-index:3!important;pointer-events:auto!important}
+.composer,.composer textarea,.composer .attach,.composer .send{pointer-events:auto!important}
+.composer .send:disabled{opacity:.58;cursor:wait}
+#xyAttachmentChip{margin:0 10px 7px;padding:7px 10px;border-radius:10px;background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.72);font-size:10px;color:var(--muted);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html[data-theme-mode="dark"] #xyAttachmentChip{background:rgba(30,37,33,.72);border-color:rgba(255,255,255,.08);color:#9da6a0}
