@@ -1,22 +1,30 @@
 #closePanel{position:relative!important;z-index:30!important;pointer-events:auto!important}
 .panel-head{position:relative;z-index:20}
 
+.user .bubble{
+  background:var(--theme-user-rendered,var(--theme-user-bubble,#d9e7dd))!important;
+  border-color:rgba(255,255,255,.62)!important;
+}
+.assistant .bubble{
+  background:var(--theme-assistant-rendered,var(--theme-assistant-bubble,#f3f1eb))!important;
+  border-color:rgba(255,255,255,.54)!important;
+}
+
 html[data-theme-mode="dark"] #themeBackdrop{filter:brightness(.62) saturate(.9) blur(var(--theme-blur,0))!important}
 html[data-theme-mode="dark"] #themeBackdrop:after{background:rgba(10,14,12,calc(.16 + var(--theme-overlay,.22) * .34))!important}
 html[data-theme-mode="dark"] .sidebar{background:linear-gradient(180deg,rgba(28,34,31,.78),rgba(31,37,34,.7))!important}
 html[data-theme-mode="dark"] .main header{background:linear-gradient(135deg,rgba(31,38,34,.74),rgba(26,31,28,.58))!important}
 html[data-theme-mode="dark"] .panel{background:linear-gradient(155deg,rgba(31,37,34,.95),rgba(35,42,38,.9))!important}
 html[data-theme-mode="dark"] .composer{background:linear-gradient(135deg,rgba(43,51,46,.84),rgba(34,41,37,.72))!important}
-
 html[data-theme-mode="dark"] .user .bubble{
-  background:color-mix(in srgb,var(--theme-user-bubble,#d9e7dd) 78%,#142018 22%)!important;
-  border-color:color-mix(in srgb,var(--theme-user-bubble,#d9e7dd) 58%,#6c7f72 42%)!important;
+  background:var(--theme-user-rendered,#53665b)!important;
+  border-color:rgba(255,255,255,.12)!important;
   color:#f7faf8!important;
   box-shadow:0 9px 26px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.09)!important
 }
 html[data-theme-mode="dark"] .assistant .bubble{
-  background:color-mix(in srgb,var(--theme-assistant-bubble,#f3f1eb) 62%,#252b27 38%)!important;
-  border-color:color-mix(in srgb,var(--theme-assistant-bubble,#f3f1eb) 42%,#677069 58%)!important;
+  background:var(--theme-assistant-rendered,#555a56)!important;
+  border-color:rgba(255,255,255,.10)!important;
   color:#f4f6f4!important;
   box-shadow:0 8px 22px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.075)!important
 }
