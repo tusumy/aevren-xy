@@ -95,8 +95,9 @@
       if(m?.role!=='assistant')return;
       const rows=[...box.querySelectorAll(`.message.assistant[data-message="${index}"]`)];const host=rows.at(-1);
       if(!host||host.querySelector('.xy-msg-tools'))return;
+      rows.forEach(row=>row.querySelector('.bubble')?.setAttribute('data-longpress-edit',String(index)));
       const tools=document.createElement('div');tools.className='xy-msg-tools';
-      tools.innerHTML=`<button type="button" data-msg-edit="${index}" aria-label="编辑回复" title="编辑回复">✎</button><button type="button" data-msg-retry="${index}" aria-label="重新生成" title="重新生成">↻</button>`;
+      tools.innerHTML=`<button type="button" data-msg-retry="${index}" aria-label="重新生成" title="重新生成">↻</button>`;
       host.appendChild(tools);
       if(Array.isArray(m.variants)&&m.variants.length>1){
         const ai=activeVariant(m),pager=document.createElement('div');pager.className='xy-branch-pager';
@@ -110,11 +111,44 @@
   renderMessages=function(){syncAll();const r=priorRender();requestAnimationFrame(decorate);return r};
 
   box.addEventListener('click',e=>{
-    const edit=e.target.closest?.('[data-msg-edit]');if(edit){e.preventDefault();e.stopPropagation();editAssistant(Number(edit.dataset.msgEdit));return}
     const retry=e.target.closest?.('[data-msg-retry]');if(retry){e.preventDefault();e.stopPropagation();regenerate(Number(retry.dataset.msgRetry));return}
     const prev=e.target.closest?.('[data-branch-prev]');if(prev){e.preventDefault();e.stopPropagation();const i=Number(prev.dataset.branchPrev),m=currentChat()?.messages?.[i];if(m)switchVariant(i,activeVariant(m)-1);return}
     const next=e.target.closest?.('[data-branch-next]');if(next){e.preventDefault();e.stopPropagation();const i=Number(next.dataset.branchNext),m=currentChat()?.messages?.[i];if(m)switchVariant(i,activeVariant(m)+1)}
   });
+
+  let pressTimer=null,pressTarget=null,startX=0,startY=0,longPressed=false;
+  const cancelPress=()=>{if(pressTimer){clearTimeout(pressTimer);pressTimer=null}pressTarget=null};
+  box.addEventListener('pointerdown',e=>{
+    if(e.button!=null&&e.button!==0)return;
+    const bubble=e.target.closest?.('.message.assistant[data-message] .bubble[data-longpress-edit]');
+    if(!bubble||e.target.closest?.('button'))return;
+    cancelPress();pressTarget=bubble;startX=e.clientX;startY=e.clientY;longPressed=false;
+    const index=Number(bubble.dataset.longpressEdit);
+    pressTimer=setTimeout(()=>{
+      pressTimer=null;longPressed=true;
+      if(navigator.vibrate)try{navigator.vibrate(12)}catch{}
+      editAssistant(index);
+    },520);
+  });
+  box.addEventListener('pointermove',e=>{
+    if(!pressTarget)return;
+    if(Math.hypot(e.clientX-startX,e.clientY-startY)>10)cancelPress();
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(type=>box.addEventListener(type,cancelPress));
+  box.addEventListener('click',e=>{
+    if(!longPressed)return;
+    const bubble=e.target.closest?.('.message.assistant[data-message] .bubble[data-longpress-edit]');
+    if(bubble){e.preventDefault();e.stopPropagation()}
+    longPressed=false;
+  },true);
+  box.addEventListener('contextmenu',e=>{
+    const bubble=e.target.closest?.('.message.assistant[data-message] .bubble[data-longpress-edit]');
+    if(!bubble)return;
+    e.preventDefault();
+    if(!pressTimer&&!longPressed)editAssistant(Number(bubble.dataset.longpressEdit));
+    cancelPress();
+  });
+
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeEditor()});
 
   syncAll();renderMessages();
