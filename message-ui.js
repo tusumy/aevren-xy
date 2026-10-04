@@ -20,6 +20,21 @@
     if(Number.isNaN(d.getTime()))return "";
     return d.toLocaleString("zh-CN",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false});
   };
+  const cleanEnding=text=>String(text??"").replace(/[。！？!?…]+$/u,"").trimEnd();
+
+  function migrateLegacyTimestamps(){
+    let changed=false;
+    const now=Date.now();
+    chats.forEach((c,ci)=>{
+      const missing=c.messages.filter(m=>!m.createdAt).length;
+      if(!missing)return;
+      let n=0;
+      const base=now-(missing-1)*1000-ci*100;
+      c.messages.forEach(m=>{if(!m.createdAt){m.createdAt=base+n*1000;n++;changed=true}});
+    });
+    if(changed)save();
+  }
+
   function splitReply(text){
     const raw=String(text??"").trim();
     if(!raw)return [""];
@@ -30,7 +45,7 @@
       if(!clean)return;
       const lines=clean.split(/\n+/).map(x=>x.trim()).filter(Boolean);
       lines.forEach(line=>{
-        const found=line.match(/[^。！？!?…]+(?:[。！？!?…]+[”’"）》】]*)|[^。！？!?…]+$/g);
+        const found=line.match(/[^。！？!?…]+(?:[。！？!?…]+[”’\"）》】]*)|[^。！？!?…]+$/g);
         if(found?.length>1)found.forEach(x=>{const t=x.trim();if(t)chunks.push(t)});
         else chunks.push(line);
       });
@@ -44,16 +59,18 @@
     if(merged.length<=24)return merged;
     return [...merged.slice(0,23),merged.slice(23).join("")];
   }
+
   function messageHtml(m,index){
     const isAssistant=m.role==="assistant";
-    const parts=isAssistant?splitReply(m.text):[String(m.text??"")];
+    const rawParts=isAssistant?splitReply(m.text):[String(m.text??"")];
+    const parts=isAssistant?rawParts.map(cleanEnding):rawParts;
     const stamp=timeText(m.createdAt),title=timeTitle(m.createdAt);
     return parts.map((part,i)=>{
       const first=i===0,last=i===parts.length-1;
       const split=parts.length>1?` split-piece ${first?"split-first":""} ${last?"split-last":"split-mid"}`:"";
       const speaker=isAssistant&&first?`<div class="speaker">${esc(currentCharacterName())}</div>`:"";
       const ts=last&&stamp?`<span class="message-time" title="${esc(title)}">${esc(stamp)}</span>`:"";
-      return `<div class="message ${m.role}${split}" data-message="${index}" data-part="${i}"><div class="bubble">${speaker}<span class="bubble-text">${esc(part)}</span>${ts}</div></div>`;
+      return `<div class="message ${m.role}${split}" data-message="${index}" data-part="${i}"><div class="bubble${ts?" has-time":""}">${speaker}<span class="bubble-text">${esc(part)}</span>${ts}</div></div>`;
     }).join("");
   }
 
@@ -90,5 +107,6 @@
     if(e.target.closest(".use-character")||e.target.id==="saveCharacter")requestAnimationFrame(()=>{updatePlaceholder();renderMessages()});
   });
 
+  migrateLegacyTimestamps();
   renderMessages();
 })();
