@@ -41,7 +41,8 @@
       if(merged.length&&part.length<=2)merged[merged.length-1]+=part;
       else merged.push(part);
     }
-    return merged.slice(0,24);
+    if(merged.length<=24)return merged;
+    return [...merged.slice(0,23),merged.slice(23).join("")];
   }
   function messageHtml(m,index){
     const isAssistant=m.role==="assistant";
@@ -83,7 +84,7 @@
 
   const sendButton=document.querySelector("#sendBtn");if(sendButton)sendButton.onclick=send;
   document.querySelector("#newChat")?.addEventListener("click",()=>requestAnimationFrame(()=>{
-    const c=chat();if(c?.messages?.length&& !c.messages[0].createdAt){c.messages[0].createdAt=Date.now();save();renderMessages()}
+    const c=chat();if(c?.messages?.length&&!c.messages[0].createdAt){c.messages[0].createdAt=Date.now();save();renderMessages()}
   }));
   document.addEventListener("click",e=>{
     if(e.target.closest(".use-character")||e.target.id==="saveCharacter")requestAnimationFrame(()=>{updatePlaceholder();renderMessages()});
