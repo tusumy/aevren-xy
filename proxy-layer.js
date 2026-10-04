@@ -2,6 +2,7 @@
   const nativeFetch=window.fetch.bind(window);
   const cleanBase=v=>String(v||'').trim().replace(/\/$/,'');
   const cleanProxy=v=>String(v||'').trim().replace(/\/$/,'');
+  let installed=false;
 
   function draftConfig(url){
     const form=document.querySelector('#endpointForm');
@@ -14,7 +15,8 @@
   }
 
   function activeConfig(url){
-    const ep=(Array.isArray(endpoints)?endpoints:[]).find(x=>x.active)||endpoints?.[0];
+    const list=Array.isArray(endpoints)?endpoints:[];
+    const ep=list.find(x=>x.active)||list[0];
     if(!ep)return null;
     const base=cleanBase(ep.base),proxy=cleanProxy(ep.proxy),proxyKey=String(ep.proxyKey||'').trim();
     if(base&&proxy&&(url===base||url.startsWith(base+'/')))return {base,proxy,proxyKey};
@@ -28,26 +30,35 @@
     return String(input||'');
   }
 
-  window.fetch=async function(input,init){
-    const url=inputUrl(input);
-    const cfg=draftConfig(url)||activeConfig(url);
-    if(!cfg)return nativeFetch(input,init);
+  function installProxyFetch(){
+    if(installed)return;
+    installed=true;
+    window.fetch=async function(input,init){
+      const url=inputUrl(input);
+      const cfg=draftConfig(url)||activeConfig(url);
+      if(!cfg)return nativeFetch(input,init);
 
-    const proxied=cfg.proxy+(cfg.proxy.includes('?')?'&':'?')+'target='+encodeURIComponent(url);
-    const sourceHeaders=input instanceof Request?input.headers:undefined;
-    const headers=new Headers(sourceHeaders||undefined);
-    if(init?.headers)new Headers(init.headers).forEach((v,k)=>headers.set(k,v));
-    if(cfg.proxyKey)headers.set('X-Aevren-Proxy-Key',cfg.proxyKey);
+      const proxied=cfg.proxy+(cfg.proxy.includes('?')?'&':'?')+'target='+encodeURIComponent(url);
+      const sourceHeaders=input instanceof Request?input.headers:undefined;
+      const headers=new Headers(sourceHeaders||undefined);
+      if(init?.headers)new Headers(init.headers).forEach((v,k)=>headers.set(k,v));
+      if(cfg.proxyKey)headers.set('X-Aevren-Proxy-Key',cfg.proxyKey);
 
-    const next={...(init||{}),headers};
-    if(input instanceof Request){
-      if(next.method==null)next.method=input.method;
-      if(next.body==null&&input.method!=='GET'&&input.method!=='HEAD')next.body=input.body;
-      if(next.signal==null)next.signal=input.signal;
-      if(next.redirect==null)next.redirect=input.redirect;
-    }
-    return nativeFetch(proxied,next);
-  };
+      const next={...(init||{}),headers};
+      if(input instanceof Request){
+        if(next.method==null)next.method=input.method;
+        if(next.body==null&&input.method!=='GET'&&input.method!=='HEAD')next.body=input.body;
+        if(next.signal==null)next.signal=input.signal;
+        if(next.redirect==null)next.redirect=input.redirect;
+      }
+      return nativeFetch(proxied,next);
+    };
+  }
+
+  function maybeInstallFromSaved(){
+    const list=Array.isArray(endpoints)?endpoints:[];
+    if(list.some(x=>cleanProxy(x?.proxy)))installProxyFetch();
+  }
 
   function injectFields(){
     const form=document.querySelector('#endpointForm');
@@ -56,6 +67,7 @@
     const proxy=document.createElement('input');
     proxy.id='endpointProxy';
     proxy.placeholder='代理地址（可选，例如 https://aevren-proxy.xxx.workers.dev）';
+    proxy.addEventListener('input',()=>{if(cleanProxy(proxy.value))installProxyFetch()});
     const key=document.createElement('input');
     key.id='endpointProxyKey';
     key.type='password';
@@ -84,6 +96,7 @@
         injectFields();
         const p=document.querySelector('#endpointProxy'),k=document.querySelector('#endpointProxyKey');
         if(p)p.value=ep?.proxy||'';if(k)k.value=ep?.proxyKey||'';
+        if(cleanProxy(ep?.proxy))installProxyFetch();
       });
     }
   });
@@ -96,6 +109,7 @@
       proxy:cleanProxy(document.querySelector('#endpointProxy')?.value),
       proxyKey:String(document.querySelector('#endpointProxyKey')?.value||'').trim()
     };
+    if(pendingSave.proxy)installProxyFetch();
     setTimeout(()=>{
       if(!pendingSave)return;
       const {edit,proxy,proxyKey}=pendingSave;pendingSave=null;
@@ -107,4 +121,5 @@
   },true);
 
   requestAnimationFrame(injectFields);
+  maybeInstallFromSaved();
 })();
