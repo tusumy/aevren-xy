@@ -6,7 +6,8 @@
     accent:"#365d4a",
     bgImage:"",
     overlay:0.22,
-    blur:0
+    blur:0,
+    mode:"light"
   };
   const PRESETS={
     mint:{bgColor:"#edf2ed",userBubble:"#d9e7dd",assistantBubble:"#f3f1eb",accent:"#365d4a",bgImage:"",overlay:0.22,blur:0},
@@ -17,27 +18,35 @@
 
   let theme=store.get("xy.theme",DEFAULT_THEME);
   theme={...DEFAULT_THEME,...theme};
+  const systemScheme=window.matchMedia?.("(prefers-color-scheme: dark)");
 
   function persist(){store.set("xy.theme",theme)}
+  function resolvedMode(){
+    if(theme.mode==="dark"||theme.mode==="light")return theme.mode;
+    return systemScheme?.matches?"dark":"light";
+  }
   function backdrop(){
     let el=document.querySelector("#themeBackdrop");
     if(!el){el=document.createElement("div");el.id="themeBackdrop";document.body.prepend(el)}
     return el;
   }
   function applyTheme(){
-    const root=document.documentElement.style;
-    root.setProperty("--theme-bg",theme.bgColor);
-    root.setProperty("--theme-user-bubble",theme.userBubble);
-    root.setProperty("--theme-assistant-bubble",theme.assistantBubble);
-    root.setProperty("--theme-accent",theme.accent);
-    root.setProperty("--theme-overlay",String(theme.overlay));
-    root.setProperty("--theme-blur",Number(theme.blur||0)+"px");
+    const mode=resolvedMode(),root=document.documentElement;
+    root.dataset.themeMode=mode;
+    root.style.colorScheme=mode;
+    root.style.setProperty("--theme-bg",theme.bgColor);
+    root.style.setProperty("--theme-user-bubble",theme.userBubble);
+    root.style.setProperty("--theme-assistant-bubble",theme.assistantBubble);
+    root.style.setProperty("--theme-accent",theme.accent);
+    root.style.setProperty("--theme-overlay",String(theme.overlay));
+    root.style.setProperty("--theme-blur",Number(theme.blur||0)+"px");
     const bg=backdrop();
     bg.style.backgroundColor=theme.bgColor;
     bg.style.backgroundImage=theme.bgImage?`url(${JSON.stringify(theme.bgImage)})`:"none";
     document.body.classList.toggle("theme-has-image",!!theme.bgImage);
+    document.body.classList.toggle("theme-dark",mode==="dark");
     const meta=document.querySelector('meta[name="theme-color"]');
-    if(meta)meta.setAttribute("content",theme.bgColor);
+    if(meta)meta.setAttribute("content",mode==="dark"?"#171b19":theme.bgColor);
   }
 
   function themePanel(){
@@ -47,6 +56,11 @@
     const body=document.querySelector("#panelBody");
     body.innerHTML=`
       <p class="setting-note">颜色、背景图都只保存在当前浏览器。相册图片会自动压缩后保存，不会写进仓库。</p>
+      <div class="theme-mode-switch" aria-label="明暗模式">
+        <button data-theme-mode="light" class="${theme.mode==="light"?"active":""}">☀ 浅色</button>
+        <button data-theme-mode="dark" class="${theme.mode==="dark"?"active":""}">☾ 深色</button>
+        <button data-theme-mode="system" class="${theme.mode==="system"?"active":""}">◐ 跟随系统</button>
+      </div>
       <div class="theme-presets">
         <button data-theme-preset="mint">薄荷</button>
         <button data-theme-preset="cream">奶油</button>
@@ -144,6 +158,8 @@
   }
 
   document.addEventListener("click",e=>{
+    const mode=e.target.closest("[data-theme-mode]");
+    if(mode){theme.mode=mode.dataset.themeMode;persist();applyTheme();themePanel();return}
     const preset=e.target.closest("[data-theme-preset]");
     if(preset){theme={...theme,...PRESETS[preset.dataset.themePreset],bgImage:""};persist();applyTheme();themePanel();return}
     if(e.target.id==="clearThemeImage"){theme.bgImage="";persist();applyTheme();themePanel();return}
@@ -151,6 +167,7 @@
     if(e.target.id==="resetTheme"){theme={...DEFAULT_THEME};persist();applyTheme();themePanel();return}
   });
 
+  systemScheme?.addEventListener?.("change",()=>{if(theme.mode==="system")applyTheme()});
   const previousOpenPanel=openPanel;
   openPanel=function(type){if(type==="theme"){themePanel();return}return previousOpenPanel(type)};
   applyTheme();
