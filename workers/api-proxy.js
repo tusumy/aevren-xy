@@ -49,7 +49,9 @@ export default {
     if(!allowedHosts.length&&!env.PROXY_KEY){
       return json({error:'proxy_not_configured',message:'Set ALLOWED_HOSTS or PROXY_KEY in Worker variables.'},500,cors);
     }
-    if(allowedHosts.length&&!allowedHosts.includes(target.hostname)){
+    // PROXY_KEY is the universal personal-proxy mode. A stale ALLOWED_HOSTS value
+    // must not silently turn it back into a single-host proxy.
+    if(!env.PROXY_KEY&&allowedHosts.length&&!allowedHosts.includes(target.hostname)){
       return json({error:'host_not_allowed',host:target.hostname,allowedHosts},403,cors);
     }
 
