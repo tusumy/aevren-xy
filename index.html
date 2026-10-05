@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="./provider-core.css?v=ae827590" />
   <link rel="stylesheet" href="./message-actions.css?v=9ca9cfdc" />
   <link rel="stylesheet" href="./voice-core.css?v=3" />
+  <link rel="stylesheet" href="./sidebar-tools.css?v=849b75e8" />
 </head>
 <body>
   <div class="app">
@@ -25,12 +26,15 @@
       <div class="section-label">最近</div>
       <nav class="chats" id="chatList"></nav>
       <div class="sidebar-bottom">
-        <button class="nav-btn" data-panel="memory">⌁ <span>记忆</span><b id="memoryCount">0</b></button>
-        <button class="nav-btn" data-panel="characters">◇ <span>角色</span></button>
-        <button class="nav-btn" data-panel="theme">◐ <span>主题</span></button>
-        <button class="nav-btn" data-panel="journal">◌ <span>日记</span></button>
-        <button class="nav-btn" data-panel="mcp">⌘ <span>MCP</span></button>
-        <button class="nav-btn" data-panel="settings">⚙ <span>设置</span></button>
+        <div class="sidebar-toolbox">
+          <div class="sidebar-toolbox-label">工具</div>
+          <button class="nav-btn" data-panel="memory">⌁ <span>记忆</span><b id="memoryCount">0</b></button>
+          <button class="nav-btn" data-panel="characters">◇ <span>角色</span></button>
+          <button class="nav-btn" data-panel="theme">◐ <span>主题</span></button>
+          <button class="nav-btn" data-panel="journal">◌ <span>日记</span></button>
+          <button class="nav-btn" data-panel="mcp">⌘ <span>MCP</span></button>
+          <button class="nav-btn" data-panel="settings">⚙ <span>设置</span></button>
+        </div>
       </div>
     </aside>
     <main class="main">
@@ -58,7 +62,7 @@
   <script src="./app.js?v=04939326"></script>
   <script src="./native-bridge.js?v=513c922c"></script>
   <script src="./settings-ui.js?v=753e0afa"></script>
-  <script src="./proxy-layer.js?v=0dccaea3"></script>
+  <script src="./proxy-layer.js?v=06ed87a1"></script>
   <script src="./provider-core.js?v=4352699a"></script>
   <script src="./provider-known.js?v=4131e688"></script>
   <script src="./memory-core.js?v=f055345f"></script>
