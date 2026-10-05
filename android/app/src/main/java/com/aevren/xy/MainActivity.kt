@@ -6,14 +6,21 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.graphics.Rect
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Base64
+import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
+import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
@@ -41,6 +48,7 @@ class MainActivity : Activity() {
     private lateinit var webView: WebView
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var pendingAudioPermission: PermissionRequest? = null
+    private var lastForcedHeight = Int.MIN_VALUE
 
     private val http = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -54,12 +62,25 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Do not use a Fullscreen theme flag here: on several WebView/IME combinations it
+        // prevents adjustResize from producing a useful visible frame. Hide system bars
+        // through immersive mode instead, then keep resize enabled for the keyboard.
+        window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        applyImmersiveUi()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            window.attributes = window.attributes.apply {
+                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+        }
+
         webView = WebView(this)
         webView.setBackgroundColor(0xFFF6F2EC.toInt())
         webView.layoutParams = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
             FrameLayout.LayoutParams.MATCH_PARENT
         )
+        webView.overScrollMode = View.OVER_SCROLL_NEVER
         setContentView(webView)
 
         if ((applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
@@ -74,8 +95,14 @@ class MainActivity : Activity() {
             allowFileAccess = false
             allowContentAccess = true
             setSupportMultipleWindows(false)
+            cacheMode = WebSettings.LOAD_NO_CACHE
             userAgentString = "$userAgentString AevrenXY/Android"
         }
+
+        // Some Android WebView versions still do not resize reliably in immersive mode.
+        // This uses the real visible display frame as a second line of defence and forces
+        // the WebView itself to end above the IME when the keyboard is present.
+        installKeyboardResizeWorkaround()
 
         webView.addJavascriptInterface(NativeHttpBridge(webView, http), "AevrenNative")
         webView.webViewClient = object : WebViewClient() {
@@ -87,6 +114,11 @@ class MainActivity : Activity() {
                 if (allowed) return false
                 runCatching { startActivity(Intent(Intent.ACTION_VIEW, uri)) }
                 return true
+            }
+
+            override fun onPageFinished(view: WebView, url: String) {
+                super.onPageFinished(view, url)
+                applyImmersiveUi()
             }
         }
 
@@ -128,8 +160,66 @@ class MainActivity : Activity() {
             }
         }
 
-        if (savedInstanceState == null) webView.loadUrl("${HOME}?app=android")
-        else webView.restoreState(savedInstanceState)
+        if (savedInstanceState == null) {
+            webView.loadUrl("${HOME}?app=android&shell=3&t=${System.currentTimeMillis()}")
+        } else {
+            webView.restoreState(savedInstanceState)
+        }
+    }
+
+    private fun applyImmersiveUi() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.let { controller ->
+                controller.hide(WindowInsets.Type.statusBars() or WindowInsets.Type.navigationBars())
+                controller.systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility =
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                    View.SYSTEM_UI_FLAG_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                    View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+        }
+    }
+
+    private fun installKeyboardResizeWorkaround() {
+        webView.viewTreeObserver.addOnGlobalLayoutListener {
+            val visible = Rect()
+            webView.getWindowVisibleDisplayFrame(visible)
+            val rootHeight = webView.rootView.height
+            if (rootHeight <= 0) return@addOnGlobalLayoutListener
+
+            val visibleHeight = (visible.bottom - visible.top).coerceAtLeast(1)
+            val obscured = rootHeight - visible.bottom
+            val keyboardOpen = obscured > rootHeight * 0.15f
+            val desiredHeight = if (keyboardOpen) visibleHeight else FrameLayout.LayoutParams.MATCH_PARENT
+
+            if (desiredHeight != lastForcedHeight) {
+                lastForcedHeight = desiredHeight
+                val params = webView.layoutParams
+                params.height = desiredHeight
+                webView.layoutParams = params
+                webView.requestLayout()
+
+                // Tell the page immediately too; this avoids waiting for WebView's own
+                // visualViewport event on devices where that event is delayed.
+                val jsHeight = if (keyboardOpen) visibleHeight else -1
+                webView.post {
+                    webView.evaluateJavascript(
+                        "window.__xyNativeVisibleHeight && window.__xyNativeVisibleHeight($jsHeight);",
+                        null
+                    )
+                }
+            }
+        }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) applyImmersiveUi()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
