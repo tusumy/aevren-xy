@@ -7,9 +7,11 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Base64
 import android.view.View
+import android.view.WindowInsets
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
 import android.webkit.PermissionRequest
@@ -33,6 +35,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 
 class MainActivity : Activity() {
     companion object {
@@ -85,6 +88,8 @@ class MainActivity : Activity() {
             userAgentString = "$userAgentString AevrenXY/Android"
         }
 
+        installImeInsetBridge()
+
         webView.addJavascriptInterface(NativeHttpBridge(webView, http), "AevrenNative")
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -100,6 +105,9 @@ class MainActivity : Activity() {
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
                 applyImmersiveUi()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    view.requestApplyInsets()
+                }
             }
         }
 
@@ -142,9 +150,29 @@ class MainActivity : Activity() {
         }
 
         if (savedInstanceState == null) {
-            webView.loadUrl("${HOME}?app=android&shell=4&t=${System.currentTimeMillis()}")
+            webView.loadUrl("${HOME}?app=android&shell=5&t=${System.currentTimeMillis()}")
         } else {
             webView.restoreState(savedInstanceState)
+        }
+    }
+
+    private fun installImeInsetBridge() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
+
+        webView.setOnApplyWindowInsetsListener { _, insets ->
+            val imeBottomPx = insets.getInsets(WindowInsets.Type.ime()).bottom
+            val navBottomPx = insets.getInsets(WindowInsets.Type.navigationBars()).bottom
+            val effectivePx = (imeBottomPx - navBottomPx).coerceAtLeast(0)
+            val density = resources.displayMetrics.density.coerceAtLeast(1f)
+            val cssBottom = (effectivePx / density).roundToInt()
+
+            webView.post {
+                webView.evaluateJavascript(
+                    "window.__xyNativeImeBottom && window.__xyNativeImeBottom($cssBottom);",
+                    null
+                )
+            }
+            insets
         }
     }
 
