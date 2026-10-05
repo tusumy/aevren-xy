@@ -16,12 +16,14 @@
         scroll-padding-bottom:120px!important;
       }
       .composer-wrap{
+        flex:0 0 auto!important;
+      }
+      html.xy-ime-open .composer-wrap{
         position:fixed!important;
         left:0!important;
         right:0!important;
         bottom:var(--xy-ime-bottom,0px)!important;
-        z-index:50!important;
-        flex:0 0 auto!important;
+        z-index:10!important;
         transform:none!important;
         transition:bottom .12s ease-out!important;
       }
