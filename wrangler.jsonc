@@ -1,0 +1,7 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "aevren-xy-api",
+  "main": "workers/api-proxy.js",
+  "compatibility_date": "2026-10-05",
+  "workers_dev": true
+}
