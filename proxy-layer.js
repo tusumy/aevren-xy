@@ -1,5 +1,6 @@
 (()=>{
   const nativeFetch=window.fetch.bind(window);
+  const IS_NATIVE=Boolean(window.__XY_NATIVE_HTTP__||(window.AevrenNative&&typeof window.AevrenNative.request==='function'));
   const GLOBAL_KEY='xy.globalProxy';
   const cleanBase=v=>String(v||'').trim().replace(/\/$/,'');
   const cleanProxy=v=>String(v||'').trim().replace(/\/$/,'');
@@ -15,6 +16,7 @@
   }
 
   function modeFor(ep){
+    if(IS_NATIVE)return 'direct';
     const hasGlobal=Boolean(cleanProxy(readGlobal().url));
     if(ep?.proxyMode==='custom')return 'custom';
     if(ep?.proxyMode==='direct'&&ep?.proxyModeExplicit)return 'direct';
@@ -24,7 +26,7 @@
   }
 
   function proxyFor(mode,customProxy,customKey){
-    if(mode==='direct')return null;
+    if(IS_NATIVE||mode==='direct')return null;
     if(mode==='custom'){
       const proxy=cleanProxy(customProxy),proxyKey=String(customKey||'').trim();
       return proxy?{proxy,proxyKey}:null;
@@ -34,6 +36,7 @@
   }
 
   function draftConfig(url){
+    if(IS_NATIVE)return null;
     const form=document.querySelector('#endpointForm');
     if(!form||form.hidden)return null;
     const base=cleanBase(document.querySelector('#endpointBase')?.value);
@@ -44,6 +47,7 @@
   }
 
   function activeConfig(url){
+    if(IS_NATIVE)return null;
     const list=Array.isArray(endpoints)?endpoints:[];
     const ep=list.find(x=>x.active)||list[0];
     if(!ep)return null;
@@ -60,6 +64,9 @@
   function installProxyFetch(){
     if(installed)return;
     installed=true;
+    // APK already replaces fetch with the native OkHttp bridge before this file loads.
+    // Never wrap it in the Cloudflare proxy again: APK traffic must stay direct.
+    if(IS_NATIVE)return;
     window.fetch=async function(input,init){
       const url=inputUrl(input);
       const cfg=draftConfig(url)||activeConfig(url);
@@ -83,6 +90,7 @@
   }
 
   function syncCustomVisibility(){
+    if(IS_NATIVE)return;
     const mode=document.querySelector('#endpointProxyMode')?.value;
     const proxy=document.querySelector('#endpointProxy'),key=document.querySelector('#endpointProxyKey');
     const custom=mode==='custom';
@@ -115,12 +123,13 @@
   }
 
   function injectGlobalCard(){
+    if(IS_NATIVE)return;
     const list=document.querySelector('#endpointList');
     if(!list||document.querySelector('#xyGlobalProxyCard'))return;
     const global=readGlobal();
     const card=document.createElement('div');
     card.id='xyGlobalProxyCard';card.className='endpoint-card active';
-    card.innerHTML='<strong>全局代理</strong><small>网页端统一走一个 Cloudflare Worker；APK 原生网络不需要它。</small><div class="endpoint-form" style="margin-top:10px"><input id="globalProxyUrl" placeholder="Worker 地址，例如 https://aevren-xy-api.xxx.workers.dev"><input id="globalProxyKey" type="password" placeholder="代理密钥 PROXY_KEY"><div style="display:grid;grid-template-columns:1fr 1fr;gap:7px"><button type="button" class="panel-action" id="saveGlobalProxy">保存</button><button type="button" class="panel-action" id="testGlobalProxy">测试代理</button></div><div class="fetch-status" id="globalProxyStatus"></div></div>';
+    card.innerHTML='<strong>全局代理</strong><small>仅网页版使用 Cloudflare Worker；APK 始终原生直连。</small><div class="endpoint-form" style="margin-top:10px"><input id="globalProxyUrl" placeholder="Worker 地址，例如 https://aevren-xy-api.xxx.workers.dev"><input id="globalProxyKey" type="password" placeholder="代理密钥 PROXY_KEY"><div style="display:grid;grid-template-columns:1fr 1fr;gap:7px"><button type="button" class="panel-action" id="saveGlobalProxy">保存</button><button type="button" class="panel-action" id="testGlobalProxy">测试代理</button></div><div class="fetch-status" id="globalProxyStatus"></div></div>';
     list.insertAdjacentElement('beforebegin',card);
     card.querySelector('#globalProxyUrl').value=global.url||'';
     card.querySelector('#globalProxyKey').value=global.key||'';
@@ -128,12 +137,13 @@
       const url=cleanProxy(card.querySelector('#globalProxyUrl').value),key=String(card.querySelector('#globalProxyKey').value||'').trim();
       writeGlobal({url,key});
       const btn=card.querySelector('#saveGlobalProxy'),old=btn.textContent;btn.textContent=url?'已保存':'已清除';setTimeout(()=>btn.textContent=old,1200);
-      const status=card.querySelector('#globalProxyStatus');if(status)status.textContent=url?'已保存；现有旧接口会默认跟随全局代理':'全局代理已清除';
+      const status=card.querySelector('#globalProxyStatus');if(status)status.textContent=url?'已保存；网页端旧接口会默认跟随全局代理':'全局代理已清除';
     });
     card.querySelector('#testGlobalProxy').addEventListener('click',()=>testGlobalProxy(card));
   }
 
   function injectFields(){
+    if(IS_NATIVE)return;
     const form=document.querySelector('#endpointForm');
     const base=document.querySelector('#endpointBase');
     if(!form||!base)return;
@@ -171,7 +181,7 @@
       injectFields();
       const form=document.querySelector('#endpointForm'),mode=document.querySelector('#endpointProxyMode'),p=document.querySelector('#endpointProxy'),k=document.querySelector('#endpointProxyKey');
       if(form)form.dataset.proxyModeExplicit='';
-      if(mode)mode.value=cleanProxy(readGlobal().url)?'global':'direct';
+      if(mode)mode.value=IS_NATIVE?'direct':(cleanProxy(readGlobal().url)?'global':'direct');
       if(p)p.value='';if(k)k.value='';syncCustomVisibility();
     });
     if(e.target.classList?.contains('edit-endpoint')){
@@ -191,10 +201,10 @@
     const form=document.querySelector('#endpointForm');
     pendingSave={
       edit:form?.dataset.edit??'',
-      proxyMode:document.querySelector('#endpointProxyMode')?.value||'direct',
-      proxyModeExplicit:form?.dataset.proxyModeExplicit==='1',
-      proxy:cleanProxy(document.querySelector('#endpointProxy')?.value),
-      proxyKey:String(document.querySelector('#endpointProxyKey')?.value||'').trim()
+      proxyMode:IS_NATIVE?'direct':(document.querySelector('#endpointProxyMode')?.value||'direct'),
+      proxyModeExplicit:IS_NATIVE?true:(form?.dataset.proxyModeExplicit==='1'),
+      proxy:IS_NATIVE?'':cleanProxy(document.querySelector('#endpointProxy')?.value),
+      proxyKey:IS_NATIVE?'':String(document.querySelector('#endpointProxyKey')?.value||'').trim()
     };
     setTimeout(()=>{
       if(!pendingSave)return;
@@ -206,9 +216,6 @@
     },0);
   },true);
 
-  // Always install the proxy layer before provider-core loads. It stays dormant
-  // when no proxy applies, but this preserves the provider -> proxy -> network order
-  // even when a global proxy is configured later from the UI.
   installProxyFetch();
   requestAnimationFrame(()=>{injectGlobalCard();injectFields()});
 })();
