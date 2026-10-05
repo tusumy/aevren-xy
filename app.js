@@ -27,7 +27,7 @@ $("#panelBody").innerHTML=body;$("#panel").classList.add("open");$("#scrim").cla
 $("#sendBtn").onclick=send;$("#input").oninput=resize;$("#input").onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}};
 $("#newChat").onclick=()=>{const id=Date.now();chats.unshift({id,title:"新对话",messages:[{role:"assistant",text:"嗯，我在。"}]});current=id;save();renderChats();renderMessages()};
 $("#chatList").onclick=e=>{const b=e.target.closest("[data-id]");if(b){current=Number(b.dataset.id);save();renderChats();renderMessages();$("#sidebar").classList.remove("open")}};
-document.querySelectorAll("[data-panel]").forEach(b=>b.onclick=()=>openPanel(b.dataset.panel));$("#memoryBtn").onclick=()=>openPanel("memory");
+document.querySelectorAll("[data-panel]").forEach(b=>b.onclick=()=>openPanel(b.dataset.panel));$("#memoryBtn").onclick=()=>openPanel("settings");
 function close(){ $("#panel").classList.remove("open");$("#sidebar").classList.remove("open");$("#scrim").classList.remove("show")}
 function closeSidebar(){const side=$("#sidebar"),panel=$("#panel");side.classList.remove("open");if(!panel.classList.contains("open"))$("#scrim").classList.remove("show")}
 $("#closePanel")?.addEventListener("click",close);
