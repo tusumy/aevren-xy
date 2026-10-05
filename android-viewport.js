@@ -2,47 +2,90 @@
   const isAndroid=/AevrenXY\/Android/i.test(navigator.userAgent)||new URLSearchParams(location.search).get('app')==='android';
   if(!isAndroid)return;
 
+  const root=document.documentElement;
+  root.style.setProperty('--xy-ime-bottom','0px');
+
   const style=document.createElement('style');
   style.textContent=`
-    html,body,.app,.main{height:var(--xy-app-height,100dvh)!important;max-height:var(--xy-app-height,100dvh)!important}
+    html,body,.app,.main{height:100dvh!important;max-height:100dvh!important}
     .main,.messages{min-height:0!important}
     body{overflow:hidden!important}
-    .composer-wrap{flex:0 0 auto!important}
+    @media(max-width:760px){
+      .messages{
+        padding-bottom:110px!important;
+        scroll-padding-bottom:120px!important;
+      }
+      .composer-wrap{
+        position:fixed!important;
+        left:0!important;
+        right:0!important;
+        bottom:var(--xy-ime-bottom,0px)!important;
+        z-index:50!important;
+        flex:0 0 auto!important;
+        transform:none!important;
+        transition:bottom .12s ease-out!important;
+      }
+      html.xy-ime-open .messages{
+        padding-bottom:calc(110px + var(--xy-ime-bottom,0px))!important;
+        scroll-padding-bottom:calc(120px + var(--xy-ime-bottom,0px))!important;
+      }
+    }
   `;
   document.head.appendChild(style);
 
-  let nativeHeight=0;
-  const applyHeight=value=>{
-    const height=Math.max(1,Math.round(value||window.innerHeight||document.documentElement.clientHeight));
-    document.documentElement.style.setProperty('--xy-app-height',height+'px');
-    document.body.style.height=height+'px';
-    document.querySelector('.app')?.style.setProperty('height',height+'px','important');
-    document.querySelector('.main')?.style.setProperty('height',height+'px','important');
+  let nativeImeBottom=0;
+
+  const scrollChatToBottom=()=>{
     requestAnimationFrame(()=>{
-      const input=document.activeElement;
-      if(input&&/^(TEXTAREA|INPUT)$/.test(input.tagName)){
-        input.scrollIntoView({block:'nearest',inline:'nearest'});
-        const messages=document.querySelector('#messages');
-        if(messages)messages.scrollTop=messages.scrollHeight;
+      const messages=document.querySelector('#messages');
+      if(messages)messages.scrollTop=messages.scrollHeight;
+      const active=document.activeElement;
+      if(active&&/^(TEXTAREA|INPUT)$/.test(active.tagName)){
+        active.scrollIntoView({block:'nearest',inline:'nearest'});
       }
     });
   };
 
-  const sync=()=>{
-    if(nativeHeight>0){applyHeight(nativeHeight);return}
+  const applyImeBottom=value=>{
+    const bottom=Math.max(0,Math.round(Number(value)||0));
+    root.style.setProperty('--xy-ime-bottom',bottom+'px');
+    root.classList.toggle('xy-ime-open',bottom>24);
+    if(bottom>24)scrollChatToBottom();
+  };
+
+  window.__xyNativeImeBottom=value=>{
+    nativeImeBottom=Math.max(0,Number(value)||0);
+    applyImeBottom(nativeImeBottom);
+  };
+
+  const syncViewportFallback=()=>{
+    if(nativeImeBottom>0)return;
     const vv=window.visualViewport;
-    applyHeight(vv?.height||window.innerHeight||document.documentElement.clientHeight);
+    if(!vv)return;
+    const layoutHeight=window.innerHeight||document.documentElement.clientHeight||0;
+    const obscured=Math.max(0,layoutHeight-vv.height-vv.offsetTop);
+    applyImeBottom(obscured);
   };
 
-  window.__xyNativeVisibleHeight=value=>{
-    nativeHeight=Number(value)>0?Number(value):0;
-    sync();
-  };
+  window.visualViewport?.addEventListener('resize',syncViewportFallback,{passive:true});
+  window.visualViewport?.addEventListener('scroll',syncViewportFallback,{passive:true});
+  window.addEventListener('resize',syncViewportFallback,{passive:true});
 
-  sync();
-  window.addEventListener('resize',sync,{passive:true});
-  window.visualViewport?.addEventListener('resize',sync,{passive:true});
-  window.visualViewport?.addEventListener('scroll',sync,{passive:true});
-  document.addEventListener('focusin',()=>setTimeout(sync,30));
-  document.addEventListener('focusout',()=>setTimeout(()=>{nativeHeight=0;sync()},120));
+  document.addEventListener('focusin',event=>{
+    if(/^(TEXTAREA|INPUT)$/.test(event.target?.tagName||'')){
+      setTimeout(()=>{
+        syncViewportFallback();
+        scrollChatToBottom();
+      },80);
+    }
+  });
+
+  document.addEventListener('focusout',()=>setTimeout(()=>{
+    if(!document.activeElement||!/^(TEXTAREA|INPUT)$/.test(document.activeElement.tagName||'')){
+      nativeImeBottom=0;
+      applyImeBottom(0);
+    }
+  },180));
+
+  syncViewportFallback();
 })();
