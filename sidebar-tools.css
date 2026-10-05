@@ -1,0 +1,8 @@
+.sidebar-bottom{margin-top:auto;border-top:0;padding-top:12px}
+.sidebar-toolbox{position:relative;padding:8px;border:1px solid rgba(255,255,255,.72);border-radius:18px;background:linear-gradient(145deg,rgba(255,255,255,.48),rgba(236,241,237,.28));box-shadow:0 12px 34px rgba(48,61,52,.06),inset 0 1px 0 rgba(255,255,255,.8);backdrop-filter:blur(20px) saturate(1.18);-webkit-backdrop-filter:blur(20px) saturate(1.18)}
+.sidebar-toolbox-label{padding:3px 7px 6px;color:var(--muted);font-size:9px;letter-spacing:.14em;text-transform:uppercase;user-select:none}
+.sidebar-toolbox .nav-btn{min-height:40px;padding:9px 10px;border-radius:11px;transition:background .16s ease,color .16s ease,transform .16s ease}
+.sidebar-toolbox .nav-btn:hover{background:rgba(255,255,255,.62);transform:translateY(-1px)}
+.sidebar-toolbox .nav-btn:active{transform:scale(.985)}
+.sidebar-toolbox .nav-btn b{background:rgba(226,233,227,.78)}
+@media(max-width:760px){.sidebar-bottom{padding-bottom:max(2px,env(safe-area-inset-bottom))}.sidebar-toolbox{padding:7px;border-radius:17px}.sidebar-toolbox .nav-btn{min-height:39px;padding:8px 9px}}
