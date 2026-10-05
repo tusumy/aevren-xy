@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="./provider-core.css?v=ae827590" />
   <link rel="stylesheet" href="./message-actions.css?v=9ca9cfdc" />
   <link rel="stylesheet" href="./voice-core.css?v=3" />
-  <link rel="stylesheet" href="./sidebar-tools.css?v=849b75e8" />
+  <link rel="stylesheet" href="./sidebar-tools.css?v=9ba3fe01" />
 </head>
 <body>
   <div class="app">
@@ -26,15 +26,14 @@
       <div class="section-label">最近</div>
       <nav class="chats" id="chatList"></nav>
       <div class="sidebar-bottom">
-        <div class="sidebar-toolbox">
-          <div class="sidebar-toolbox-label">工具</div>
-          <button class="nav-btn" data-panel="memory">⌁ <span>记忆</span><b id="memoryCount">0</b></button>
-          <button class="nav-btn" data-panel="characters">◇ <span>角色</span></button>
-          <button class="nav-btn" data-panel="theme">◐ <span>主题</span></button>
-          <button class="nav-btn" data-panel="journal">◌ <span>日记</span></button>
-          <button class="nav-btn" data-panel="mcp">⌘ <span>MCP</span></button>
-          <button class="nav-btn" data-panel="settings">⚙ <span>设置</span></button>
-        </div>
+        <input class="sidebar-toolbox-toggle" id="sidebarToolboxToggle" type="checkbox" />
+        <label class="sidebar-toolbox-label" for="sidebarToolboxToggle"><span>工具</span><span class="sidebar-toolbox-chevron">⌄</span></label>
+        <button class="nav-btn" data-panel="memory">⌁ <span>记忆</span><b id="memoryCount">0</b></button>
+        <button class="nav-btn" data-panel="characters">◇ <span>角色</span></button>
+        <button class="nav-btn" data-panel="theme">◐ <span>主题</span></button>
+        <button class="nav-btn" data-panel="journal">◌ <span>日记</span></button>
+        <button class="nav-btn" data-panel="mcp">⌘ <span>MCP</span></button>
+        <button class="nav-btn" data-panel="settings">⚙ <span>设置</span></button>
       </div>
     </aside>
     <main class="main">
