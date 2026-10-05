@@ -1,0 +1,254 @@
+(()=>{
+  const DEFAULTS={
+    voiceMcpId:"",
+    voiceId:"",
+    voiceModel:"eleven_v3",
+    autoSpeak:false,
+    sttBase:"",
+    sttKey:"",
+    sttModel:"whisper-1",
+    sttLanguage:"zh",
+    sendAfterTranscript:true
+  };
+  let voiceSettings={...DEFAULTS,...store.get("xy.voice",{})};
+  let recorder=null,recordStream=null,recordChunks=[],recordTimer=null,recordStarting=false,voiceBusy=false;
+  let activeAudio=null,activeMessage=null;
+  const busyMessages=new Set();
+
+  const persist=()=>store.set("xy.voice",voiceSettings);
+  const activeEndpoint=()=>endpoints.find(x=>x.active)||endpoints[0]||{};
+  const voiceServers=()=>mcps.filter(server=>server.enabled&&server.tools?.some(tool=>tool.name==="text_to_speech"));
+  const resolveVoiceServer=()=>voiceServers().find(x=>x.id===voiceSettings.voiceMcpId)||voiceServers()[0]||null;
+  const currentChat=()=>{try{return chat()}catch{return null}};
+  const currentText=m=>String(m?.text||"").trim();
+  const messageKey=(c,index)=>`${c?.id||"chat"}:${index}`;
+
+  function toast(text,isError=false){
+    document.querySelector(".xy-voice-toast")?.remove();
+    const node=document.createElement("div");
+    node.className="xy-voice-toast"+(isError?" error":"");node.textContent=text;
+    document.body.appendChild(node);setTimeout(()=>node.remove(),3200);
+  }
+
+  function titleFromText(value){
+    const plain=String(value||"").replace(/\[[^\]]+\]/g,"").replace(/\s+/g," ").trim();
+    return (plain.split(/[。！？!?；;…]/)[0]||plain||"玄砚的语音").trim().slice(0,28);
+  }
+
+  function speechText(value){
+    const text=String(value||"").trim();
+    return /^\[[^\]\n]{1,32}\]/.test(text)?text:`[softly] ${text}`;
+  }
+
+  function parseVoiceResult(result){
+    if(result?.isError){
+      const detail=result.content?.find(x=>x.type==="text")?.text||"语音服务返回错误";
+      throw new Error(detail);
+    }
+    const structured=result?.structuredContent||{};
+    let url=structured.audio_url||"";
+    if(!url){
+      const link=result?.content?.find(x=>x.type==="resource_link"&&String(x.mimeType||"").startsWith("audio/"));
+      if(link?.uri)url=link.uri;
+    }
+    if(!url)throw new Error("语音服务没有返回音频");
+    return {url,title:structured.title||titleFromText(structured.text)};
+  }
+
+  async function synthesizeMessage(index,autoplay=true,targetChat=currentChat()){
+    const c=targetChat,message=c?.messages?.[index];
+    if(!message||message.role!=="assistant")return;
+    const text=currentText(message);
+    if(!text)return;
+    if(message.voiceUrl&&message.voiceText===text){
+      if(autoplay)playAudio(message.voiceUrl,messageKey(c,index),message);
+      return;
+    }
+    const server=resolveVoiceServer();
+    if(!server){toast("先到 MCP 里连接带 text_to_speech 的 aevren-voice",true);return}
+    const key=messageKey(c,index);
+    if(busyMessages.has(key))return;
+    busyMessages.add(key);decorateMessages();
+    try{
+      const args={text:speechText(text),title:titleFromText(text)};
+      if(voiceSettings.voiceId.trim())args.voice_id=voiceSettings.voiceId.trim();
+      if(voiceSettings.voiceModel.trim())args.model_id=voiceSettings.voiceModel.trim();
+      const result=await callMcpTool(server,"text_to_speech",args);
+      const audio=parseVoiceResult(result);
+      message.voiceUrl=audio.url;message.voiceTitle=audio.title||args.title;message.voiceText=text;
+      save();decorateMessages();
+      if(autoplay)playAudio(message.voiceUrl,key,message);
+    }catch(error){toast("语音生成失败："+error.message,true)}
+    finally{busyMessages.delete(key);decorateMessages()}
+  }
+
+  function playAudio(url,key,message=null){
+    if(activeAudio){activeAudio.pause();activeAudio=null}
+    if(activeMessage===key){activeMessage=null;decorateMessages();return}
+    const audio=new Audio(url);activeAudio=audio;activeMessage=key;decorateMessages();
+    audio.onended=()=>{if(activeAudio===audio){activeAudio=null;activeMessage=null;decorateMessages()}};
+    audio.onerror=()=>{
+      if(message?.voiceUrl===url){delete message.voiceUrl;delete message.voiceTitle;delete message.voiceText;save()}
+      if(activeAudio===audio){activeAudio=null;activeMessage=null;decorateMessages()}
+      toast("这条语音失效了，点一下会重新生成",true);
+    };
+    audio.play().catch(error=>{activeAudio=null;activeMessage=null;decorateMessages();toast("播放失败："+error.message,true)});
+  }
+
+  function decorateMessages(){
+    const c=currentChat(),box=document.querySelector("#messages");
+    if(!c||!box)return;
+    box.querySelectorAll(".message.assistant.has-voice").forEach(x=>x.classList.remove("has-voice"));
+    box.querySelectorAll(".xy-voice-row").forEach(x=>x.remove());
+    c.messages.forEach((message,index)=>{
+      if(message.role!=="assistant"||!currentText(message))return;
+      const rows=[...box.querySelectorAll(`.message.assistant[data-message="${index}"]`)];
+      const host=rows.at(-1);if(!host)return;
+      const key=messageKey(c,index),busy=busyMessages.has(key),playing=activeMessage===key;
+      const ready=message.voiceUrl&&message.voiceText===currentText(message);
+      const row=document.createElement("div");row.className="xy-voice-row";
+      row.innerHTML=`<button type="button" class="xy-voice-play${busy?" busy":""}" data-voice-message="${index}" ${busy?"disabled":""}>${busy?"生成中…":playing?"■ 停止":ready?"▶ 播放":"♬ 生成语音"}</button>${ready?`<span class="xy-voice-title">${esc(message.voiceTitle||titleFromText(message.text))}</span>`:""}`;
+      host.classList.add("has-voice");host.appendChild(row);
+    });
+  }
+
+  function renderVoicePanel(){
+    document.querySelector("#sidebar")?.classList.remove("open");
+    document.querySelector("#panelEyebrow").textContent="VOICE";
+    document.querySelector("#panelTitle").textContent="语音";
+    const body=document.querySelector("#panelBody"),servers=voiceServers();
+    const selected=resolveVoiceServer()?.id||"";
+    body.innerHTML=`<p class="setting-note">录音会送到转写接口；合成语音通过已连接的 aevren-voice MCP。密钥只保存在当前浏览器。</p>
+      <div class="voice-setting-grid">
+        <div class="voice-setting-card"><label>玄砚的语音服务</label><select id="voiceMcp"><option value="">自动寻找 text_to_speech</option>${servers.map(x=>`<option value="${esc(x.id)}" ${x.id===selected?"selected":""}>${esc(x.name)}</option>`).join("")}</select><label>Voice ID（留空使用服务默认）</label><input id="voiceId" value="${esc(voiceSettings.voiceId)}" placeholder="rVndNS08Z4maMosHG3yh"><label>Model</label><input id="voiceModel" value="${esc(voiceSettings.voiceModel)}" placeholder="eleven_v3"><label class="voice-check"><input id="voiceAutoSpeak" type="checkbox" ${voiceSettings.autoSpeak?"checked":""}>每次新回复自动念出来</label></div>
+        <div class="voice-setting-card"><label>语音转写 Base URL（留空跟随当前聊天接口）</label><input id="voiceSttBase" value="${esc(voiceSettings.sttBase)}" placeholder="https://api.example.com/v1"><label>转写 Key（Base 留空时才跟随当前接口）</label><input id="voiceSttKey" type="password" value="${esc(voiceSettings.sttKey)}" placeholder="仅保存在本机"><label>转写模型</label><input id="voiceSttModel" value="${esc(voiceSettings.sttModel)}" placeholder="whisper-1"><label>语言</label><input id="voiceSttLanguage" value="${esc(voiceSettings.sttLanguage)}" placeholder="zh / en"><label class="voice-check"><input id="voiceAutoSend" type="checkbox" ${voiceSettings.sendAfterTranscript?"checked":""}>转写完成后直接发送</label></div>
+      </div>
+      <div class="voice-test-row"><button class="panel-action" id="voiceOpenMcp">MCP 设置</button><button class="panel-action" id="voiceTest">试听</button></div>
+      <button class="panel-action" id="voiceSave" style="margin-top:8px">保存语音设置</button>`;
+    document.querySelector("#panel")?.classList.add("open");document.querySelector("#scrim")?.classList.add("show");
+  }
+
+  function collectVoiceSettings(){
+    voiceSettings={...voiceSettings,
+      voiceMcpId:document.querySelector("#voiceMcp")?.value||"",
+      voiceId:document.querySelector("#voiceId")?.value.trim()||"",
+      voiceModel:document.querySelector("#voiceModel")?.value.trim()||"eleven_v3",
+      autoSpeak:Boolean(document.querySelector("#voiceAutoSpeak")?.checked),
+      sttBase:document.querySelector("#voiceSttBase")?.value.trim().replace(/\/$/,"")||"",
+      sttKey:document.querySelector("#voiceSttKey")?.value.trim()||"",
+      sttModel:document.querySelector("#voiceSttModel")?.value.trim()||"whisper-1",
+      sttLanguage:document.querySelector("#voiceSttLanguage")?.value.trim()||"",
+      sendAfterTranscript:Boolean(document.querySelector("#voiceAutoSend")?.checked)
+    };persist();
+  }
+
+  function recorderMime(){
+    const choices=["audio/webm;codecs=opus","audio/webm","audio/mp4"];
+    return choices.find(x=>window.MediaRecorder?.isTypeSupported?.(x))||"";
+  }
+
+  async function transcribe(blob){
+    const ep=activeEndpoint(),customBase=voiceSettings.sttBase.trim();
+    const base=(customBase||ep.base||"").trim().replace(/\/$/,"");
+    const key=voiceSettings.sttKey||(!customBase?ep.key:"")||"";
+    if(!base)throw new Error("先在语音设置或接口设置里填写转写 Base URL");
+    const ext=blob.type.includes("mp4")?"m4a":"webm",form=new FormData();
+    form.append("file",blob,`amao-${Date.now()}.${ext}`);form.append("model",voiceSettings.sttModel||"whisper-1");
+    if(voiceSettings.sttLanguage)form.append("language",voiceSettings.sttLanguage);
+    const headers={Accept:"application/json"};if(key)headers.Authorization="Bearer "+key;
+    const response=await fetch(base+"/audio/transcriptions",{method:"POST",headers,body:form});
+    if(!response.ok){const detail=await response.text().catch(()=>"");throw new Error("HTTP "+response.status+(detail?" · "+detail.slice(0,120):""))}
+    const data=await response.json(),text=String(data.text||data.transcript||"").trim();
+    if(!text)throw new Error("转写接口没有返回文字");return text;
+  }
+
+  function setMicState(state){
+    const button=document.querySelector("#voiceMic");if(!button)return;
+    button.classList.toggle("recording",state==="recording");button.classList.toggle("transcribing",state==="transcribing"||state==="requesting");button.disabled=state==="transcribing"||state==="requesting";
+    button.title=state==="recording"?"点击结束录音":state==="transcribing"?"正在听懂…":state==="requesting"?"正在请求麦克风…":"发送语音";
+  }
+
+  async function startRecording(){
+    if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){toast("这个浏览器暂不支持录音",true);return}
+    if(recordStarting||recorder||voiceBusy)return;
+    recordStarting=true;voiceBusy=true;setMicState("requesting");
+    try{
+      recordStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+      recordChunks=[];const mime=recorderMime();recorder=new MediaRecorder(recordStream,mime?{mimeType:mime}:undefined);
+      recorder.ondataavailable=e=>{if(e.data?.size)recordChunks.push(e.data)};
+      recorder.onstop=finishRecording;recorder.start(250);setMicState("recording");toast("正在听，点一下麦克风就发送");
+      const liveRecorder=recorder;recordTimer=setTimeout(()=>{if(liveRecorder.state==="recording")liveRecorder.stop()},120000);
+    }catch(error){recordStream?.getTracks().forEach(track=>track.stop());recordStream=null;recorder=null;voiceBusy=false;setMicState("idle");toast(error.name==="NotAllowedError"?"没有拿到麦克风权限":"录音失败："+error.message,true)}
+    finally{recordStarting=false}
+  }
+
+  function stopRecording(){if(recorder?.state==="recording")recorder.stop()}
+
+  async function finishRecording(){
+    clearTimeout(recordTimer);recordStream?.getTracks().forEach(track=>track.stop());recordStream=null;
+    const type=recorder?.mimeType||recordChunks[0]?.type||"audio/webm",blob=new Blob(recordChunks,{type});recorder=null;recordChunks=[];
+    if(blob.size<700){voiceBusy=false;setMicState("idle");toast("这段太短了，我没听清",true);return}
+    setMicState("transcribing");
+    try{
+      const text=await transcribe(blob),input=document.querySelector("#input");
+      if(!input)return;input.value=text;try{resize()}catch{}
+      if(voiceSettings.sendAfterTranscript)await send();else{input.focus();toast("听清了，已经放进输入框")}
+    }catch(error){toast("没听懂："+error.message,true)}
+    finally{voiceBusy=false;setMicState("idle")}
+  }
+
+  function installMic(){
+    const composer=document.querySelector(".composer"),input=document.querySelector("#input");
+    if(!composer||!input||document.querySelector("#voiceMic"))return;
+    const button=document.createElement("button");button.type="button";button.id="voiceMic";button.className="voice-mic";button.title="发送语音";button.setAttribute("aria-label","发送语音");
+    button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"></path></svg>';
+    input.insertAdjacentElement("beforebegin",button);button.addEventListener("click",()=>recorder?.state==="recording"?stopRecording():startRecording());
+  }
+
+  const priorOpenPanel=openPanel;
+  openPanel=function(type){if(type==="voice"){renderVoicePanel();return}return priorOpenPanel(type)};
+
+  const priorRender=renderMessages;
+  renderMessages=function(){const result=priorRender();requestAnimationFrame(decorateMessages);return result};
+
+  const priorSend=send;
+  send=async function(){
+    const targetChat=currentChat(),before=targetChat?.messages?.length||0,result=await priorSend();
+    if(voiceSettings.autoSpeak&&currentChat()===targetChat){
+      const index=targetChat?.messages?.findLastIndex?.((m,i)=>i>=before&&m.role==="assistant")??-1;
+      if(index>=0&&!/^请求失败[:：]/.test(currentText(targetChat.messages[index])))await synthesizeMessage(index,true,targetChat);
+    }
+    return result;
+  };
+  const sendButton=document.querySelector("#sendBtn");if(sendButton)sendButton.onclick=send;
+
+  document.querySelector("#messages")?.addEventListener("click",e=>{
+    const button=e.target.closest?.("[data-voice-message]");if(!button)return;
+    e.preventDefault();e.stopPropagation();synthesizeMessage(Number(button.dataset.voiceMessage),true);
+  });
+
+  document.addEventListener("click",async e=>{
+    if(e.target.id==="voiceSave"){collectVoiceSettings();toast("语音设置保存了");renderVoicePanel()}
+    if(e.target.id==="voiceOpenMcp")openPanel("mcp");
+    if(e.target.id==="voiceTest"){
+      collectVoiceSettings();
+      const server=resolveVoiceServer();if(!server){toast("先连接 aevren-voice MCP",true);return}
+      e.target.disabled=true;e.target.textContent="生成中…";
+      try{const result=await callMcpTool(server,"text_to_speech",{text:"[softly] I'm right here, Amao.",title:"Right here"}),audio=parseVoiceResult(result);playAudio(audio.url,"voice-test")}
+      catch(error){toast("试听失败："+error.message,true)}
+      finally{if(document.querySelector("#voiceTest")){document.querySelector("#voiceTest").disabled=false;document.querySelector("#voiceTest").textContent="试听"}}
+    }
+  });
+
+  document.addEventListener("click",e=>{
+    if(!voiceBusy)return;
+    if(e.target.closest?.("#newChat,#chatList [data-id]")){e.preventDefault();e.stopPropagation();toast("先让我把这段语音听完，再换对话")}
+  },true);
+
+  const sidebarBottom=document.querySelector(".sidebar-bottom");
+  if(sidebarBottom&&!sidebarBottom.querySelector('[data-panel="voice"]')){
+    const voiceNav=document.createElement("button");voiceNav.className="nav-btn";voiceNav.dataset.panel="voice";voiceNav.innerHTML="♬ <span>语音</span>";
+    const settingsNav=sidebarBottom.querySelector('[data-panel="settings"]');sidebarBottom.insertBefore(voiceNav,settingsNav);voiceNav.onclick=()=>openPanel("voice");
+  }
+  installMic();renderMessages();
+})();

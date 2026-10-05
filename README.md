@@ -10,6 +10,8 @@ A quiet, mobile-first chat frontend for Aevren and Amao.
 - localStorage persistence
 - optional Cloudflare Worker API proxy for endpoints that need CORS help
 - direct API connections stay native unless a proxy is explicitly configured
+- microphone recording with OpenAI-compatible audio transcription
+- ElevenLabs playback through a connected `text_to_speech` MCP tool
 - zero build step: plain HTML/CSS/JS
 
 Open `index.html` directly, or deploy the repository as a static site.
