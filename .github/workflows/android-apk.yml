@@ -31,8 +31,23 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
+
+      # Keep one debug signing identity across ephemeral GitHub runners.
+      # The first run creates ~/.android/debug.keystore; later runs restore it,
+      # so new APKs can update the previous build instead of conflicting.
+      - name: Restore debug signing key
+        id: debug-key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: aevren-xy-debug-keystore-v1
+
       - name: Build debug APK
         run: gradle -p android :app:assembleDebug --no-daemon
+
+      - name: Verify debug signing key exists
+        run: test -f "$HOME/.android/debug.keystore"
+
       - uses: actions/upload-artifact@v4
         with:
           name: aevren-xy-debug-apk
