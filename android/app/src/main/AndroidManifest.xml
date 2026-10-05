@@ -7,7 +7,7 @@
         android:allowBackup="true"
         android:hardwareAccelerated="true"
         android:label="Aevren XY"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar.Fullscreen"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
