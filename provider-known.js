@@ -1,35 +1,25 @@
 (()=>{
-  const OPENAI_V1_HOSTS=new Set(['api.justwoker.icu']);
+  const ANTHROPIC_HOSTS=new Set(['api.justwoker.icu']);
   const clean=v=>String(v||'').trim().replace(/\/$/,'');
 
   function knownProtocol(base){
     try{
       const host=new URL(clean(base)).hostname.toLowerCase();
-      if(OPENAI_V1_HOSTS.has(host))return 'openai';
+      if(ANTHROPIC_HOSTS.has(host))return 'anthropic';
     }catch{}
     return null;
   }
 
-  function normalizeBase(base,protocol){
-    const raw=clean(base);
-    if(!raw)return raw;
-    try{
-      const u=new URL(raw);
-      if(protocol==='openai'&&OPENAI_V1_HOSTS.has(u.hostname.toLowerCase())&&(u.pathname===''||u.pathname==='/')){
-        u.pathname='/v1';
-        return clean(u.toString());
-      }
-    }catch{}
-    return raw;
+  function normalizeBase(base){
+    return clean(base);
   }
 
   function normalizeEndpoint(ep){
     if(!ep)return false;
     let changed=false;
     const forced=knownProtocol(ep.base);
-    const protocol=forced||ep.protocol||'openai';
-    const nextBase=normalizeBase(ep.base,protocol);
-    if(ep.protocol!==protocol){ep.protocol=protocol;changed=true;}
+    if(forced&&ep.protocol!==forced){ep.protocol=forced;changed=true;}
+    const nextBase=normalizeBase(ep.base);
     if(nextBase&&nextBase!==ep.base){ep.base=nextBase;changed=true;}
     return changed;
   }
@@ -50,10 +40,8 @@
     const select=document.querySelector('#endpointProtocol');
     const forced=knownProtocol(base?.value);
     if(forced&&select)select.value=forced;
-    if(base)base.value=normalizeBase(base.value,forced||select?.value||'openai');
+    if(base)base.value=normalizeBase(base.value);
 
-    // provider-core also persists protocol after the base form saves.
-    // Run one tick later so known-host corrections win over a stale saved protocol.
     setTimeout(()=>{
       if(!Array.isArray(endpoints))return;
       let changed=false;
