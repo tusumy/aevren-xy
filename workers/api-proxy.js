@@ -12,7 +12,7 @@ const corsHeaders=(request,env)=>{
     'Access-Control-Allow-Origin':value||allowed,
     'Access-Control-Allow-Methods':'GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS',
     'Access-Control-Allow-Headers':requested||fallback,
-    'Access-Control-Expose-Headers':'Content-Type, Content-Length, MCP-Session-Id, X-Aevren-Proxy',
+    'Access-Control-Expose-Headers':'Content-Type, Content-Length, MCP-Session-Id, X-Aevren-Proxy, X-Aevren-Upstream-Retry',
     'Access-Control-Max-Age':'86400',
     'X-Aevren-Proxy':'1',
     'Vary':'Origin, Access-Control-Request-Headers'
@@ -23,6 +23,33 @@ const json=(data,status,headers)=>new Response(JSON.stringify(data),{
   status,
   headers:{'Content-Type':'application/json; charset=utf-8',...headers}
 });
+
+const stripBrowserOnlyHeaders=headers=>{
+  for(const name of [...headers.keys()]){
+    const lower=name.toLowerCase();
+    if(
+      lower==='host'||lower==='origin'||lower==='referer'||lower==='content-length'||
+      lower==='x-aevren-proxy-key'||lower==='cookie'||lower==='accept-language'||
+      lower.startsWith('cf-')||lower.startsWith('sec-')||lower.startsWith('x-forwarded-')
+    ) headers.delete(name);
+  }
+  return headers;
+};
+
+const apkLikeHeaders=source=>{
+  const out=new Headers();
+  const keep=[
+    'content-type','authorization','accept','x-api-key','anthropic-version',
+    'anthropic-beta','x-goog-api-key','mcp-session-id','mcp-protocol-version','last-event-id'
+  ];
+  for(const name of keep){
+    const value=source.get(name);
+    if(value)out.set(name,value);
+  }
+  if(!out.has('accept'))out.set('accept','application/json');
+  out.set('user-agent','AevrenXY/0.1 Android');
+  return out;
+};
 
 export default {
   async fetch(request,env){
@@ -49,25 +76,40 @@ export default {
     if(!allowedHosts.length&&!env.PROXY_KEY){
       return json({error:'proxy_not_configured',message:'Set ALLOWED_HOSTS or PROXY_KEY in Worker variables.'},500,cors);
     }
-    // PROXY_KEY is the universal personal-proxy mode. A stale ALLOWED_HOSTS value
-    // must not silently turn it back into a single-host proxy.
     if(!env.PROXY_KEY&&allowedHosts.length&&!allowedHosts.includes(target.hostname)){
       return json({error:'host_not_allowed',host:target.hostname,allowedHosts},403,cors);
     }
 
-    const headers=new Headers(request.headers);
-    for(const name of [...headers.keys()]){
-      const lower=name.toLowerCase();
-      if(lower==='host'||lower==='origin'||lower==='referer'||lower==='content-length'||lower==='x-aevren-proxy-key'||lower.startsWith('cf-')||lower.startsWith('sec-')||lower.startsWith('x-forwarded-'))headers.delete(name);
-    }
-
-    const init={method:request.method,headers,redirect:'follow'};
-    if(request.method!=='GET'&&request.method!=='HEAD')init.body=request.body;
+    const headers=stripBrowserOnlyHeaders(new Headers(request.headers));
+    const hasBody=request.method!=='GET'&&request.method!=='HEAD';
+    const bodyBytes=hasBody?await request.arrayBuffer():null;
+    const makeInit=nextHeaders=>({
+      method:request.method,
+      headers:nextHeaders,
+      redirect:'follow',
+      ...(hasBody?{body:bodyBytes}:{}),
+      cf:{cacheTtl:0,cacheEverything:false}
+    });
 
     try{
-      const upstream=await fetch(target.toString(),init);
+      let upstream=await fetch(target.toString(),makeInit(headers));
+      let retried=false;
+
+      // Some OpenAI-compatible gateways reject a browser/Worker-flavoured request while
+      // accepting the same request from the APK. On an upstream 403, retry once with the
+      // small header set and User-Agent used by Aevren XY's native OkHttp bridge.
+      if(upstream.status===403){
+        const retryHeaders=apkLikeHeaders(headers);
+        const retry=await fetch(target.toString(),makeInit(retryHeaders));
+        if(retry.status!==403||retry.headers.get('content-type')?.includes('json')){
+          upstream=retry;
+          retried=true;
+        }
+      }
+
       const outHeaders=new Headers(upstream.headers);
       Object.entries(cors).forEach(([k,v])=>outHeaders.set(k,v));
+      if(retried)outHeaders.set('X-Aevren-Upstream-Retry','1');
       return new Response(upstream.body,{status:upstream.status,statusText:upstream.statusText,headers:outHeaders});
     }catch(err){
       return json({error:'upstream_fetch_failed',message:String(err?.message||err),target:target.hostname},502,cors);
