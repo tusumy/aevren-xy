@@ -4,10 +4,10 @@
 .message.user .message-stack{align-items:flex-end;max-width:min(94%,760px)}
 .message-time{position:static;margin-top:5px;padding:0 4px;font-size:9px;line-height:1;color:rgba(72,77,73,.48);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.01em}
 .user .message-time{color:rgba(55,67,59,.52)}
-.message{margin-bottom:26px}
-.message.split-piece{margin-top:7px!important;margin-bottom:7px!important}
-.message.split-first{margin-top:22px!important}
-.message.split-last{margin-bottom:24px!important}
+.message{margin-bottom:34px}
+.message.split-piece{margin-top:0!important;margin-bottom:12px!important}
+.message.split-first{margin-top:0!important}
+.message.split-last{margin-bottom:34px!important}
 .message.assistant .bubble{padding:10px 14px;border-radius:18px 18px 18px 7px!important;max-width:100%}
 .message.assistant.split-first .bubble{border-radius:18px 18px 18px 7px!important}
 .message.assistant.split-mid .bubble{border-radius:7px 18px 18px 7px!important}
@@ -22,8 +22,8 @@
   .message.assistant.split-first .bubble{border-radius:17px 17px 17px 7px!important}
   .message.assistant.split-mid .bubble{border-radius:7px 17px 17px 7px!important}
   .message.assistant.split-last .bubble{border-radius:7px 17px 17px 17px!important}
-  .message{margin-bottom:24px}
-  .message.split-piece{margin-top:7px!important;margin-bottom:7px!important}
-  .message.split-first{margin-top:20px!important}
-  .message.split-last{margin-bottom:22px!important}
+  .message{margin-bottom:32px}
+  .message.split-piece{margin-top:0!important;margin-bottom:11px!important}
+  .message.split-first{margin-top:0!important}
+  .message.split-last{margin-bottom:32px!important}
 }
