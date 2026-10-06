@@ -22,12 +22,20 @@
   }
   function resolvedMode(){return theme.mode==='system'?(systemScheme?.matches?'dark':'light'):theme.mode}
   function backdrop(){let el=document.querySelector('#themeBackdrop');if(!el){el=document.createElement('div');el.id='themeBackdrop';document.body.prepend(el)}return el}
+  function textFor(hex){
+    const v=norm(hex)||'#ffffff';
+    const r=parseInt(v.slice(1,3),16),g=parseInt(v.slice(3,5),16),b=parseInt(v.slice(5,7),16);
+    const luminance=(r*299+g*587+b*114)/1000;
+    return luminance>154?'#2c342f':'#f5f8f6';
+  }
   function applyTheme(){
     const root=document.documentElement,mode=resolvedMode();
     root.dataset.themeMode=mode;root.style.colorScheme=mode;
     root.style.setProperty('--theme-bg',theme.bgColor);
     root.style.setProperty('--theme-user-bubble',theme.userBubble);
     root.style.setProperty('--theme-assistant-bubble',theme.assistantBubble);
+    root.style.setProperty('--theme-user-text',textFor(theme.userBubble));
+    root.style.setProperty('--theme-assistant-text',textFor(theme.assistantBubble));
     root.style.setProperty('--theme-accent',theme.accent);
     root.style.setProperty('--theme-overlay',String(theme.overlay));
     root.style.setProperty('--theme-blur',Number(theme.blur||0)+'px');
@@ -66,7 +74,7 @@
     document.querySelector('#sidebar')?.classList.remove('open');
     const eyebrow=document.querySelector('#panelEyebrow'),title=document.querySelector('#panelTitle'),body=document.querySelector('#panelBody');
     if(eyebrow)eyebrow.textContent='THEME';if(title)title.textContent='主题';if(!body)return;
-    body.innerHTML=`<p class="setting-note">颜色、背景图都只保存在当前浏览器。背景图会自动压缩。</p>
+    body.innerHTML=`<p class="setting-note">浅色/深色只控制界面。背景图和气泡颜色按你自己的设置保留，不会跟着系统自动变暗。</p>
       <div class="theme-mode-switch"><button data-theme-mode="light" class="${theme.mode==='light'?'active':''}">☀ 浅色</button><button data-theme-mode="dark" class="${theme.mode==='dark'?'active':''}">☾ 深色</button><button data-theme-mode="system" class="${theme.mode==='system'?'active':''}">◐ 跟随系统</button></div>
       <div class="theme-presets"><button data-theme-preset="mint">薄荷</button><button data-theme-preset="cream">奶油</button><button data-theme-preset="dusk">雾紫</button><button data-theme-preset="ink">青墨</button></div>
       <div class="theme-setting-card">${colorField('背景颜色','bgColor')}${colorField('你的气泡','userBubble')}${colorField('我的气泡','assistantBubble')}${colorField('强调色','accent')}</div>
