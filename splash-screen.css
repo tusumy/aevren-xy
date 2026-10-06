@@ -1,0 +1,16 @@
+#xySplash{position:fixed;inset:0;z-index:40000;display:grid;place-items:center;overflow:hidden;background:linear-gradient(180deg,#dfeae6 0%,#c9ddd6 45%,#8fb3aa 68%,#6f9a91 100%);transition:opacity .45s ease,visibility .45s ease}
+#xySplash.xy-splash-out{opacity:0;visibility:hidden}
+.xy-splash-scene{position:relative;width:min(82vw,380px);height:min(72vh,620px);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.xy-splash-moon{position:absolute;top:14%;right:14%;width:58px;height:58px;border-radius:50%;background:rgba(255,246,221,.86);box-shadow:0 0 36px rgba(255,243,205,.5)}
+.xy-splash-house{position:relative;width:154px;height:124px;margin-top:28px;filter:drop-shadow(0 18px 28px rgba(40,61,54,.18))}
+.xy-splash-roof{position:absolute;left:19px;top:18px;width:116px;height:58px;background:#30483e;clip-path:polygon(50% 0,100% 100%,0 100%)}
+.xy-splash-body{position:absolute;left:34px;top:62px;width:86px;height:58px;background:#f0ece3;border-radius:3px}
+.xy-splash-door{position:absolute;left:70px;top:83px;width:19px;height:37px;background:#8c705b;border-radius:2px 2px 0 0}
+.xy-splash-window{position:absolute;left:94px;top:78px;width:17px;height:17px;background:#eabd6e;box-shadow:0 0 18px rgba(234,189,110,.9)}
+.xy-splash-sea{position:absolute;left:-8%;right:-8%;bottom:17%;height:100px}
+.xy-splash-wave{position:absolute;left:-12%;width:124%;height:36px;border-radius:50%;border-top:3px solid rgba(241,248,245,.7);animation:xyWave 3.4s ease-in-out infinite}
+.xy-splash-wave:nth-child(2){top:24px;opacity:.58;animation-delay:-1.3s}
+.xy-splash-wave:nth-child(3){top:49px;opacity:.38;animation-delay:-2.1s}
+.xy-splash-title{margin-top:28px;font:600 28px/1.2 system-ui,sans-serif;letter-spacing:.18em;color:#29443b;text-indent:.18em}
+.xy-splash-sub{margin-top:9px;font:500 12px/1.2 system-ui,sans-serif;letter-spacing:.14em;color:rgba(41,68,59,.62)}
+@keyframes xyWave{0%,100%{transform:translateX(-2%) translateY(0)}50%{transform:translateX(2%) translateY(-4px)}}
