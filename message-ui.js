@@ -141,9 +141,10 @@
       const batch=pendingUserQueue.splice(0);
       renderPendingQueue();
       const c=chat();if(!c)return;
-      const last=batch.at(-1);
+      const last=batch.at(-1),hadUser=c.messages.some(x=>x.role==="user");
+      if(!hadUser&&batch[0]?.text)c.title=batch[0].text.slice(0,22);
       for(const item of batch.slice(0,-1))c.messages.push({role:"user",text:item.text,createdAt:item.createdAt});
-      if(batch.length>1){save();renderChats();renderMessages()}
+      if(batch.length>1||!hadUser){save();renderChats();renderMessages()}
       await performOriginalSend(last.text,last.createdAt);
     }finally{
       queueDraining=false;
