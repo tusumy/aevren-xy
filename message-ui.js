@@ -49,7 +49,7 @@
 
   function messageHtml(m,index){
     const isAssistant=m.role==="assistant";
-    const rawParts=isAssistant?splitReply(m.text):[String(m.text??"")];
+    const rawParts=splitReply(m.text);
     const parts=isAssistant?rawParts.map(trimPlainEnding):rawParts;
     const stamp=timeText(m.createdAt),title=timeTitle(m.createdAt);
     return parts.map((part,i)=>{
