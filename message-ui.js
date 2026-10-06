@@ -2,7 +2,7 @@
   const originalSend=send;
   const pendingUserQueue=[];
   let queueDraining=false,pendingSeq=0,flushTimer=null;
-  const SEND_SETTLE_MS=4500;
+  const SEND_SETTLE_MS=2800;
 
   const currentCharacterName=()=>{
     try{return window.xyCurrentCharacter?.()?.name||document.querySelector(".presence strong")?.textContent?.trim()||"玄砚"}catch{return "玄砚"}
@@ -69,14 +69,20 @@
     return `<div class="message user xy-pending" data-pending="${item.id}"><div class="message-stack"><div class="bubble"><span class="bubble-text">${esc(item.text)}</span></div>${ts}</div></div>`;
   }
 
+  function updateReplyNow(){
+    const button=document.querySelector("#xyReplyNow");
+    if(button)button.hidden=!pendingUserQueue.length||queueDraining||sending;
+  }
+
   function renderPendingQueue(){
     const box=document.querySelector("#messages");if(!box)return;
     box.querySelectorAll(".xy-pending").forEach(x=>x.remove());
-    if(!pendingUserQueue.length)return;
+    if(!pendingUserQueue.length){updateReplyNow();return}
     const html=pendingUserQueue.map(pendingHtml).join("");
     const typing=box.querySelector("#typing");
     if(typing)typing.insertAdjacentHTML("beforebegin",html);else box.insertAdjacentHTML("beforeend",html);
     box.scrollTop=box.scrollHeight;
+    updateReplyNow();
   }
 
   renderMessages=function(){
@@ -142,6 +148,7 @@
       return;
     }
     queueDraining=true;
+    updateReplyNow();
     try{
       const batch=pendingUserQueue.splice(0);
       renderPendingQueue();
@@ -153,6 +160,7 @@
       await performOriginalSend(last.text,last.createdAt);
     }finally{
       queueDraining=false;
+      updateReplyNow();
       if(pendingUserQueue.length)scheduleFlush();
     }
   }
@@ -163,6 +171,13 @@
   };
 
   const sendButton=document.querySelector("#sendBtn");if(sendButton){sendButton.disabled=false;sendButton.onclick=send}
+  const composerWrap=document.querySelector(".composer-wrap");
+  if(composerWrap&&!document.querySelector("#xyReplyNow")){
+    const quick=document.createElement("button");
+    quick.type="button";quick.id="xyReplyNow";quick.className="xy-reply-now";quick.textContent="直接回答";quick.hidden=true;
+    composerWrap.insertBefore(quick,composerWrap.querySelector(".composer"));
+    quick.addEventListener("click",()=>{if(flushTimer){clearTimeout(flushTimer);flushTimer=null}drainQueue()});
+  }
   document.querySelector("#input")?.addEventListener("input",()=>{if(pendingUserQueue.length)scheduleFlush()});
   document.querySelector("#newChat")?.addEventListener("click",()=>requestAnimationFrame(()=>{
     const c=chat();if(c?.messages?.length&&!c.messages[0].createdAt){c.messages[0].createdAt=Date.now();save();renderMessages()}
