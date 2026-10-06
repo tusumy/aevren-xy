@@ -11,6 +11,8 @@
 .xy-context-menu button{border:0;background:transparent;color:inherit;border-radius:10px;min-height:38px;padding:0 11px;text-align:left;font:500 13px/1.2 system-ui;cursor:pointer}
 .xy-context-menu button:active{background:color-mix(in srgb,var(--theme-accent,#365d4a) 13%,transparent)}
 .xy-context-menu button.danger{color:#a14f4f}
+.xy-context-menu.xy-quote-menu{width:min(286px,76vw);max-height:min(420px,62vh);overflow:auto}
+.xy-context-menu.xy-quote-menu button{white-space:normal;line-height:1.45;padding:9px 11px;min-height:0}
 html[data-theme-mode="dark"] .xy-context-menu{background:color-mix(in srgb,var(--theme-bg,#242b27) 26%,#171b19 74%);border-color:rgba(255,255,255,.09);box-shadow:0 16px 42px rgba(0,0,0,.34);color:#edf1ee}
 html[data-theme-mode="dark"] .xy-context-menu button:active{background:rgba(255,255,255,.08)}
 html[data-theme-mode="dark"] .xy-context-menu button.danger{color:#d58a8a}
