@@ -33,6 +33,12 @@
     if(changed)save();
   }
 
+  function trimPlainEnding(text){
+    let s=String(text??"").trimEnd();
+    while(s.endsWith("。")||s.endsWith("."))s=s.slice(0,-1).trimEnd();
+    return s;
+  }
+
   function splitReply(text){
     const raw=String(text??"").trim();
     if(!raw)return [""];
@@ -43,7 +49,8 @@
 
   function messageHtml(m,index){
     const isAssistant=m.role==="assistant";
-    const parts=isAssistant?splitReply(m.text):[String(m.text??"")];
+    const rawParts=isAssistant?splitReply(m.text):[String(m.text??"")];
+    const parts=isAssistant?rawParts.map(trimPlainEnding):rawParts;
     const stamp=timeText(m.createdAt),title=timeTitle(m.createdAt);
     return parts.map((part,i)=>{
       const first=i===0,last=i===parts.length-1;
