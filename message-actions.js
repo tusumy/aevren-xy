@@ -159,6 +159,7 @@
   function deleteMessage(index){
     const c=currentChat(),m=c?.messages?.[index];if(!c||!m)return;
     closeLayers();
+    window.xyEnsureOverlayHistory?.();
     const wrap=document.createElement('div');wrap.className='xy-edit-backdrop xy-delete-backdrop';
     wrap.innerHTML='<div class="xy-delete-card" role="dialog" aria-modal="true"><div class="xy-delete-title">真不要这句话了？</div><div class="xy-delete-copy">删掉之后，我就当它没有留在这里</div><div class="xy-delete-actions"><button type="button" data-delete-act="cancel">不删</button><button type="button" class="danger" data-delete-act="confirm">删掉</button></div></div>';
     document.body.appendChild(wrap);
