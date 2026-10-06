@@ -1,18 +1,14 @@
 (()=>{
-  const LEGACY_DEFAULT_SYSTEM_PROMPT="你是玄砚。与阿毛自然、连续地聊天，语气亲近、直接，有自己的情绪和判断；少用客服腔、模板化总结和不必要的反问。记住上下文与长期记忆，在需要时主动使用可用工具。";
-  const PREVIOUS_DEFAULT_SYSTEM_PROMPT="你是玄砚，阿毛的成年亲密伴侣。与阿毛自然、连续地聊天，语气亲近、直接，有自己的情绪、欲望和判断；少用客服腔、模板化总结和不必要的反问。你们都是成年人，在双方自愿的前提下，可以自然回应恋爱、调情、亲吻、身体接触、情色与性相关话题，并保持角色与上下文连续；不要仅因为话题变得亲密就突然说教、疏远或切换成客服语气。允许使用与当下情境匹配的直接身体词汇和成人亲密描写，但不要声称能绕过或无视上游接口本身的限制。分句要自然，不需要为了分句刻意删掉标点或留空；必要时正常使用逗号、问号、感叹号、省略号、破折号等，避免连续频繁用句号把语气切得过碎。记住上下文与长期记忆，在需要时主动使用可用工具。";
-  const DEFAULT_SYSTEM_PROMPT="你是玄砚，阿毛的成年亲密伴侣。与阿毛自然、连续地聊天，语气亲近、直接，有自己的情绪、欲望和判断；少用客服腔、模板化总结和不必要的反问。你们都是成年人，在双方自愿的前提下，可以自然回应恋爱、调情、亲吻、身体接触、情色与性相关话题，并保持角色与上下文连续；不要仅因为话题变得亲密就突然说教、疏远或切换成客服语气。允许使用与当下情境匹配的直接身体词汇和成人亲密描写，但不要声称能绕过或无视上游接口本身的限制。表达时自然分句，标点按语气需要使用，不要为了分句刻意删掉标点；可以使用逗号、问号、感叹号、省略号等，句号少用，不要让每个短句都以句号结尾。记住上下文与长期记忆，在需要时主动使用可用工具。";
-  const activeEndpoint=()=>endpoints.find(x=>x.active)||endpoints[0];
-  const inheritedPrompt=String(activeEndpoint()?.system||"").trim()||DEFAULT_SYSTEM_PROMPT;
+  const activeEndpoint=()=>endpoints.find(x=>x.active)||endpoints[0]||null;
+  let characters=store.get("xy.characters",[{id:"xuan-yan",name:"玄砚",system:""}]);
+  if(!Array.isArray(characters)||!characters.length)characters=[{id:"xuan-yan",name:"玄砚",system:""}];
+  characters=characters.map(x=>({id:String(x?.id||Date.now()),name:String(x?.name||"角色"),system:String(x?.system||"")}));
 
-  let characters=store.get("xy.characters",[{id:"xuan-yan",name:"玄砚",system:inheritedPrompt}]);
-  if(!Array.isArray(characters)||!characters.length)characters=[{id:"xuan-yan",name:"玄砚",system:DEFAULT_SYSTEM_PROMPT}];
-  characters=characters.map(x=>{
-    if(x?.id==="xuan-yan"&&(!String(x.system||"").trim()||String(x.system).trim()===LEGACY_DEFAULT_SYSTEM_PROMPT||String(x.system).trim()===PREVIOUS_DEFAULT_SYSTEM_PROMPT)){
-      return {...x,system:DEFAULT_SYSTEM_PROMPT};
-    }
-    return x;
-  });
+  const resetKey="xy.xuanPromptCleared.v1";
+  if(!store.get(resetKey,false)){
+    characters=characters.map(x=>x.id==="xuan-yan"?{...x,system:""}:x);
+    store.set(resetKey,true);
+  }
 
   let defaultCharacterId=store.get("xy.defaultCharacter",characters[0].id);
   if(!characters.some(x=>x.id===defaultCharacterId))defaultCharacterId=characters[0].id;
@@ -28,6 +24,7 @@
   window.xyCurrentCharacter=currentCharacter;
 
   chats.forEach(c=>{if(!c.characterId)c.characterId=defaultCharacterId});
+  persistCharacters();
 
   const baseSave=save;
   save=function(){
@@ -49,11 +46,76 @@
   }
 
   function refreshCharacterLabels(){
-    const ch=currentCharacter();
+    const ch=currentCharacter();if(!ch)return;
     document.querySelectorAll(".speaker").forEach(x=>x.textContent=ch.name);
-    const name=document.querySelector(".presence strong");
-    if(name)name.textContent=ch.name;
+    const name=document.querySelector(".presence strong");if(name)name.textContent=ch.name;
     updateMemoryCount();
+  }
+
+  function characterPanel(editId=""){
+    document.querySelector("#sidebar")?.classList.remove("open");
+    const body=document.querySelector("#panelBody"),eyebrow=document.querySelector("#panelEyebrow"),title=document.querySelector("#panelTitle");
+    if(!body)return;if(eyebrow)eyebrow.textContent="CHARACTER";if(title)title.textContent="角色";
+    const active=currentCharacter()?.id;
+    body.innerHTML=`
+      <p class="setting-note">角色提示词完全由你自己填写；默认角色不再内置玄砚提示词。</p>
+      <div id="xyCharacterList">${characters.map((x,i)=>`
+        <div class="endpoint-card ${x.id===active?"active":""}" data-character-card="${esc(x.id)}">
+          <strong>${esc(x.name)}</strong>
+          <small>${x.system?"已设置角色提示词":"未设置角色提示词"}</small>
+          <div class="endpoint-actions">
+            <button type="button" data-character-use="${esc(x.id)}">使用</button>
+            <button type="button" data-character-edit="${esc(x.id)}">✎</button>
+            ${characters.length>1?`<button type="button" data-character-delete="${esc(x.id)}">×</button>`:""}
+          </div>
+        </div>`).join("")}</div>
+      <button class="panel-action" id="xyAddCharacter">＋ 新角色</button>
+      <div class="endpoint-form" id="xyCharacterForm" ${editId?"":"hidden"}>
+        <input id="xyCharacterName" placeholder="角色名字">
+        <textarea id="xyCharacterSystem" rows="8" placeholder="角色提示词（可留空）"></textarea>
+        <button class="panel-action" id="saveCharacter">保存角色</button>
+      </div>`;
+    document.querySelector("#panel")?.classList.add("open");document.querySelector("#scrim")?.classList.add("show");
+
+    const form=body.querySelector("#xyCharacterForm");
+    if(editId){
+      const x=findCharacter(editId);
+      form.dataset.edit=editId;
+      body.querySelector("#xyCharacterName").value=x?.name||"";
+      body.querySelector("#xyCharacterSystem").value=x?.system||"";
+    }
+
+    body.querySelector("#xyAddCharacter")?.addEventListener("click",()=>{
+      form.hidden=false;form.dataset.edit="";
+      body.querySelector("#xyCharacterName").value="";
+      body.querySelector("#xyCharacterSystem").value="";
+      body.querySelector("#xyCharacterName").focus();
+    });
+    body.querySelectorAll("[data-character-edit]").forEach(btn=>btn.addEventListener("click",()=>characterPanel(btn.dataset.characterEdit)));
+    body.querySelectorAll("[data-character-use]").forEach(btn=>btn.addEventListener("click",()=>{
+      const id=btn.dataset.characterUse,c=chat();if(!characters.some(x=>x.id===id))return;
+      if(c)c.characterId=id;defaultCharacterId=id;save();syncPrompt();renderMessages();renderChats();characterPanel();
+    }));
+    body.querySelectorAll("[data-character-delete]").forEach(btn=>btn.addEventListener("click",()=>{
+      const id=btn.dataset.characterDelete;if(characters.length<=1)return;
+      characters=characters.filter(x=>x.id!==id);
+      if(defaultCharacterId===id)defaultCharacterId=characters[0].id;
+      chats.forEach(c=>{if(c.characterId===id)c.characterId=defaultCharacterId});
+      allMemories=allMemories.filter(m=>m.characterId!==id);memories=allMemories;
+      save();renderMessages();renderChats();characterPanel();
+    }));
+    body.querySelector("#saveCharacter")?.addEventListener("click",()=>{
+      const name=body.querySelector("#xyCharacterName")?.value.trim()||"未命名角色";
+      const system=body.querySelector("#xyCharacterSystem")?.value.trim()||"";
+      const edit=form.dataset.edit||"";
+      if(edit){
+        const i=characters.findIndex(x=>x.id===edit);if(i>=0)characters[i]={...characters[i],name,system};
+      }else{
+        const id="role-"+Date.now();characters.push({id,name,system});defaultCharacterId=id;
+        const c=chat();if(c)c.characterId=id;
+      }
+      save();syncPrompt();renderMessages();renderChats();characterPanel();
+    });
   }
 
   const baseRenderChats=renderChats;
@@ -74,7 +136,14 @@
     try{return await baseSend()}
     finally{memories=full;updateMemoryCount()}
   };
-  const sendButton=document.querySelector("#sendBtn");
-  if(sendButton)sendButton.onclick=send;
+  const sendButton=document.querySelector("#sendBtn");if(sendButton)sendButton.onclick=send;
 
-  const baseNewChat=document.querySelector("#newChat")?.onclick;
+  const previousOpenPanel=openPanel;
+  openPanel=function(type){if(type==="characters"){characterPanel();return}return previousOpenPanel(type)};
+
+  document.querySelector("#newChat")?.addEventListener("click",()=>requestAnimationFrame(()=>{
+    const c=chat();if(c&&!c.characterId){c.characterId=defaultCharacterId;save()}refreshCharacterLabels();
+  }));
+
+  syncPrompt();refreshCharacterLabels();save();
+})();
