@@ -92,17 +92,58 @@
       try{document.execCommand('copy');showNotice('已复制')}catch{showNotice('复制失败',true)}finally{ta.remove()}
     }
   }
-  function quoteMessage(index){
+  function insertQuote(index,text){
     const m=currentChat()?.messages?.[index];if(!m)return;
     const input=document.querySelector('#input');if(!input)return;
-    const text=messageText(m).replace(/\s+/g,' ').trim();
-    const short=text.length>120?text.slice(0,120)+'…':text;
+    const clean=String(text||'').replace(/\s+/g,' ').trim();
+    if(!clean)return;
+    const short=clean.length>160?clean.slice(0,160)+'…':clean;
     const who=m.role==='assistant'?(window.xyCurrentCharacter?.()?.name||'玄砚'):'你';
     const prefix=`引用${who}：「${short}」\n`;
     input.value=prefix+(input.value?input.value:'');
     try{resize()}catch{}
     input.focus();input.setSelectionRange(input.value.length,input.value.length);
     showNotice('已引用到输入框');
+  }
+
+  function quoteMessage(index){insertQuote(index,messageText(currentChat()?.messages?.[index]))}
+
+  function quoteUnits(text){
+    const raw=String(text||'').trim();
+    if(!raw)return [];
+    const lines=raw.split(/\n+/).map(x=>x.trim()).filter(Boolean),out=[];
+    for(const line of lines){
+      const parts=line.match(/[^。！？!?…；;]+(?:[。！？!?…；;]+[”’\"）》】]*)|[^。！？!?…；;]+$/g)||[line];
+      parts.map(x=>x.trim()).filter(Boolean).forEach(x=>out.push(x));
+    }
+    return out.length?out:[raw];
+  }
+
+  function showQuotePicker(index,point){
+    closeLayers();const m=currentChat()?.messages?.[index];if(!m)return;
+    const units=quoteUnits(messageText(m));
+    if(units.length<=1){insertQuote(index,units[0]||messageText(m));return}
+    const wrap=document.createElement('div');wrap.className='xy-context-backdrop';
+    wrap.innerHTML=`<div class="xy-context-menu xy-quote-menu" role="menu" aria-label="选择引用句子">${units.map((x,i)=>`<button type="button" data-quote-unit="${i}">${esc(x.length>44?x.slice(0,44)+'…':x)}</button>`).join('')}</div>`;
+    document.body.appendChild(wrap);
+    const menu=wrap.querySelector('.xy-context-menu');
+    requestAnimationFrame(()=>{
+      const rect=menu.getBoundingClientRect(),gap=12,pad=10;
+      const vw=document.documentElement.clientWidth||window.innerWidth;
+      const vh=document.documentElement.clientHeight||window.innerHeight;
+      const x=Number(point?.x)||vw/2,y=Number(point?.y)||vh/2;
+      let left=x<=vw/2?x+gap:x-rect.width-gap;
+      let top=y-Math.min(28,rect.height*.2);
+      left=Math.max(pad,Math.min(left,vw-rect.width-pad));
+      top=Math.max(pad,Math.min(top,vh-rect.height-pad));
+      menu.style.left=Math.round(left)+'px';menu.style.top=Math.round(top)+'px';
+    });
+    wrap.addEventListener('click',e=>{
+      if(e.target===wrap){closeLayers();return}
+      const button=e.target.closest?.('[data-quote-unit]');if(!button)return;
+      const selected=units[Number(button.dataset.quoteUnit)]||'';
+      closeLayers();insertQuote(index,selected);
+    });
   }
 
   function rememberMessage(index){
@@ -129,7 +170,8 @@
     const assistant=m.role==='assistant';
     wrap.innerHTML=`<div class="xy-context-menu" role="menu" aria-label="消息操作">
       <button type="button" data-context-act="copy">复制</button>
-      <button type="button" data-context-act="quote">引用</button>
+      <button type="button" data-context-act="quote">引用整条</button>
+      ${assistant?'<button type="button" data-context-act="quote-one">引用一句</button>':''}
       <button type="button" data-context-act="edit">编辑</button>
       <button type="button" data-context-act="remember">记住</button>
       ${assistant?'<button type="button" data-context-act="retry">重新生成</button>':''}
@@ -156,6 +198,7 @@
       closeLayers();
       if(act==='copy')copyMessage(index);
       else if(act==='quote')quoteMessage(index);
+      else if(act==='quote-one'){showQuotePicker(index,point);return}
       else if(act==='edit')editMessage(index);
       else if(act==='remember')rememberMessage(index);
       else if(act==='retry')regenerate(index);
