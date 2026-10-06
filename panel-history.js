@@ -5,12 +5,15 @@
     document.querySelector("#scrim")?.classList.remove("show");
     document.querySelector(".xy-edit-backdrop")?.remove();
     document.querySelector(".xy-context-backdrop")?.remove();
+    document.querySelector(".xy-delete-backdrop")?.remove();
     document.querySelector(".xy-context-active")?.classList.remove("xy-context-active");
   };
   const ensureHistory=()=>{
     if(history.state?.xyOverlay)return;
     history.pushState({...history.state,xyOverlay:true},"");
   };
+
+  window.xyEnsureOverlayHistory=ensureHistory;
 
   const priorOpenPanel=openPanel;
   openPanel=function(type){ensureHistory();return priorOpenPanel(type)};
