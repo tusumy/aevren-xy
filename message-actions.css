@@ -31,3 +31,10 @@ html[data-theme-mode="dark"] .xy-edit-card textarea{background:rgba(12,16,14,.56
 .xy-msg-notice{position:fixed;left:50%;bottom:max(92px,calc(env(safe-area-inset-bottom) + 76px));transform:translateX(-50%);z-index:13000;max-width:min(86vw,460px);padding:9px 13px;border-radius:13px;background:rgba(39,48,43,.9);color:white;font:500 12px/1.35 system-ui;box-shadow:0 8px 28px rgba(0,0,0,.16)}
 .xy-msg-notice.error{background:rgba(112,54,54,.94)}
 @media (max-width:680px){.xy-context-menu{width:138px}.xy-context-menu button{min-height:36px;font-size:12px;padding:0 10px}}
+.xy-delete-card{box-sizing:border-box;width:min(360px,calc(100vw - 32px));background:rgba(249,247,243,.98);border:1px solid rgba(70,92,80,.12);box-shadow:0 20px 60px rgba(30,38,34,.22);border-radius:22px;padding:18px}
+.xy-delete-title{font:600 17px/1.35 system-ui;color:var(--ink,#292725)}
+.xy-delete-copy{margin-top:8px;font:13px/1.55 system-ui;color:var(--muted,#8c8881)}
+.xy-delete-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}
+.xy-delete-actions button{border:0;border-radius:13px;padding:11px;background:rgba(255,255,255,.7);color:inherit;font:600 13px/1 system-ui}
+.xy-delete-actions button.danger{background:#a85656;color:#fff}
+html[data-theme-mode="dark"] .xy-delete-card{background:rgba(31,36,33,.98);border-color:rgba(255,255,255,.08)}
