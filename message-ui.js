@@ -20,8 +20,6 @@
     if(Number.isNaN(d.getTime()))return "";
     return d.toLocaleString("zh-CN",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false});
   };
-  const cleanEnding=text=>String(text??"").replace(/[。！？!?…]+$/u,"").trimEnd();
-
   function migrateLegacyTimestamps(){
     let changed=false;
     const now=Date.now();
@@ -62,14 +60,13 @@
 
   function messageHtml(m,index){
     const isAssistant=m.role==="assistant";
-    const rawParts=isAssistant?splitReply(m.text):[String(m.text??"")];
-    const parts=isAssistant?rawParts.map(cleanEnding):rawParts;
+    const parts=isAssistant?splitReply(m.text):[String(m.text??"")];
     const stamp=timeText(m.createdAt),title=timeTitle(m.createdAt);
     return parts.map((part,i)=>{
       const first=i===0,last=i===parts.length-1;
       const split=parts.length>1?` split-piece ${first?"split-first":""} ${last?"split-last":"split-mid"}`:"";
       const ts=last&&stamp?`<span class="message-time" title="${esc(title)}">${esc(stamp)}</span>`:"";
-      return `<div class="message ${m.role}${split}" data-message="${index}" data-part="${i}"><div class="bubble${ts?" has-time":""}"><span class="bubble-text">${esc(part)}</span>${ts}</div></div>`;
+      return `<div class="message ${m.role}${split}" data-message="${index}" data-part="${i}"><div class="message-stack"><div class="bubble"><span class="bubble-text">${esc(part)}</span></div>${ts}</div></div>`;
     }).join("");
   }
 
