@@ -60,11 +60,11 @@
     body.innerHTML=`
       <p class="setting-note">角色提示词完全由你自己填写；默认角色不再内置玄砚提示词。</p>
       <div id="xyCharacterList">${characters.map((x,i)=>`
-        <div class="endpoint-card ${x.id===active?"active":""}" data-character-card="${esc(x.id)}">
+        <div class="character-card ${x.id===active?"active":""}" data-character-card="${esc(x.id)}">
           <strong>${esc(x.name)}</strong>
           <small>${x.system?"已设置角色提示词":"未设置角色提示词"}</small>
-          <div class="endpoint-actions">
-            <button type="button" data-character-use="${esc(x.id)}">使用</button>
+          <div class="character-actions">
+            <button type="button" class="use-character" data-character-use="${esc(x.id)}">使用</button>
             <button type="button" data-character-edit="${esc(x.id)}">✎</button>
             ${characters.length>1?`<button type="button" data-character-delete="${esc(x.id)}">×</button>`:""}
           </div>
