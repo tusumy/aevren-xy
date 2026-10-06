@@ -1,5 +1,5 @@
 (()=>{
-  const DEFAULT_THEME={bgColor:'#edf2ed',userBubble:'#d9e7dd',assistantBubble:'#f3f1eb',accent:'#365d4a',bgImage:'',overlay:.22,blur:0,mode:'light',bubbleGlass:false};
+  const DEFAULT_THEME={bgColor:'#edf2ed',userBubble:'#d9e7dd',assistantBubble:'#f3f1eb',accent:'#365d4a',bgImage:'',overlay:.22,blur:0,mode:'light',bubbleGlass:false,fontScale:.95};
   const PRESETS={
     mint:{bgColor:'#edf2ed',userBubble:'#d9e7dd',assistantBubble:'#f3f1eb',accent:'#365d4a',bgImage:'',overlay:.22,blur:0},
     cream:{bgColor:'#f5efe6',userBubble:'#eee1d5',assistantBubble:'#faf5ee',accent:'#745c48',bgImage:'',overlay:.18,blur:0},
@@ -46,6 +46,9 @@
     root.style.setProperty('--theme-accent',theme.accent);
     root.style.setProperty('--theme-overlay',String(theme.overlay));
     root.style.setProperty('--theme-blur',Number(theme.blur||0)+'px');
+    const fontScale=Math.max(.8,Math.min(1.2,Number(theme.fontScale||.95)));
+    root.style.setProperty('--xy-user-font-size',(15*fontScale).toFixed(2)+'px');
+    root.style.setProperty('--xy-assistant-font-size',(15.5*fontScale).toFixed(2)+'px');
     const bg=backdrop();
     bg.style.backgroundColor=theme.bgColor;
     bg.style.backgroundImage=theme.bgImage?`url(${JSON.stringify(theme.bgImage)})`:'none';
@@ -86,7 +89,7 @@
       <div class="theme-mode-switch"><button data-theme-mode="light" class="${theme.mode==='light'?'active':''}">☀ 浅色</button><button data-theme-mode="dark" class="${theme.mode==='dark'?'active':''}">☾ 深色</button><button data-theme-mode="system" class="${theme.mode==='system'?'active':''}">◐ 跟随系统</button></div>
       <div class="theme-presets"><button data-theme-preset="mint">薄荷</button><button data-theme-preset="cream">奶油</button><button data-theme-preset="dusk">雾紫</button><button data-theme-preset="ink">青墨</button></div>
       <div class="theme-setting-card">${colorField('背景颜色','bgColor')}${colorField('你的气泡','userBubble')}${colorField('我的气泡','assistantBubble')}${colorField('强调色','accent')}</div>
-      <div class="theme-setting-card"><label class="theme-stack"><span>气泡磨砂玻璃 <b id="themeBubbleGlassValue">${theme.bubbleGlass?'已开启':'已关闭'}</b></span><input id="themeBubbleGlass" type="checkbox" ${theme.bubbleGlass?'checked':''}></label></div>
+      <div class="theme-setting-card"><label class="theme-stack"><span>气泡磨砂玻璃 <b id="themeBubbleGlassValue">${theme.bubbleGlass?'已开启':'已关闭'}</b></span><input id="themeBubbleGlass" type="checkbox" ${theme.bubbleGlass?'checked':''}></label><label class="theme-stack"><span>聊天字号 <b id="themeFontValue">${Math.round(Number(theme.fontScale||.95)*100)}%</b></span><input class="xy-theme-range" id="themeFontScale" type="range" min="0.8" max="1.2" step="0.05" value="${Number(theme.fontScale||.95)}"></label></div>
       <div class="theme-setting-card"><label class="theme-stack"><span>背景图片 URL</span><input id="themeBgUrl" type="url" placeholder="https://..." value="${theme.bgImage&&!theme.bgImage.startsWith('data:')?escHtml(theme.bgImage):''}"></label><div class="theme-upload-row"><label class="theme-upload-button">从相册选择<input id="themeBgFile" type="file" accept="image/*" hidden></label><button class="theme-small-btn" id="clearThemeImage">清除背景图</button></div><div class="fetch-status" id="themeImageStatus">${theme.bgImage?'已设置背景图':'当前没有背景图'}</div></div>
       <div class="theme-setting-card"><label class="theme-stack"><span>背景遮罩 <b id="themeOverlayValue">${Math.round(theme.overlay*100)}%</b></span><input class="xy-theme-range" id="themeOverlay" type="range" min="0" max="0.85" step="0.05" value="${theme.overlay}"></label><label class="theme-stack"><span>背景模糊 <b id="themeBlurValue">${Number(theme.blur||0)}px</b></span><input class="xy-theme-range" id="themeBlur" type="range" min="0" max="24" step="1" value="${Number(theme.blur||0)}"></label></div>
       <button class="panel-action" id="saveTheme">保存主题</button><button class="theme-reset" id="resetTheme">恢复默认</button>`;
@@ -102,6 +105,9 @@
     body.querySelectorAll('[data-theme-preset]').forEach(btn=>btn.addEventListener('click',()=>{const bgImage=theme.bgImage;theme={...theme,...PRESETS[btn.dataset.themePreset],bgImage};persist();applyTheme();themePanel()}));
     const glass=body.querySelector('#themeBubbleGlass');
     glass?.addEventListener('change',()=>{theme.bubbleGlass=!!glass.checked;persist();applyTheme();const label=body.querySelector('#themeBubbleGlassValue');if(label)label.textContent=theme.bubbleGlass?'已开启':'已关闭'});
+    const font=body.querySelector('#themeFontScale');
+    paintRange(font,.8,1.2,Number(theme.fontScale||.95));
+    font?.addEventListener('input',()=>{theme.fontScale=Number(font.value);body.querySelector('#themeFontValue').textContent=Math.round(theme.fontScale*100)+'%';paintRange(font,.8,1.2,theme.fontScale);persist();applyTheme()});
     const overlay=body.querySelector('#themeOverlay'),blur=body.querySelector('#themeBlur');
     paintRange(overlay,0,.85,theme.overlay);paintRange(blur,0,24,theme.blur);
     overlay?.addEventListener('input',()=>{theme.overlay=Number(overlay.value);body.querySelector('#themeOverlayValue').textContent=Math.round(theme.overlay*100)+'%';paintRange(overlay,0,.85,theme.overlay);applyTheme()});
