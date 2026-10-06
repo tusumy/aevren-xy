@@ -1,7 +1,8 @@
 (()=>{
   const originalSend=send;
   const pendingUserQueue=[];
-  let queueDraining=false,pendingSeq=0;
+  let queueDraining=false,pendingSeq=0,flushTimer=null;
+  const SEND_SETTLE_MS=2200;
 
   const currentCharacterName=()=>{
     try{return window.xyCurrentCharacter?.()?.name||document.querySelector(".presence strong")?.textContent?.trim()||"玄砚"}catch{return "玄砚"}
@@ -125,31 +126,38 @@
     return true;
   }
 
+  function scheduleFlush(){
+    if(flushTimer)clearTimeout(flushTimer);
+    flushTimer=setTimeout(()=>{flushTimer=null;drainQueue()},SEND_SETTLE_MS);
+  }
+
   async function drainQueue(){
-    if(queueDraining)return;
+    if(queueDraining||sending||!pendingUserQueue.length){
+      if(pendingUserQueue.length)scheduleFlush();
+      return;
+    }
     queueDraining=true;
     try{
-      while(pendingUserQueue.length){
-        const batch=pendingUserQueue.splice(0);
-        renderPendingQueue();
-        const c=chat();if(!c)break;
-        const last=batch.at(-1);
-        for(const item of batch.slice(0,-1))c.messages.push({role:"user",text:item.text,createdAt:item.createdAt});
-        if(batch.length>1){save();renderChats();renderMessages()}
-        await performOriginalSend(last.text,last.createdAt);
-      }
-    }finally{queueDraining=false}
+      const batch=pendingUserQueue.splice(0);
+      renderPendingQueue();
+      const c=chat();if(!c)return;
+      const last=batch.at(-1);
+      for(const item of batch.slice(0,-1))c.messages.push({role:"user",text:item.text,createdAt:item.createdAt});
+      if(batch.length>1){save();renderChats();renderMessages()}
+      await performOriginalSend(last.text,last.createdAt);
+    }finally{
+      queueDraining=false;
+      if(pendingUserQueue.length)scheduleFlush();
+    }
   }
 
   send=async function(){
-    const input=document.querySelector("#input"),text=input?.value.trim();
-    if(!text)return;
-    if(sending||queueDraining){queueCurrentInput();return}
-    await performOriginalSend(text,Date.now());
-    await drainQueue();
+    if(!queueCurrentInput())return;
+    scheduleFlush();
   };
 
-  const sendButton=document.querySelector("#sendBtn");if(sendButton)sendButton.onclick=send;
+  const sendButton=document.querySelector("#sendBtn");if(sendButton){sendButton.disabled=false;sendButton.onclick=send}
+  document.querySelector("#input")?.addEventListener("input",()=>{if(pendingUserQueue.length)scheduleFlush()});
   document.querySelector("#newChat")?.addEventListener("click",()=>requestAnimationFrame(()=>{
     const c=chat();if(c?.messages?.length&&!c.messages[0].createdAt){c.messages[0].createdAt=Date.now();save();renderMessages()}
   }));
