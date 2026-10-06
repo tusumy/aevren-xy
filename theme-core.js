@@ -22,6 +22,11 @@
   }
   function resolvedMode(){return theme.mode==='system'?(systemScheme?.matches?'dark':'light'):theme.mode}
   function backdrop(){let el=document.querySelector('#themeBackdrop');if(!el){el=document.createElement('div');el.id='themeBackdrop';document.body.prepend(el)}return el}
+  function rgbaColor(hex,alpha){
+    const v=norm(hex)||'#ffffff';
+    const r=parseInt(v.slice(1,3),16),g=parseInt(v.slice(3,5),16),b=parseInt(v.slice(5,7),16);
+    return 'rgba('+r+','+g+','+b+','+alpha+')';
+  }
   function textFor(hex){
     const v=norm(hex)||'#ffffff';
     const r=parseInt(v.slice(1,3),16),g=parseInt(v.slice(3,5),16),b=parseInt(v.slice(5,7),16);
@@ -36,6 +41,8 @@
     root.style.setProperty('--theme-assistant-bubble',theme.assistantBubble);
     root.style.setProperty('--theme-user-text',textFor(theme.userBubble));
     root.style.setProperty('--theme-assistant-text',textFor(theme.assistantBubble));
+    root.style.setProperty('--theme-user-glass',rgbaColor(theme.userBubble,.58));
+    root.style.setProperty('--theme-assistant-glass',rgbaColor(theme.assistantBubble,.54));
     root.style.setProperty('--theme-accent',theme.accent);
     root.style.setProperty('--theme-overlay',String(theme.overlay));
     root.style.setProperty('--theme-blur',Number(theme.blur||0)+'px');
