@@ -68,6 +68,7 @@
   function closeLayers(){
     document.querySelector('.xy-edit-backdrop')?.remove();
     document.querySelector('.xy-context-backdrop')?.remove();
+    document.querySelector('.xy-context-active')?.classList.remove('xy-context-active');
   }
   function editMessage(index){
     closeLayers();const c=currentChat(),m=c?.messages?.[index];if(!m)return;
@@ -104,27 +105,61 @@
     showNotice('已引用到输入框');
   }
 
-  function showContext(index){
+  function rememberMessage(index){
+    const m=currentChat()?.messages?.[index];if(!m)return;
+    const text=messageText(m).trim();if(!text)return;
+    const characterId=window.xyCurrentCharacter?.()?.id;
+    const item={text,tag:'聊天'};
+    if(characterId)item.characterId=characterId;
+    memories.unshift(item);save();renderChats();
+    showNotice('已加入记忆');
+  }
+
+  function deleteMessage(index){
+    const c=currentChat(),m=c?.messages?.[index];if(!c||!m)return;
+    if(!window.confirm('删除这条消息？'))return;
+    c.messages.splice(index,1);save();renderMessages();
+    showNotice('已删除');
+  }
+
+  function showContext(index,point,bubble){
     closeLayers();const m=currentChat()?.messages?.[index];if(!m)return;
+    bubble?.classList.add('xy-context-active');
     const wrap=document.createElement('div');wrap.className='xy-context-backdrop';
     const assistant=m.role==='assistant';
-    wrap.innerHTML=`<div class="xy-context-menu" role="dialog" aria-modal="true">
-      <button type="button" data-context-act="copy"><span>复制</span></button>
-      <button type="button" data-context-act="quote"><span>引用</span></button>
-      <button type="button" data-context-act="edit"><span>编辑</span></button>
-      ${assistant?'<button type="button" data-context-act="retry"><span>重新生成</span></button>':''}
-      <button type="button" class="muted" data-context-act="cancel"><span>取消</span></button>
+    wrap.innerHTML=`<div class="xy-context-menu" role="menu" aria-label="消息操作">
+      <button type="button" data-context-act="copy">复制</button>
+      <button type="button" data-context-act="quote">引用</button>
+      <button type="button" data-context-act="edit">编辑</button>
+      <button type="button" data-context-act="remember">记住</button>
+      ${assistant?'<button type="button" data-context-act="retry">重新生成</button>':''}
+      <button type="button" class="danger" data-context-act="delete">删除</button>
     </div>`;
     document.body.appendChild(wrap);
+    const menu=wrap.querySelector('.xy-context-menu');
+    requestAnimationFrame(()=>{
+      const rect=menu.getBoundingClientRect(),gap=12,pad=10;
+      const vw=document.documentElement.clientWidth||window.innerWidth;
+      const vh=document.documentElement.clientHeight||window.innerHeight;
+      const x=Number(point?.x)||vw/2,y=Number(point?.y)||vh/2;
+      let left=x<=vw/2?x+gap:x-rect.width-gap;
+      let top=y-Math.min(28,rect.height*.2);
+      left=Math.max(pad,Math.min(left,vw-rect.width-pad));
+      top=Math.max(pad,Math.min(top,vh-rect.height-pad));
+      menu.style.left=Math.round(left)+'px';
+      menu.style.top=Math.round(top)+'px';
+    });
     wrap.addEventListener('click',e=>{
       const act=e.target.closest?.('[data-context-act]')?.dataset.contextAct;
-      if(e.target===wrap||act==='cancel'){closeLayers();return}
+      if(e.target===wrap){closeLayers();return}
       if(!act)return;
       closeLayers();
       if(act==='copy')copyMessage(index);
       else if(act==='quote')quoteMessage(index);
       else if(act==='edit')editMessage(index);
+      else if(act==='remember')rememberMessage(index);
       else if(act==='retry')regenerate(index);
+      else if(act==='delete')deleteMessage(index);
     });
   }
 
@@ -167,7 +202,7 @@
     pressTimer=setTimeout(()=>{
       pressTimer=null;longPressed=true;
       if(navigator.vibrate)try{navigator.vibrate(12)}catch{}
-      showContext(index);
+      showContext(index,{x:startX,y:startY},pressTarget);
     },480);
   });
   box.addEventListener('pointermove',e=>{if(pressTarget&&Math.hypot(e.clientX-startX,e.clientY-startY)>10)cancelPress()});
@@ -181,7 +216,7 @@
   box.addEventListener('contextmenu',e=>{
     const bubble=e.target.closest?.('.message[data-message] .bubble[data-longpress-message]');
     if(!bubble)return;
-    e.preventDefault();showContext(Number(bubble.dataset.longpressMessage));cancelPress();
+    e.preventDefault();showContext(Number(bubble.dataset.longpressMessage),{x:e.clientX,y:e.clientY},bubble);cancelPress();
   });
 
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLayers()});
