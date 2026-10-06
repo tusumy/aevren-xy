@@ -30,3 +30,7 @@
 @media(max-width:760px){
   .messages{padding-left:18px!important;padding-right:18px!important}
 }
+.xy-reply-now{display:block;margin:0 0 7px auto;border:1px solid rgba(70,92,80,.14);background:rgba(255,255,255,.58);color:var(--theme-accent,#365d4a);border-radius:999px;padding:6px 11px;font-size:11px;line-height:1;box-shadow:0 6px 18px rgba(45,56,49,.07);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer}
+.xy-reply-now[hidden]{display:none!important}
+.xy-reply-now:active{transform:scale(.96)}
+html[data-theme-mode="dark"] .xy-reply-now{background:rgba(28,35,31,.76);border-color:rgba(255,255,255,.08);color:#e8f0eb}
