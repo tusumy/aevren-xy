@@ -37,25 +37,8 @@
     const raw=String(text??"").trim();
     if(!raw)return [""];
     if(raw.includes("```"))return [raw];
-    const chunks=[];
-    raw.split(/\n{2,}/).forEach(block=>{
-      const clean=block.trim();
-      if(!clean)return;
-      const lines=clean.split(/\n+/).map(x=>x.trim()).filter(Boolean);
-      lines.forEach(line=>{
-        const found=line.match(/[^。！？!?…]+(?:[。！？!?…]+[”’\"）》】]*)|[^。！？!?…]+$/g);
-        if(found?.length>1)found.forEach(x=>{const t=x.trim();if(t)chunks.push(t)});
-        else chunks.push(line);
-      });
-    });
-    if(chunks.length<=1)return [raw];
-    const merged=[];
-    for(const part of chunks){
-      if(merged.length&&part.length<=2)merged[merged.length-1]+=part;
-      else merged.push(part);
-    }
-    if(merged.length<=24)return merged;
-    return [...merged.slice(0,23),merged.slice(23).join("")];
+    const parts=raw.split(/\n{2,}|\n+/).map(x=>x.trim()).filter(Boolean);
+    return parts.length?parts:[raw];
   }
 
   function messageHtml(m,index){
