@@ -1,16 +1,25 @@
 .bubble{position:relative}
 .bubble-text{display:inline;white-space:pre-wrap}
-.message-time{position:absolute;right:11px;bottom:7px;font-size:9px;line-height:1;color:rgba(72,77,73,.48);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.01em}
+.message-stack{display:flex;flex-direction:column;align-items:flex-start;max-width:min(82%,680px)}
+.message.user .message-stack{align-items:flex-end}
+.message-time{position:static;margin-top:5px;padding:0 4px;font-size:9px;line-height:1;color:rgba(72,77,73,.48);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.01em}
 .user .message-time{color:rgba(55,67,59,.52)}
-.bubble.has-time{padding-right:48px!important;padding-bottom:14px!important}
 .message.split-piece{margin-top:3px!important;margin-bottom:3px!important}
 .message.split-first{margin-top:18px!important}
 .message.split-last{margin-bottom:18px!important}
-.message.assistant .bubble{padding:10px 14px;border-radius:18px 18px 18px 7px!important;max-width:min(82%,680px)}
+.message.assistant .bubble{padding:10px 14px;border-radius:18px 18px 18px 7px!important;max-width:100%}
 .message.assistant.split-first .bubble{border-radius:18px 18px 18px 7px!important}
 .message.assistant.split-mid .bubble{border-radius:7px 18px 18px 7px!important}
 .message.assistant.split-last .bubble{border-radius:7px 18px 18px 18px!important}
-.message.assistant.split-piece .bubble.has-time{padding-right:50px!important}
 .message.user .bubble{border-radius:18px 18px 7px 18px!important}
 .speaker{margin-bottom:4px}
-@media(max-width:760px){.message-time{font-size:8px;right:10px;bottom:7px}.bubble.has-time{padding-right:44px!important}.message.assistant .bubble{padding:9px 13px;max-width:86%;border-radius:17px 17px 17px 7px!important}.message.assistant.split-first .bubble{border-radius:17px 17px 17px 7px!important}.message.assistant.split-mid .bubble{border-radius:7px 17px 17px 7px!important}.message.assistant.split-last .bubble{border-radius:7px 17px 17px 17px!important}.message.split-first{margin-top:15px!important}.message.split-last{margin-bottom:15px!important}}
+@media(max-width:760px){
+  .message-stack{max-width:86%}
+  .message-time{font-size:8px;margin-top:5px;padding:0 3px}
+  .message.assistant .bubble{padding:9px 13px;max-width:100%;border-radius:17px 17px 17px 7px!important}
+  .message.assistant.split-first .bubble{border-radius:17px 17px 17px 7px!important}
+  .message.assistant.split-mid .bubble{border-radius:7px 17px 17px 7px!important}
+  .message.assistant.split-last .bubble{border-radius:7px 17px 17px 17px!important}
+  .message.split-first{margin-top:15px!important}
+  .message.split-last{margin-bottom:15px!important}
+}
