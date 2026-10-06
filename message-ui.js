@@ -2,7 +2,7 @@
   const originalSend=send;
   const pendingUserQueue=[];
   let queueDraining=false,pendingSeq=0,flushTimer=null;
-  const SEND_SETTLE_MS=2200;
+  const SEND_SETTLE_MS=4500;
 
   const currentCharacterName=()=>{
     try{return window.xyCurrentCharacter?.()?.name||document.querySelector(".presence strong")?.textContent?.trim()||"玄砚"}catch{return "玄砚"}
@@ -126,9 +126,14 @@
     return true;
   }
 
-  function scheduleFlush(){
+  function scheduleFlush(delay=SEND_SETTLE_MS){
     if(flushTimer)clearTimeout(flushTimer);
-    flushTimer=setTimeout(()=>{flushTimer=null;drainQueue()},SEND_SETTLE_MS);
+    flushTimer=setTimeout(()=>{
+      flushTimer=null;
+      const draft=document.querySelector("#input")?.value.trim()||"";
+      if(draft){scheduleFlush(900);return}
+      drainQueue();
+    },delay);
   }
 
   async function drainQueue(){
