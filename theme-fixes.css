@@ -14,5 +14,5 @@ html[data-theme-mode="dark"] .sidebar{background:linear-gradient(180deg,rgba(28,
 html[data-theme-mode="dark"] .main header{background:linear-gradient(135deg,rgba(31,38,34,.74),rgba(26,31,28,.58))!important}
 html[data-theme-mode="dark"] .panel{background:linear-gradient(155deg,rgba(31,37,34,.95),rgba(35,42,38,.9))!important}
 html[data-theme-mode="dark"] .composer{background:linear-gradient(135deg,rgba(43,51,46,.84),rgba(34,41,37,.72))!important}
-html[data-theme-mode="dark"] .user .bubble{background:var(--theme-user-bubble,#d9e7dd)!important;border-color:rgba(255,255,255,.12)!important;box-shadow:0 9px 26px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.09)!important}
-html[data-theme-mode="dark"] .assistant .bubble{background:var(--theme-assistant-bubble,#f3f1eb)!important;border-color:rgba(255,255,255,.10)!important;box-shadow:0 8px 22px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.075)!important}
+html[data-theme-mode="dark"] .user .bubble{border-color:rgba(255,255,255,.12)!important;box-shadow:0 9px 26px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.09)!important}
+html[data-theme-mode="dark"] .assistant .bubble{border-color:rgba(255,255,255,.10)!important;box-shadow:0 8px 22px rgba(0,0,0,.16),inset 0 1px 0 rgba(255,255,255,.075)!important}
