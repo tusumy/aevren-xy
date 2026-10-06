@@ -1,8 +1,9 @@
 (()=>{
   const KEY="xy.avatars";
-  const read=()=>{try{return JSON.parse(localStorage.getItem(KEY))||{user:"",characters:{}}}catch{return {user:"",characters:{}}}};
+  const read=()=>{try{return JSON.parse(localStorage.getItem(KEY))||{user:"",characters:{},visible:true}}catch{return {user:"",characters:{},visible:true}}};
   let avatars=read();
   if(!avatars.characters||typeof avatars.characters!=="object")avatars.characters={};
+  if(typeof avatars.visible!=="boolean")avatars.visible=true;
   const saveAvatars=()=>localStorage.setItem(KEY,JSON.stringify(avatars));
   const currentCharacter=()=>{try{return window.xyCurrentCharacter?.()||{id:"xuan-yan",name:document.querySelector(".presence strong")?.textContent?.trim()||"玄砚"}}catch{return {id:"xuan-yan",name:"玄砚"}}};
   const charAvatar=()=>avatars.characters[currentCharacter().id]||"";
@@ -23,6 +24,8 @@
     const box=document.querySelector("#messages");if(!box)return;
     box.querySelectorAll(".xy-msg-avatar").forEach(x=>x.remove());
     box.querySelectorAll(".message.xy-has-avatar,.message.xy-avatar-continuation").forEach(x=>x.classList.remove("xy-has-avatar","xy-avatar-continuation"));
+    document.documentElement.dataset.showAvatars=avatars.visible?"1":"0";
+    if(!avatars.visible)return;
     const ch=currentCharacter(),assistantSrc=charAvatar(),userSrc=avatars.user||"";
     const groups=new Map();
     box.querySelectorAll(".message[data-message]").forEach(row=>{
@@ -50,7 +53,8 @@
     img.src=url;
   });
   async function packAvatar(file){
-    if(!file?.type?.startsWith("image/"))throw new Error("请选择图片");
+    if(!file)throw new Error("请选择图片");
+    if(file.type&&!file.type.startsWith("image/"))throw new Error("请选择图片文件");
     const img=await loadImage(file),size=320;
     const canvas=document.createElement("canvas");canvas.width=size;canvas.height=size;
     const ctx=canvas.getContext("2d",{alpha:false});
@@ -68,22 +72,26 @@
     const user=avatars.user||"",role=charAvatar();
     body.innerHTML=`
       <p class="setting-note">头像只保存在当前设备，不会写进仓库。角色头像按角色分别保存。</p>
+      <div class="xy-avatar-visibility"><span><strong>显示聊天头像</strong><small>关闭后恢复无头像排版</small></span><input id="xyAvatarVisible" type="checkbox" ${avatars.visible?"checked":""}></div>
       <div class="xy-avatar-setting">
         <div class="xy-avatar-preview ${user?"has-image":""}" id="xyUserAvatarPreview" ${user?`style="background-image:url('${user.replace(/'/g,"%27")}')"`:""}>${user?"":"我"}</div>
         <div class="xy-avatar-setting-copy"><strong>我的头像</strong><span>显示在你的消息旁边</span></div>
-        <label class="xy-avatar-pick">选择图片<input type="file" id="xyUserAvatarFile" accept="image/*" hidden></label>
+        <button type="button" class="xy-avatar-pick" data-avatar-pick="user">选择图片</button>
+        <input class="xy-avatar-file" type="file" id="xyUserAvatarFile" accept="image/*">
         <button type="button" class="xy-avatar-clear" data-avatar-clear="user">清除</button>
       </div>
       <div class="xy-avatar-setting">
         <div class="xy-avatar-preview ${role?"has-image":""}" id="xyRoleAvatarPreview" ${role?`style="background-image:url('${role.replace(/'/g,"%27")}')"`:""}>${role?"":initials(ch.name,"砚")}</div>
-        <div class="xy-avatar-setting-copy"><strong>${esc(ch.name)}的头像</strong><span>显示在回复和当前角色旁边</span></div>
-        <label class="xy-avatar-pick">选择图片<input type="file" id="xyRoleAvatarFile" accept="image/*" hidden></label>
+        <div class="xy-avatar-setting-copy"><strong>${esc(ch.name)}的头像</strong><span>显示在回复旁边</span></div>
+        <button type="button" class="xy-avatar-pick" data-avatar-pick="role">选择图片</button>
+        <input class="xy-avatar-file" type="file" id="xyRoleAvatarFile" accept="image/*">
         <button type="button" class="xy-avatar-clear" data-avatar-clear="role">清除</button>
       </div>`;
     document.querySelector("#panel")?.classList.add("open");document.querySelector("#scrim")?.classList.add("show");
 
-    const bind=async(id,kind)=>{
-      const input=body.querySelector(id);if(!input)return;
+    const bind=(id,kind)=>{
+      const input=body.querySelector(id),button=body.querySelector('[data-avatar-pick="'+kind+'"]');if(!input||!button)return;
+      button.addEventListener("click",()=>input.click());
       input.addEventListener("change",async()=>{
         const file=input.files?.[0];if(!file)return;
         try{
@@ -94,6 +102,9 @@
       });
     };
     bind("#xyUserAvatarFile","user");bind("#xyRoleAvatarFile","role");
+    body.querySelector("#xyAvatarVisible")?.addEventListener("change",e=>{
+      avatars.visible=!!e.target.checked;saveAvatars();renderMessages();requestAnimationFrame(decorateMessages);
+    });
     body.querySelectorAll("[data-avatar-clear]").forEach(btn=>btn.addEventListener("click",()=>{
       if(btn.dataset.avatarClear==="user")avatars.user="";
       else delete avatars.characters[currentCharacter().id];
