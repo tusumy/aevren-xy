@@ -1,0 +1,29 @@
+.message.xy-has-avatar{align-items:flex-start;gap:10px}
+.message.user.xy-has-avatar{justify-content:flex-end}
+.message.xy-has-avatar .message-stack{max-width:78%}
+.message.user.xy-has-avatar .message-stack{max-width:88%}
+.xy-msg-avatar{flex:0 0 34px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;margin-top:2px;background:rgba(255,255,255,.68);border:1px solid rgba(255,255,255,.72);box-shadow:0 5px 16px rgba(44,53,48,.09);font:600 12px/1 system-ui;color:var(--theme-accent,#365d4a);background-position:center;background-size:cover;background-repeat:no-repeat;overflow:hidden}
+.xy-msg-avatar.user{order:2}
+.xy-avatar-continuation.assistant{padding-left:44px}
+html[data-theme-mode="dark"] .xy-msg-avatar{background-color:rgba(34,42,37,.78);border-color:rgba(255,255,255,.09);color:#e9efeb}
+
+.xy-avatar-setting{display:grid;grid-template-columns:64px 1fr auto;gap:8px 12px;align-items:center;padding:13px;margin:0 0 10px;border-radius:16px;background:rgba(255,255,255,.46);border:1px solid rgba(255,255,255,.76)}
+.xy-avatar-preview{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.72);border:1px solid rgba(80,90,84,.12);background-position:center;background-size:cover;background-repeat:no-repeat;font:600 18px/1 Georgia,serif;color:var(--theme-accent,#365d4a)}
+.xy-avatar-setting-copy strong{display:block;font-size:13px;font-weight:600}
+.xy-avatar-setting-copy span{display:block;margin-top:4px;font-size:10px;color:var(--muted)}
+.xy-avatar-pick,.xy-avatar-clear{border:0;border-radius:10px;min-height:34px;padding:0 10px;font-size:11px;cursor:pointer}
+.xy-avatar-pick{display:grid;place-items:center;background:rgba(54,93,74,.10);color:var(--theme-accent,#365d4a)}
+.xy-avatar-clear{background:transparent;color:#9a8178}
+html[data-theme-mode="dark"] .xy-avatar-setting{background:rgba(37,44,40,.64);border-color:rgba(255,255,255,.07)}
+html[data-theme-mode="dark"] .xy-avatar-preview{background-color:rgba(26,32,29,.9);border-color:rgba(255,255,255,.09);color:#edf1ee}
+
+@media(max-width:760px){
+.message.xy-has-avatar{gap:9px}
+.message.xy-has-avatar .message-stack{max-width:76%}
+.message.user.xy-has-avatar .message-stack{max-width:84%}
+.xy-msg-avatar{flex-basis:32px;width:32px;height:32px}
+.xy-avatar-continuation.assistant{padding-left:41px}
+.xy-avatar-setting{grid-template-columns:58px 1fr}
+.xy-avatar-preview{width:58px;height:58px}
+.xy-avatar-pick,.xy-avatar-clear{grid-column:1/3}
+}
