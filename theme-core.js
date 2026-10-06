@@ -1,5 +1,5 @@
 (()=>{
-  const DEFAULT_THEME={bgColor:'#edf2ed',userBubble:'#d9e7dd',assistantBubble:'#f3f1eb',accent:'#365d4a',bgImage:'',overlay:.22,blur:0,mode:'light',bubbleGlass:false,fontScale:.95};
+  const DEFAULT_THEME={bgColor:'#edf2ed',userBubble:'#d9e7dd',assistantBubble:'#f3f1eb',accent:'#365d4a',bgImage:'',overlay:.22,blur:0,mode:'light',bubbleGlass:false,fontScale:.95,fontFamily:'system'};
   const PRESETS={
     mint:{bgColor:'#edf2ed',userBubble:'#d9e7dd',assistantBubble:'#f3f1eb',accent:'#365d4a',bgImage:'',overlay:.22,blur:0},
     cream:{bgColor:'#f5efe6',userBubble:'#eee1d5',assistantBubble:'#faf5ee',accent:'#745c48',bgImage:'',overlay:.18,blur:0},
@@ -49,6 +49,7 @@
     const fontScale=Math.max(.8,Math.min(1.2,Number(theme.fontScale||.95)));
     root.style.setProperty('--xy-user-font-size',(15*fontScale).toFixed(2)+'px');
     root.style.setProperty('--xy-assistant-font-size',(15.5*fontScale).toFixed(2)+'px');
+    root.style.setProperty('--xy-chat-font-family',theme.fontFamily==='serif'?'Georgia, serif':'system-ui, sans-serif');
     const bg=backdrop();
     bg.style.backgroundColor=theme.bgColor;
     bg.style.backgroundImage=theme.bgImage?`url(${JSON.stringify(theme.bgImage)})`:'none';
