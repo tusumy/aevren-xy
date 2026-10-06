@@ -1,5 +1,5 @@
 (()=>{
-  const DEFAULT_THEME={bgColor:'#edf2ed',userBubble:'#d9e7dd',assistantBubble:'#f3f1eb',accent:'#365d4a',bgImage:'',overlay:.22,blur:0,mode:'light'};
+  const DEFAULT_THEME={bgColor:'#edf2ed',userBubble:'#d9e7dd',assistantBubble:'#f3f1eb',accent:'#365d4a',bgImage:'',overlay:.22,blur:0,mode:'light',bubbleGlass:false};
   const PRESETS={
     mint:{bgColor:'#edf2ed',userBubble:'#d9e7dd',assistantBubble:'#f3f1eb',accent:'#365d4a',bgImage:'',overlay:.22,blur:0},
     cream:{bgColor:'#f5efe6',userBubble:'#eee1d5',assistantBubble:'#faf5ee',accent:'#745c48',bgImage:'',overlay:.18,blur:0},
@@ -44,6 +44,7 @@
     bg.style.backgroundImage=theme.bgImage?`url(${JSON.stringify(theme.bgImage)})`:'none';
     document.body.classList.toggle('theme-has-image',!!theme.bgImage);
     document.body.classList.toggle('theme-dark',mode==='dark');
+    root.dataset.bubbleGlass=theme.bubbleGlass?'1':'0';
     const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=mode==='dark'?'#171b19':theme.bgColor;
   }
   const escHtml=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -78,6 +79,7 @@
       <div class="theme-mode-switch"><button data-theme-mode="light" class="${theme.mode==='light'?'active':''}">☀ 浅色</button><button data-theme-mode="dark" class="${theme.mode==='dark'?'active':''}">☾ 深色</button><button data-theme-mode="system" class="${theme.mode==='system'?'active':''}">◐ 跟随系统</button></div>
       <div class="theme-presets"><button data-theme-preset="mint">薄荷</button><button data-theme-preset="cream">奶油</button><button data-theme-preset="dusk">雾紫</button><button data-theme-preset="ink">青墨</button></div>
       <div class="theme-setting-card">${colorField('背景颜色','bgColor')}${colorField('你的气泡','userBubble')}${colorField('我的气泡','assistantBubble')}${colorField('强调色','accent')}</div>
+      <div class="theme-setting-card"><label class="theme-stack"><span>气泡磨砂玻璃 <b id="themeBubbleGlassValue">${theme.bubbleGlass?'已开启':'已关闭'}</b></span><input id="themeBubbleGlass" type="checkbox" ${theme.bubbleGlass?'checked':''}></label></div>
       <div class="theme-setting-card"><label class="theme-stack"><span>背景图片 URL</span><input id="themeBgUrl" type="url" placeholder="https://..." value="${theme.bgImage&&!theme.bgImage.startsWith('data:')?escHtml(theme.bgImage):''}"></label><div class="theme-upload-row"><label class="theme-upload-button">从相册选择<input id="themeBgFile" type="file" accept="image/*" hidden></label><button class="theme-small-btn" id="clearThemeImage">清除背景图</button></div><div class="fetch-status" id="themeImageStatus">${theme.bgImage?'已设置背景图':'当前没有背景图'}</div></div>
       <div class="theme-setting-card"><label class="theme-stack"><span>背景遮罩 <b id="themeOverlayValue">${Math.round(theme.overlay*100)}%</b></span><input class="xy-theme-range" id="themeOverlay" type="range" min="0" max="0.85" step="0.05" value="${theme.overlay}"></label><label class="theme-stack"><span>背景模糊 <b id="themeBlurValue">${Number(theme.blur||0)}px</b></span><input class="xy-theme-range" id="themeBlur" type="range" min="0" max="24" step="1" value="${Number(theme.blur||0)}"></label></div>
       <button class="panel-action" id="saveTheme">保存主题</button><button class="theme-reset" id="resetTheme">恢复默认</button>`;
@@ -91,6 +93,8 @@
     body.querySelectorAll('[data-color-input]').forEach(input=>{const commit=()=>{const key=input.dataset.colorInput;if(setColor(key,input.value)){input.value=theme[key];const p=body.querySelector(`[data-color-preview="${key}"]`);if(p)p.style.background=theme[key]}else input.value=theme[key]};input.addEventListener('change',commit);input.addEventListener('blur',commit)});
     body.querySelectorAll('[data-theme-mode]').forEach(btn=>btn.addEventListener('click',()=>{theme.mode=btn.dataset.themeMode;persist();applyTheme();themePanel()}));
     body.querySelectorAll('[data-theme-preset]').forEach(btn=>btn.addEventListener('click',()=>{const bgImage=theme.bgImage;theme={...theme,...PRESETS[btn.dataset.themePreset],bgImage};persist();applyTheme();themePanel()}));
+    const glass=body.querySelector('#themeBubbleGlass');
+    glass?.addEventListener('change',()=>{theme.bubbleGlass=!!glass.checked;persist();applyTheme();const label=body.querySelector('#themeBubbleGlassValue');if(label)label.textContent=theme.bubbleGlass?'已开启':'已关闭'});
     const overlay=body.querySelector('#themeOverlay'),blur=body.querySelector('#themeBlur');
     paintRange(overlay,0,.85,theme.overlay);paintRange(blur,0,24,theme.blur);
     overlay?.addEventListener('input',()=>{theme.overlay=Number(overlay.value);body.querySelector('#themeOverlayValue').textContent=Math.round(theme.overlay*100)+'%';paintRange(overlay,0,.85,theme.overlay);applyTheme()});
