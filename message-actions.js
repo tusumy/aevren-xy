@@ -158,9 +158,17 @@
 
   function deleteMessage(index){
     const c=currentChat(),m=c?.messages?.[index];if(!c||!m)return;
-    if(!window.confirm('删除这条消息？'))return;
-    c.messages.splice(index,1);save();renderMessages();
-    showNotice('已删除');
+    closeLayers();
+    const wrap=document.createElement('div');wrap.className='xy-edit-backdrop xy-delete-backdrop';
+    wrap.innerHTML='<div class="xy-delete-card" role="dialog" aria-modal="true"><div class="xy-delete-title">真不要这句话了？</div><div class="xy-delete-copy">删掉之后，我就当它没有留在这里</div><div class="xy-delete-actions"><button type="button" data-delete-act="cancel">不删</button><button type="button" class="danger" data-delete-act="confirm">删掉</button></div></div>';
+    document.body.appendChild(wrap);
+    wrap.addEventListener('click',e=>{
+      const act=e.target.closest?.('[data-delete-act]')?.dataset.deleteAct;
+      if(e.target===wrap||act==='cancel'){wrap.remove();return}
+      if(act!=='confirm')return;
+      const live=currentChat();if(!live?.messages?.[index]){wrap.remove();return}
+      live.messages.splice(index,1);save();wrap.remove();renderMessages();showNotice('已删除');
+    });
   }
 
   function showContext(index,point,bubble){
