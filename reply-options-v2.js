@@ -212,10 +212,11 @@
     input.setSelectionRange(input.value.length,input.value.length);
   }
 
-  let drawing=false;
+  let drawing=false,observer=null;
   function renderLatestOptions(){
     if(drawing)return;
     drawing=true;
+    observer?.disconnect();
     try{
       const box=document.querySelector("#messages");
       if(!box)return;
@@ -263,6 +264,8 @@
       stack.appendChild(wrap);
     }finally{
       drawing=false;
+      const target=document.querySelector("#messages");
+      if(observer&&target)observer.observe(target,{childList:true,subtree:true});
     }
   }
 
@@ -276,7 +279,7 @@
   const box=document.querySelector("#messages");
   if(box){
     let queued=false;
-    new MutationObserver(()=>{
+    observer=new MutationObserver(()=>{
       if(queued)return;
       queued=true;
       requestAnimationFrame(()=>{
