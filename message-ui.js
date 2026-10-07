@@ -2,7 +2,7 @@
   const originalSend=send;
   const pendingUserQueue=[];
   let queueDraining=false,pendingSeq=0,flushTimer=null;
-  const SEND_SETTLE_MS=2800;
+  const SEND_SETTLE_MS=5000;
 
   const currentCharacterName=()=>{
     try{return window.xyCurrentCharacter?.()?.name||document.querySelector(".presence strong")?.textContent?.trim()||"玄砚"}catch{return "玄砚"}
