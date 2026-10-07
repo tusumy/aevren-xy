@@ -347,3 +347,72 @@ private class NativeHttpBridge(
                 else -> ByteArray(0).toRequestBody(null)
             }
             requestBuilder.method(method, requestBody)
+
+            client.newCall(requestBuilder.build()).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    reject(id, e.message ?: "Network request failed")
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    response.use {
+                        val bytes = it.body?.bytes() ?: ByteArray(0)
+                        val type = it.header("content-type").orEmpty().lowercase()
+                        val textual = type.startsWith("text/") ||
+                            type.contains("json") || type.contains("xml") ||
+                            type.contains("javascript") || type.contains("event-stream") ||
+                            type.contains("x-www-form-urlencoded")
+                        val headers = JSONObject()
+                        for (name in it.headers.names()) headers.put(name, it.headers.values(name).joinToString(", "))
+                        val payload = JSONObject()
+                            .put("status", it.code)
+                            .put("statusText", it.message)
+                            .put("headers", headers)
+                        if (textual) payload.put("body", bytes.toString(Charsets.UTF_8))
+                        else payload.put("bodyBase64", Base64.encodeToString(bytes, Base64.NO_WRAP))
+                        resolve(id, payload.toString())
+                    }
+                }
+            })
+        } catch (error: Exception) {
+            reject(id, error.message ?: error.javaClass.simpleName)
+        }
+    }
+
+    private fun buildBody(body: JSONObject?, headers: JSONObject): RequestBody? {
+        if (body == null) return null
+        return when (body.optString("kind", "none")) {
+            "none" -> null
+            "text" -> body.optString("data").toRequestBody(
+                body.optString("contentType", headers.optString("content-type")).toMediaTypeOrNull()
+            )
+            "base64" -> Base64.decode(body.optString("base64"), Base64.DEFAULT).toRequestBody(
+                body.optString("contentType", "application/octet-stream").toMediaTypeOrNull()
+            )
+            "multipart" -> {
+                val builder = MultipartBody.Builder().setType(MultipartBody.FORM)
+                val parts = body.optJSONArray("parts") ?: JSONArray()
+                for (i in 0 until parts.length()) {
+                    val part = parts.getJSONObject(i)
+                    val name = part.optString("name")
+                    if (part.optString("type") == "file") {
+                        val bytes = Base64.decode(part.optString("base64"), Base64.DEFAULT)
+                        val fileBody = bytes.toRequestBody(part.optString("contentType", "application/octet-stream").toMediaTypeOrNull())
+                        builder.addFormDataPart(name, part.optString("filename", "blob"), fileBody)
+                    } else builder.addFormDataPart(name, part.optString("value"))
+                }
+                builder.build()
+            }
+            else -> null
+        }
+    }
+
+    private fun resolve(id: String, payload: String) {
+        val js = "window.__xyNativeResolve && window.__xyNativeResolve(${JSONObject.quote(id)}, ${JSONObject.quote(payload)});"
+        webView.post { webView.evaluateJavascript(js, null) }
+    }
+
+    private fun reject(id: String, message: String) {
+        val js = "window.__xyNativeReject && window.__xyNativeReject(${JSONObject.quote(id)}, ${JSONObject.quote(message)});"
+        webView.post { webView.evaluateJavascript(js, null) }
+    }
+}
