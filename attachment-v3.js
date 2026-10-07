@@ -199,6 +199,30 @@
       truncated:!!a.truncated,previewDataUrl:a.previewDataUrl||""
     };
   };
+  const previousSave=typeof save==="function"?save:null;
+  if(previousSave){
+    save=function(){
+      const hidden=[];
+      const visit=value=>{
+        if(!value||typeof value!=="object")return;
+        if(Array.isArray(value)){value.forEach(visit);return}
+        for(const key of ["dataUrl","text"]){
+          if(Object.prototype.hasOwnProperty.call(value,key)){
+            hidden.push([value,key,value[key]]);
+            delete value[key];
+          }
+        }
+        Object.keys(value).forEach(k=>visit(value[k]));
+      };
+      try{
+        visit(chats);
+        return previousSave();
+      }finally{
+        for(let i=hidden.length-1;i>=0;i--){const [obj,key,val]=hidden[i];obj[key]=val}
+      }
+    };
+  }
+
   window.xyAttachments={
     busy:()=>busy>0,
     wait:()=>busy?new Promise(resolve=>waiters.push(resolve)):Promise.resolve(),
