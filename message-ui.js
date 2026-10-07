@@ -1,5 +1,5 @@
 (()=>{
-  const originalSend=send;
+  const originalSend=window.AevrenApiCompat?.send||send;
   const pendingUserQueue=[];
   let queueDraining=false,pendingSeq=0,flushTimer=null;
   const SEND_SETTLE_MS=10000;
