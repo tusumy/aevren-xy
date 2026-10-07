@@ -29,6 +29,17 @@
     return b+'/v1/messages';
   }
 
+  function anthropicImage(part){
+    if(!part||typeof part!=='object')return null;
+    if(part.type==='image'&&part.source)return part;
+    if(part.type!=='image_url')return null;
+    const url=String(part.image_url?.url||part.url||'');
+    const m=url.match(/^data:([^;,]+);base64,(.+)$/);
+    if(m)return {type:'image',source:{type:'base64',media_type:m[1],data:m[2]}};
+    if(/^https?:\/\//i.test(url))return {type:'image',source:{type:'url',url}};
+    return null;
+  }
+
   function blocksFromContent(content){
     if(Array.isArray(content)){
       const out=[];
@@ -36,7 +47,10 @@
         if(typeof part==='string'&&part.trim())out.push({type:'text',text:part});
         else if(part&&typeof part==='object'){
           if(part.type==='text'&&String(part.text||'').trim())out.push({type:'text',text:String(part.text)});
-          else if(part.type==='image'||part.type==='image_url')out.push(part);
+          else{
+            const image=anthropicImage(part);
+            if(image)out.push(image);
+          }
         }
       }
       return out;
