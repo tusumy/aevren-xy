@@ -1,0 +1,9 @@
+.xy-journal-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.xy-journal-editor{margin:10px 0 14px}
+.xy-journal-editor textarea{width:100%;min-height:150px;padding:12px;border:1px solid rgba(255,255,255,.82);border-radius:14px;background:rgba(255,255,255,.58);color:var(--ink);outline:0;resize:vertical;line-height:1.65}
+.xy-journal-card{position:relative}
+.xy-journal-meta{display:flex;align-items:center;gap:8px;margin-bottom:6px}.xy-journal-meta small{font-size:9px;color:var(--muted)}
+.xy-journal-card-actions{position:absolute;right:8px;top:8px;display:flex;gap:2px}
+.xy-journal-card-actions button{width:26px;height:26px;border:0;border-radius:9px;background:transparent;color:#827d77;cursor:pointer}
+.xy-journal-toast{position:fixed;z-index:180;left:50%;bottom:104px;transform:translateX(-50%);padding:9px 13px;border-radius:999px;background:rgba(42,52,47,.9);color:#fff;font-size:11px}
+@media(max-width:760px){.xy-journal-actions{grid-template-columns:1fr}.xy-journal-editor textarea{min-height:135px}}
