@@ -50,23 +50,36 @@
     return parts.length?parts:[raw];
   }
 
+  function attachmentHtml(items){
+    const list=Array.isArray(items)?items.filter(Boolean):[];
+    if(!list.length)return "";
+    const inner=list.map(a=>{
+      if(a.kind==="image"&&a.dataUrl)return `<img class="xy-message-image" src="${esc(a.dataUrl)}" alt="${esc(a.name||"图片")}">`;
+      return `<div class="xy-message-file"><span>▤</span><b>${esc(a.name||"附件")}</b></div>`;
+    }).join("");
+    return `<div class="xy-message-attachments">${inner}</div>`;
+  }
+
   function messageHtml(m,index){
     const isAssistant=m.role==="assistant";
     const rawParts=isAssistant?splitReply(m.text):[String(m.text??"")];
     const parts=isAssistant?rawParts.map(trimPlainEnding):rawParts;
-    const stamp=timeText(m.createdAt),title=timeTitle(m.createdAt);
+    const stamp=timeText(m.createdAt),title=timeTitle(m.createdAt),media=attachmentHtml(m.attachments);
     return parts.map((part,i)=>{
       const first=i===0,last=i===parts.length-1;
       const split=parts.length>1?` split-piece ${first?"split-first":""} ${last?"split-last":"split-mid"}`:"";
       const ts=last&&stamp?`<span class="message-time" title="${esc(title)}">${esc(stamp)}</span>`:"";
-      return `<div class="message ${m.role}${split}" data-message="${index}" data-part="${i}"><div class="message-stack"><div class="bubble"><span class="bubble-text">${esc(part)}</span></div>${ts}</div></div>`;
+      const attachments=!isAssistant&&first?media:"";
+      const text=part?`<span class="bubble-text">${esc(part)}</span>`:"";
+      return `<div class="message ${m.role}${split}" data-message="${index}" data-part="${i}"><div class="message-stack"><div class="bubble">${attachments}${text}</div>${ts}</div></div>`;
     }).join("");
   }
 
   function pendingHtml(item){
     const stamp=timeText(item.createdAt),title=timeTitle(item.createdAt);
     const ts=stamp?`<span class="message-time" title="${esc(title)}">${esc(stamp)}</span>`:"";
-    return `<div class="message user xy-pending" data-pending="${item.id}"><div class="message-stack"><div class="bubble"><span class="bubble-text">${esc(item.text)}</span></div>${ts}</div></div>`;
+    const media=attachmentHtml(item.attachments),text=item.text?`<span class="bubble-text">${esc(item.text)}</span>`:"";
+    return `<div class="message user xy-pending" data-pending="${item.id}"><div class="message-stack"><div class="bubble">${media}${text}</div>${ts}</div></div>`;
   }
 
   function updateReplyNow(){
@@ -95,10 +108,11 @@
     updatePlaceholder();
   };
 
-  async function performOriginalSend(text,createdAt=Date.now()){
+  async function performOriginalSend(text,createdAt=Date.now(),attachments=[]){
     const c=chat(),input=document.querySelector("#input");
     if(!c||!input)return;
     input.value=String(text||"");
+    window.xyActiveSendAttachments=Array.isArray(attachments)?attachments:[];
     try{resize()}catch{}
     const before=c.messages.length,start=Date.now();
     const pending=originalSend();
@@ -115,6 +129,7 @@
     if(button&&sending)button.disabled=false;
     try{return await pending}
     finally{
+      window.xyActiveSendAttachments=[];
       const finished=Date.now();
       for(let i=afterImmediate;i<c.messages.length;i++)if(!c.messages[i].createdAt)c.messages[i].createdAt=finished+i-afterImmediate;
       save();renderMessages();
@@ -123,9 +138,16 @@
   }
 
   function queueCurrentInput(){
-    const input=document.querySelector("#input"),text=input?.value.trim();
-    if(!input||!text)return false;
-    pendingUserQueue.push({id:++pendingSeq,text,createdAt:Date.now()});
+    const input=document.querySelector("#input"),text=input?.value.trim()||"";
+    if(!input)return false;
+    if(window.xyAttachmentsBusy?.()){
+      window.xyAttachmentToast?.("附件还在处理，等一下再发");
+      return false;
+    }
+    const attachments=window.xyTakePendingAttachments?.();
+    const files=Array.isArray(attachments)?attachments:[];
+    if(!text&&!files.length)return false;
+    pendingUserQueue.push({id:++pendingSeq,text,attachments:files,createdAt:Date.now()});
     input.value="";
     try{resize()}catch{}
     renderPendingQueue();
@@ -154,10 +176,13 @@
       renderPendingQueue();
       const c=chat();if(!c)return;
       const last=batch.at(-1),hadUser=c.messages.some(x=>x.role==="user");
-      if(!hadUser&&batch[0]?.text)c.title=batch[0].text.slice(0,22);
-      for(const item of batch.slice(0,-1))c.messages.push({role:"user",text:item.text,createdAt:item.createdAt});
+      if(!hadUser){
+        const first=batch[0];
+        c.title=(first?.text||first?.attachments?.[0]?.name||"新对话").slice(0,22);
+      }
+      for(const item of batch.slice(0,-1))c.messages.push({role:"user",text:item.text,attachments:item.attachments||[],createdAt:item.createdAt});
       if(batch.length>1||!hadUser){save();renderChats();renderMessages()}
-      await performOriginalSend(last.text,last.createdAt);
+      await performOriginalSend(last.text,last.createdAt,last.attachments||[]);
     }finally{
       queueDraining=false;
       updateReplyNow();
