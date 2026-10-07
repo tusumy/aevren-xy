@@ -204,7 +204,9 @@
     composerWrap.insertBefore(quick,composerWrap.querySelector(".composer"));
     quick.addEventListener("click",()=>{if(flushTimer){clearTimeout(flushTimer);flushTimer=null}drainQueue()});
   }
-  document.querySelector("#input")?.addEventListener("input",()=>{if(pendingUserQueue.length)scheduleFlush()});
+  const inputEl=document.querySelector("#input");
+  inputEl?.addEventListener("input",()=>{if(pendingUserQueue.length)scheduleFlush()});
+  if(inputEl)inputEl.onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}};
   document.querySelector("#newChat")?.addEventListener("click",()=>requestAnimationFrame(()=>{
     const c=chat();if(c?.messages?.length&&!c.messages[0].createdAt){c.messages[0].createdAt=Date.now();save();renderMessages()}
   }));
