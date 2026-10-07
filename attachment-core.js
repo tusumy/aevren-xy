@@ -202,6 +202,30 @@
   imageInput.addEventListener("change",()=>addFiles(imageInput.files,"image"));
   fileInput.addEventListener("change",()=>addFiles(fileInput.files,"file"));
 
+  const previousSave=typeof save==="function"?save:null;
+  if(previousSave){
+    save=function(){
+      const hidden=[];
+      const visit=value=>{
+        if(!value||typeof value!=="object")return;
+        if(Array.isArray(value)){value.forEach(visit);return}
+        if(value.kind==="image"&&Object.prototype.hasOwnProperty.call(value,"dataUrl")){
+          hidden.push([value,"dataUrl",value.dataUrl]);delete value.dataUrl;
+        }
+        if(value.kind==="text"&&Object.prototype.hasOwnProperty.call(value,"text")){
+          hidden.push([value,"text",value.text]);delete value.text;
+        }
+        Object.keys(value).forEach(k=>visit(value[k]));
+      };
+      try{
+        visit(chats);
+        return previousSave();
+      }finally{
+        for(let i=hidden.length-1;i>=0;i--){const [obj,key,val]=hidden[i];obj[key]=val}
+      }
+    };
+  }
+
   window.xyAttachmentsBusy=()=>busy>0;
   window.xyAttachmentToast=toast;
   window.xyTakePendingAttachments=()=>{
