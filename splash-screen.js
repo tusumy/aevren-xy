@@ -1,4 +1,5 @@
 (()=>{
+  if(new URLSearchParams(location.search).get("app")==="android")return;
   if(document.querySelector("#xySplash"))return;
   const splash=document.createElement("div");
   splash.id="xySplash";
