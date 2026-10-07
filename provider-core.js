@@ -61,32 +61,13 @@
   };
   const safeJson=s=>{try{return JSON.parse(s)}catch{return {result:String(s??'')}}};
 
-  function anthropicBlocks(content){
-    if(!Array.isArray(content)){
-      const text=String(content??'').trim();
-      return text?[{type:'text',text}]:[];
-    }
-    const out=[];
-    for(const part of content){
-      if(typeof part==='string'&&part.trim())out.push({type:'text',text:part});
-      else if(part?.type==='text'&&String(part.text||'').trim())out.push({type:'text',text:String(part.text)});
-      else if(part?.type==='image'&&part.source)out.push(part);
-      else if(part?.type==='image_url'){
-        const url=String(part.image_url?.url||part.url||'');
-        const match=url.match(/^data:([^;,]+);base64,(.+)$/);
-        if(match)out.push({type:'image',source:{type:'base64',media_type:match[1],data:match[2]}});
-        else if(/^https?:\/\//i.test(url))out.push({type:'image',source:{type:'url',url}});
-      }
-    }
-    return out;
-  }
-
   function toAnthropicMessages(messages){
     const out=[];
     for(const m of messages||[]){
       if(m.role==='system')continue;
       if(m.role==='assistant'){
-        const blocks=anthropicBlocks(m.content);
+        const blocks=[];
+        if(m.content)blocks.push({type:'text',text:String(m.content)});
         for(const tc of m.tool_calls||[]){
           blocks.push({type:'tool_use',id:tc.id,name:tc.function?.name||'tool',input:safeJson(tc.function?.arguments||'{}')});
         }
@@ -94,7 +75,7 @@
       }else if(m.role==='tool'){
         pushRole(out,'user',[{type:'tool_result',tool_use_id:m.tool_call_id,content:String(m.content??'')}]);
       }else{
-        pushRole(out,'user',anthropicBlocks(m.content));
+        pushRole(out,'user',[{type:'text',text:String(m.content??'')}]);
       }
     }
     return out;
@@ -127,40 +108,18 @@
     return jsonResponse({choices:[{message,finish_reason:calls.length?'tool_calls':'stop'}],model:data.model,usage:data.usage},200,res.headers);
   }
 
-  function geminiParts(content){
-    if(!Array.isArray(content)){
-      const text=String(content??'').trim();
-      return text?[{text}]:[];
-    }
-    const out=[];
-    for(const part of content){
-      if(typeof part==='string'&&part.trim())out.push({text:part});
-      else if(part?.type==='text'&&String(part.text||'').trim())out.push({text:String(part.text)});
-      else if(part?.type==='image_url'){
-        const url=String(part.image_url?.url||part.url||'');
-        const match=url.match(/^data:([^;,]+);base64,(.+)$/);
-        if(match)out.push({inlineData:{mimeType:match[1],data:match[2]}});
-        else if(url)out.push({text:'[图片：'+url+']'});
-      }
-    }
-    return out;
-  }
-
   function toGeminiContents(messages){
     const out=[],callNames=new Map();
     for(const m of messages||[]){
       if(m.role==='system')continue;
       if(m.role==='assistant'){
-        const parts=geminiParts(m.content);
+        const parts=[];if(m.content)parts.push({text:String(m.content)});
         for(const tc of m.tool_calls||[]){const name=tc.function?.name||'tool';callNames.set(tc.id,name);parts.push({functionCall:{name,args:safeJson(tc.function?.arguments||'{}')}})}
         if(parts.length)out.push({role:'model',parts});
       }else if(m.role==='tool'){
         const name=callNames.get(m.tool_call_id)||'tool';
         out.push({role:'user',parts:[{functionResponse:{name,response:safeJson(m.content)}}]});
-      }else{
-        const parts=geminiParts(m.content);
-        if(parts.length)out.push({role:'user',parts});
-      }
+      }else out.push({role:'user',parts:[{text:String(m.content??'')}]});
     }
     return out;
   }
