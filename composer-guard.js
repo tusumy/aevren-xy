@@ -13,7 +13,8 @@
     e.preventDefault();
     e.stopPropagation();
     unlock();
-    if(typeof window.send==='function')window.send();
+    const queued=window.xySendQueued||window.send;
+    if(typeof queued==='function')queued();
   };
 
   if(attachBtn){
