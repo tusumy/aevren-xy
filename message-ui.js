@@ -137,12 +137,12 @@
     }
   }
 
-  function queueCurrentInput(){
+  async function queueCurrentInput(){
     const input=document.querySelector("#input"),text=input?.value.trim()||"";
     if(!input)return false;
     if(window.xyAttachmentsBusy?.()){
-      window.xyAttachmentToast?.("附件还在处理，等一下再发");
-      return false;
+      window.xyAttachmentToast?.("图片还在处理，处理完会继续发送");
+      try{await window.xyWaitAttachmentsReady?.()}catch{}
     }
     const attachments=window.xyTakePendingAttachments?.();
     const files=Array.isArray(attachments)?attachments:[];
@@ -191,7 +191,7 @@
   }
 
   send=async function(){
-    if(!queueCurrentInput())return;
+    if(!await queueCurrentInput())return;
     scheduleFlush();
   };
   window.xySendQueued=send;
