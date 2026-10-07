@@ -111,12 +111,7 @@
       const details=toggle.nextElementSibling;if(!details)return;
       details.hidden=!details.hidden;
       toggle.setAttribute('aria-expanded',details.hidden?'false':'true');
-      return;
     }
-    if(e.target.closest?.('#sendBtn'))beginTrace();
-  },true);
-  document.querySelector('#input')?.addEventListener('keydown',e=>{
-    if(e.key==='Enter'&&!e.shiftKey)beginTrace();
   },true);
 
   const btn=sendBtn();
