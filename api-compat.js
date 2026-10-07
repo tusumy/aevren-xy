@@ -45,21 +45,46 @@
     return LOCAL_ASSISTANT_EXACT.has(value)||LOCAL_ASSISTANT_PREFIXES.some(prefix=>value.startsWith(prefix));
   }
 
+  function attachmentContent(item){
+    const text=String(item?.text??item?.content??'').trim();
+    const attachments=Array.isArray(item?.attachments)?item.attachments.filter(Boolean):[];
+    if(!attachments.length)return text;
+    const parts=[];
+    if(text)parts.push({type:'text',text});
+    else if(attachments.some(a=>a?.kind==='image'&&a.dataUrl))parts.push({type:'text',text:'请查看我发送的图片。'});
+    for(const a of attachments){
+      if(a?.kind==='image'&&a.dataUrl)parts.push({type:'image_url',image_url:{url:String(a.dataUrl)}});
+      else if(a?.kind==='text'&&typeof a.text==='string'){
+        parts.push({type:'text',text:'[附件：'+String(a.name||'文本文件')+(a.truncated?'；内容已截断':'')+']\n'+a.text});
+      }else if(a?.name){
+        parts.push({type:'text',text:'[附件：'+String(a.name)+'；内容当前不可用]'});
+      }
+    }
+    return parts.length===1&&parts[0].type==='text'?parts[0].text:parts;
+  }
+
+  function mergeContent(a,b){
+    if(typeof a==='string'&&typeof b==='string')return (a+'\n\n'+b).trim();
+    const toParts=v=>Array.isArray(v)?v:(String(v||'').trim()?[{type:'text',text:String(v)}]:[]);
+    return [...toParts(a),...toParts(b)];
+  }
+
   function normalizedHistory(items){
     const out=[];
     let started=false;
     for(const item of items||[]){
       const role=item?.role;
       if(role!=='user'&&role!=='assistant')continue;
-      const content=String(item?.text??item?.content??'').trim();
-      if(!content)continue;
+      const content=role==='user'?attachmentContent(item):String(item?.text??item?.content??'').trim();
+      const empty=typeof content==='string'?!content.trim():!Array.isArray(content)||!content.length;
+      if(empty)continue;
       if(!started){
         if(role!=='user')continue;
         started=true;
       }
       if(role==='assistant'&&isLocalAssistant(content))continue;
       const last=out[out.length-1];
-      if(last?.role===role)last.content+='\n\n'+content;
+      if(last?.role===role)last.content=mergeContent(last.content,content);
       else out.push({role,content});
     }
     return out;
@@ -145,12 +170,13 @@
 
   async function compatSend(){
     const el=$('#input'),text=el.value.trim();
-    if(!text||sending)return;
+    const attachments=Array.isArray(window.xyActiveSendAttachments)?window.xyActiveSendAttachments:[];
+    if((!text&&!attachments.length)||sending)return;
     sending=true;
     $('#sendBtn').disabled=true;
     const c=chat();
-    c.messages.push({role:'user',text});
-    if(c.messages.filter(x=>x.role==='user').length===1)c.title=text.slice(0,22);
+    c.messages.push({role:'user',text,attachments});
+    if(c.messages.filter(x=>x.role==='user').length===1)c.title=(text||attachments[0]?.name||'新对话').slice(0,22);
     el.value='';resize();save();renderChats();renderMessages();showTyping();
 
     const ep=endpoints.find(x=>x.active)||endpoints[0];
@@ -251,5 +277,5 @@
     compatFetchModels(e.target);
   },true);
 
-  window.AevrenApiCompat={completeChatEndpoint,modelCandidates,normalizedHistory,normalizeApiResponse};
+  window.AevrenApiCompat={completeChatEndpoint,modelCandidates,normalizedHistory,normalizeApiResponse,attachmentContent,send:compatSend};
 })();
