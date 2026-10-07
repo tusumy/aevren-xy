@@ -1,0 +1,11 @@
+.main{position:relative}
+.messages{scrollbar-width:thin;scrollbar-color:rgba(70,92,80,.28) transparent}
+.messages::-webkit-scrollbar{width:5px}
+.messages::-webkit-scrollbar-track{background:transparent}
+.messages::-webkit-scrollbar-thumb{background:rgba(70,92,80,.24);border-radius:999px}
+.messages::-webkit-scrollbar-thumb:hover{background:rgba(70,92,80,.36)}
+.xy-scroll-bottom{position:absolute;right:max(18px,calc((100% - 820px)/2));bottom:86px;z-index:3;width:38px;height:38px;border:1px solid rgba(70,92,80,.14);border-radius:50%;background:rgba(250,250,247,.82);color:var(--theme-accent,#365d4a);box-shadow:0 10px 26px rgba(42,55,48,.13),inset 0 1px 0 rgba(255,255,255,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);font-size:20px;line-height:1;display:grid;place-items:center;opacity:0;transform:translateY(8px) scale(.92);pointer-events:none;transition:.18s ease}
+.xy-scroll-bottom.show{opacity:1;transform:none;pointer-events:auto}
+.xy-scroll-bottom:active{transform:scale(.94)}
+html[data-theme-mode="dark"] .xy-scroll-bottom{background:rgba(28,35,31,.84);border-color:rgba(255,255,255,.08);color:#dce9e2}
+@media(max-width:760px){.xy-scroll-bottom{right:14px;bottom:max(78px,calc(66px + env(safe-area-inset-bottom)))}}
