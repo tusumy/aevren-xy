@@ -17,6 +17,8 @@
 
   let pending=[];
   let busy=0;
+  let readyWaiters=[];
+  const resolveReady=()=>{if(busy)return;const list=readyWaiters.splice(0);list.forEach(fn=>fn())};
 
   const toast=(text,isError=false)=>{
     document.querySelector(".xy-attachment-toast")?.remove();
@@ -62,7 +64,7 @@
       return {kind:"image",name:file.name||"image.gif",type:"image/gif",size:file.size,dataUrl:await dataUrl(file)};
     }
     const img=await loadImage(file);
-    const maxSide=1800;
+    const maxSide=1280;
     const scale=Math.min(1,maxSide/Math.max(img.naturalWidth||1,img.naturalHeight||1));
     let width=Math.max(1,Math.round(img.naturalWidth*scale));
     let height=Math.max(1,Math.round(img.naturalHeight*scale));
@@ -74,16 +76,16 @@
       ctx.fillStyle="#fff";ctx.fillRect(0,0,width,height);ctx.drawImage(img,0,0,width,height);
       for(const q of [quality,.82,.74,.66,.58]){
         blob=await canvasBlob(canvas,"image/jpeg",q);
-        if(blob&&blob.size<=1400*1024)break;
+        if(blob&&blob.size<=480*1024)break;
       }
-      if(blob&&blob.size<=1400*1024)break;
+      if(blob&&blob.size<=480*1024)break;
       width=Math.max(720,Math.round(width*.82));
       height=Math.max(720,Math.round(height*.82));
       quality=.78;
     }
     if(!blob)throw new Error("图片压缩失败");
-    const packed=new File([blob],(file.name||"image").replace(/\.[^.]+$/,"")+".jpg",{type:"image/jpeg"});
-    return {kind:"image",name:packed.name,type:"image/jpeg",size:packed.size,width,height,dataUrl:await dataUrl(packed)};
+    const name=(file.name||"image").replace(/\.[^.]+$/,"")+".jpg";
+    return {kind:"image",name,type:"image/jpeg",size:blob.size,width,height,dataUrl:await dataUrl(blob)};
   }
 
   async function packFile(file){
@@ -195,6 +197,7 @@
     }finally{
       busy=Math.max(0,busy-1);
       renderTray();
+      if(!busy)resolveReady();
       imageInput.value="";fileInput.value="";
     }
   }
@@ -227,6 +230,7 @@
   }
 
   window.xyAttachmentsBusy=()=>busy>0;
+  window.xyWaitAttachmentsReady=()=>busy?new Promise(resolve=>readyWaiters.push(resolve)):Promise.resolve();
   window.xyAttachmentToast=toast;
   window.xyTakePendingAttachments=()=>{
     if(busy)return null;
