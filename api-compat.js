@@ -259,3 +259,29 @@
         let data;try{data=JSON.parse(raw)}catch{last='HTTP '+res.status+' · '+raw.slice(0,120);continue}
         if(!res.ok){last='HTTP '+res.status+' · '+diagnostic(data,raw);continue}
         const source=data?.data||data?.models||data;
+        const models=(Array.isArray(source)?source:[]).map(x=>typeof x==='string'?x:(x?.id||String(x?.name||'').replace(/^models\//,''))).filter(Boolean).sort();
+        if(!models.length){last='没有返回模型';continue}
+        if(picker){
+          picker.innerHTML='<select class="model-select" id="modelSelect"><option value="">选择模型…</option>'+models.map(x=>'<option value="'+esc(x)+'">'+esc(x)+'</option>').join('')+'</select>';
+          $('#modelSelect').onchange=ev=>{if(ev.target.value)$('#endpointModel').value=ev.target.value};
+        }
+        if(status)status.textContent='已拉取 '+models.length+' 个模型';
+        return;
+      }catch(error){last=String(error?.message||error)}
+    }
+    if(status)status.textContent='拉取失败：'+(last||'未知错误')+'；可继续手填 Model';
+  }
+
+  send=compatSend;
+  window.send=compatSend;
+  const sendBtn=$('#sendBtn');if(sendBtn)sendBtn.onclick=compatSend;
+  const input=$('#input');if(input)input.onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();compatSend()}};
+
+  document.addEventListener('click',e=>{
+    if(e.target?.id!=='fetchModels')return;
+    e.preventDefault();e.stopImmediatePropagation();
+    compatFetchModels(e.target);
+  },true);
+
+  window.AevrenApiCompat={completeChatEndpoint,modelCandidates,normalizedHistory,normalizeApiResponse,attachmentContent,send:compatSend};
+})();
