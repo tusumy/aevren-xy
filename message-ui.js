@@ -2,7 +2,7 @@
   const originalSend=send;
   const pendingUserQueue=[];
   let queueDraining=false,pendingSeq=0,flushTimer=null;
-  const SEND_SETTLE_MS=5000;
+  const SEND_SETTLE_MS=10000;
 
   const currentCharacterName=()=>{
     try{return window.xyCurrentCharacter?.()?.name||document.querySelector(".presence strong")?.textContent?.trim()||"玄砚"}catch{return "玄砚"}
@@ -169,6 +169,7 @@
     if(!queueCurrentInput())return;
     scheduleFlush();
   };
+  window.xySendQueued=send;
 
   const sendButton=document.querySelector("#sendBtn");if(sendButton){sendButton.disabled=false;sendButton.onclick=send}
   const composerWrap=document.querySelector(".composer-wrap");
