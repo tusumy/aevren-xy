@@ -87,6 +87,13 @@
       if(last?.role===role)last.content=mergeContent(last.content,content);
       else out.push({role,content});
     }
+    let limit=Number(localStorage.getItem("xy.contextMessageLimit")||40);
+    if(!Number.isFinite(limit)||limit<0)limit=40;
+    if(limit>0&&out.length>limit){
+      let sliced=out.slice(-limit);
+      while(sliced.length&&sliced[0]?.role!=="user")sliced=sliced.slice(1);
+      return sliced;
+    }
     return out;
   }
 
