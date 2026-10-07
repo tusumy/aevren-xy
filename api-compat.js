@@ -45,52 +45,21 @@
     return LOCAL_ASSISTANT_EXACT.has(value)||LOCAL_ASSISTANT_PREFIXES.some(prefix=>value.startsWith(prefix));
   }
 
-  function attachmentContent(item){
-    const text=String(item?.text??item?.content??'').trim();
-    const attachments=Array.isArray(item?.attachments)?item.attachments.filter(Boolean):[];
-    if(!attachments.length)return text;
-    const parts=[];
-    if(text)parts.push({type:'text',text});
-    else if(attachments.some(file=>file?.kind==='image'&&file.dataUrl))parts.push({type:'text',text:'请查看我发送的图片。'});
-    for(const file of attachments){
-      if(file?.kind==='image'&&file.dataUrl){
-        parts.push({type:'image_url',image_url:{url:String(file.dataUrl)}});
-      }else if(file?.kind==='text'&&typeof file.text==='string'){
-        const note='[附件：'+String(file.name||'文本文件')+(file.truncated?'；内容已截断':'')+']\n'+file.text;
-        parts.push({type:'text',text:note});
-      }else if(file?.name){
-        parts.push({type:'text',text:'[附件：'+String(file.name)+'；原始内容当前不可用]'});
-      }
-    }
-    return parts.length===1&&parts[0].type==='text'?parts[0].text:parts;
-  }
-
-  function mergeContent(a,b){
-    if(typeof a==='string'&&typeof b==='string')return (a+'\n\n'+b).trim();
-    const toParts=v=>Array.isArray(v)?v:(String(v||'').trim()?[{type:'text',text:String(v)}]:[]);
-    return [...toParts(a),...toParts(b)];
-  }
-
-  function contentIsEmpty(value){
-    if(typeof value==='string')return !value.trim();
-    return !Array.isArray(value)||!value.length;
-  }
-
   function normalizedHistory(items){
     const out=[];
     let started=false;
     for(const item of items||[]){
       const role=item?.role;
       if(role!=='user'&&role!=='assistant')continue;
-      const content=role==='user'?attachmentContent(item):String(item?.text??item?.content??'').trim();
-      if(contentIsEmpty(content))continue;
+      const content=String(item?.text??item?.content??'').trim();
+      if(!content)continue;
       if(!started){
         if(role!=='user')continue;
         started=true;
       }
       if(role==='assistant'&&isLocalAssistant(content))continue;
       const last=out[out.length-1];
-      if(last?.role===role)last.content=mergeContent(last.content,content);
+      if(last?.role===role)last.content+='\n\n'+content;
       else out.push({role,content});
     }
     return out;
@@ -176,13 +145,12 @@
 
   async function compatSend(){
     const el=$('#input'),text=el.value.trim();
-    const attachments=Array.isArray(window.xyActiveSendAttachments)?window.xyActiveSendAttachments:[];
-    if((!text&&!attachments.length)||sending)return;
+    if(!text||sending)return;
     sending=true;
     $('#sendBtn').disabled=true;
     const c=chat();
-    c.messages.push({role:'user',text,attachments});
-    if(c.messages.filter(x=>x.role==='user').length===1)c.title=(text||attachments[0]?.name||'新对话').slice(0,22);
+    c.messages.push({role:'user',text});
+    if(c.messages.filter(x=>x.role==='user').length===1)c.title=text.slice(0,22);
     el.value='';resize();save();renderChats();renderMessages();showTyping();
 
     const ep=endpoints.find(x=>x.active)||endpoints[0];
@@ -283,5 +251,5 @@
     compatFetchModels(e.target);
   },true);
 
-  window.AevrenApiCompat={completeChatEndpoint,modelCandidates,normalizedHistory,normalizeApiResponse,attachmentContent,send:compatSend};
+  window.AevrenApiCompat={completeChatEndpoint,modelCandidates,normalizedHistory,normalizeApiResponse};
 })();
