@@ -110,38 +110,61 @@
     if("xy.journals.v1" in values&&!Array.isArray(JSON.parse(values["xy.journals.v1"])))throw new Error("日记格式不正确");
     return values;
   }
-  function downloadBackup(){
-    const values=collect(!!$("#xyIncludeConnections")?.checked),s=stats(values);
-    const file={format:FORMAT,version:VERSION,exportedAt:new Date().toISOString(),values};
-    const filename="aevren-xy-backup-"+new Date().toISOString().slice(0,10)+".json";
-    const content=JSON.stringify(file,null,2);
+  function backupPackage(){
+    const values=collect(!!$("#xyIncludeConnections")?.checked);
+    const s=stats(values);
+    return {
+      content:JSON.stringify({format:FORMAT,version:VERSION,exportedAt:new Date().toISOString(),values},null,2),
+      filename:"aevren-xy-backup-"+new Date().toISOString().slice(0,10)+".json",
+      stats:s
+    };
+  }
+  async function copyText(value){
+    if(navigator.clipboard?.writeText){
+      try{await navigator.clipboard.writeText(value);return true}catch{}
+    }
+    const el=document.createElement("textarea");
+    el.value=value;
+    el.setAttribute("readonly","");
+    el.style.cssText="position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;z-index:-1";
+    document.body.appendChild(el);
+    el.focus();el.select();el.setSelectionRange(0,value.length);
+    let ok=false;
+    try{ok=!!document.execCommand("copy")}catch{}
+    el.remove();
+    return ok;
+  }
+  async function copyBackup(){
+    const pkg=backupPackage();
+    if(await copyText(pkg.content)){
+      setStatus("备份 JSON 已复制到剪贴板（"+describe(pkg.stats)+"）。请现在粘贴到安全的笔记或文本文件并保存；剪贴板不是永久备份。");
+    }else{
+      const manual=$("#xyBackupManual");
+      if(manual){manual.hidden=false;manual.value=pkg.content;manual.focus();manual.select()}
+      setStatus("自动复制未成功。下方已显示完整备份内容，请长按全选并复制到安全的文本文件。",true);
+    }
+  }
+  async function downloadBackup(){
+    const pkg=backupPackage();
+    // Android APK WebView loads the same hosted frontend, but a blob: download
+    // has no DownloadListener in the existing APK. Keep this usable without APK updates.
     if(window.__XY_NATIVE_HTTP__||window.AevrenNative){
-      if(typeof window.AevrenBackup?.saveBackup!=="function"){
-        setStatus("当前安装的 APK 还缺少原生文件保存功能。请安装新版 APK 覆盖更新（不要卸载或清数据），然后再导出。",true);
-        return;
-      }
-      try{
-        const bytes=new TextEncoder().encode(content);
-        let binary="";
-        for(let i=0;i<bytes.length;i+=32768){
-          binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
-        }
-        window.AevrenBackup.saveBackup(filename,btoa(binary));
-        setStatus("正在打开安卓文件保存窗口…\n"+describe(s));
-      }catch(error){setStatus("无法启动安卓备份保存："+(error.message||error),true)}
+      await copyBackup();
       return;
     }
-    const blob=new Blob([content],{type:"application/json"});
+    const blob=new Blob([pkg.content],{type:"application/json"});
     const url=URL.createObjectURL(blob),a=document.createElement("a");
-    a.href=url;a.download=filename;
+    a.href=url;a.download=pkg.filename;
     document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
-    setStatus("已生成备份文件："+describe(s)+"。请确认浏览器已保存文件。");
+    setStatus("已创建下载："+describe(pkg.stats)+"。请检查文件是否保存成功。");
   }
-  window.xyNativeBackupResult=result=>{
-    if(result?.status==="saved")setStatus("备份保存成功："+String(result.message||"文件已写入"));
-    else if(result?.status==="cancelled")setStatus(String(result.message||"已取消保存"));
-    else setStatus(String(result?.message||"备份保存失败"),true);
-  };
+  async function loadPasted(text){
+    let obj;
+    try{obj=JSON.parse(String(text||""))}catch{throw new Error("粘贴内容不是有效的 JSON")}
+    if(obj?.format!==FORMAT||obj?.version!==VERSION)throw new Error("不是支持的砚屿备份版本");
+    const values=validate(obj.values);
+    return {values,name:"粘贴的备份",date:obj.exportedAt,stats:stats(values)};
+  }
   function scoreChat(c){
     const messages=Array.isArray(c?.messages)?c.messages:[];
     return messages.reduce((n,m)=>n+String(m?.text??"").length+(Array.isArray(m?.variants)?m.variants.reduce((a,v)=>a+String(v?.text??"").length,0):0),0);
@@ -245,12 +268,16 @@
     const current=stats(collect(true));
     root.innerHTML=
       '<div class="xy-data-overview"><strong>本机数据</strong><p>'+html(describe(current))+'</p><small>'+html(warn(current))+'</small></div>'+
-      '<div class="xy-data-section"><h3>导出备份</h3><p>备份聊天、角色、记忆、日记和外观设置，下载为 JSON 文件。默认不包含 API Key / MCP Token。</p>'+
+      '<div class="xy-data-section"><h3>导出备份</h3><p>备份聊天、角色、记忆、日记和外观设置。APK 可复制 JSON，粘贴保存到手机文件；浏览器可直接下载。无需重装 APK。</p>'+
       '<label class="xy-data-check"><input id="xyIncludeConnections" type="checkbox"> 同时备份接口地址、密钥和 MCP 配置（敏感）</label>'+
-      '<button type="button" class="panel-action" id="xyExportData">下载完整数据备份</button></div>'+
-      '<div class="xy-data-section"><h3>导入备份</h3><p>先选择文件并预览。合并模式不会清空当前数据；覆盖模式只替换备份中包含的数据项。</p>'+
+      '<button type="button" class="panel-action" id="xyExportData">导出备份（APK 自动复制）</button>'+
+      '<button type="button" class="panel-action" id="xyCopyData">复制备份 JSON</button>'+
+      '<textarea id="xyBackupManual" rows="5" hidden aria-label="手动复制备份 JSON" style="width:100%;margin-top:8px;font-size:11px;min-height:110px"></textarea></div>'+
+      '<div class="xy-data-section"><h3>导入备份</h3><p>选择备份文件，或者粘贴备份 JSON。默认安全合并，不直接清空现有对话。</p>'+
       '<label class="xy-data-pick">选择 .json 备份文件<input id="xyImportFile" type="file" accept=".json,application/json" hidden></label>'+
-      '<div id="xyImportPreview" class="xy-data-preview">尚未选择文件</div>'+
+      '<textarea id="xyImportPaste" rows="3" placeholder="也可以在这里粘贴备份 JSON" style="width:100%;min-height:75px;margin-bottom:7px;font-size:11px"></textarea>'+
+      '<button type="button" class="panel-action" id="xyParsePaste">读取粘贴的备份</button>'+
+      '<div id="xyImportPreview" class="xy-data-preview">尚未选择文件或粘贴备份</div>'+
       '<select id="xyImportMode"><option value="merge">安全合并（推荐）</option><option value="replace">按备份覆盖</option></select>'+
       '<button type="button" class="panel-action" id="xyApplyImport" disabled>确认导入</button></div>'+
       '<div class="xy-data-section"><h3>本机历史快照</h3><p>存储于浏览器 IndexedDB；自动最多保留 8 份，至少相隔一小时。清除网站数据也会删除这些快照。</p>'+
@@ -258,7 +285,17 @@
       '<div id="xySnapshotList" class="xy-data-snapshot-list">正在读取…</div></div>'+
       '<div id="xyDataStatus" role="status" class="xy-data-status"></div>';
     $("#panel").classList.add("open");$("#scrim").classList.add("show");
-    $("#xyExportData").onclick=downloadBackup;
+    $("#xyExportData").onclick=()=>downloadBackup().catch(e=>setStatus("导出失败："+e.message,true));
+    $("#xyCopyData").onclick=()=>copyBackup().catch(e=>setStatus("复制失败："+e.message,true));
+    $("#xyParsePaste").onclick=async()=>{
+      pendingImport=null;$("#xyApplyImport").disabled=true;
+      try{
+        pendingImport=await loadPasted($("#xyImportPaste").value);
+        $("#xyImportPreview").textContent=pendingImport.name+" · "+date(pendingImport.date)+"\n"+describe(pendingImport.stats);
+        $("#xyApplyImport").disabled=false;
+        setStatus("备份校验通过，可选择安全合并导入。");
+      }catch(e){setStatus("无法读取备份："+e.message,true)}
+    };
     $("#xyCreateSnapshot").onclick=async()=>{
       try{await snapshot("手动保存",true);setStatus("本机快照已保存。");await drawSnapshots()}
       catch(e){setStatus("快照失败："+e.message,true)}
