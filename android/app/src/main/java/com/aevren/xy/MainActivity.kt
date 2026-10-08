@@ -336,6 +336,7 @@ private class NativeVoiceBridge(
     private val webView: WebView
 ) {
     @Volatile private var ttsReady = false
+    @Volatile private var currentTtsEngine = ""
     private var tts: TextToSpeech? = null
     private var recorder: MediaRecorder? = null
     private var recordingFile: File? = null
@@ -343,8 +344,17 @@ private class NativeVoiceBridge(
     @Volatile private var speechListening = false
 
     init {
+        initTts("")
+    }
+
+    private fun initTts(enginePackage: String) {
+        currentTtsEngine = enginePackage
+        ttsReady = false
         activity.runOnUiThread {
-            tts = TextToSpeech(activity.applicationContext) { status ->
+            runCatching { tts?.stop() }
+            runCatching { tts?.shutdown() }
+            tts = null
+            val listener = TextToSpeech.OnInitListener { status ->
                 ttsReady = status == TextToSpeech.SUCCESS
                 if (ttsReady) {
                     tts?.language = Locale.SIMPLIFIED_CHINESE
@@ -355,10 +365,43 @@ private class NativeVoiceBridge(
                         override fun onError(utteranceId: String?) { notifyTtsDone(utteranceId, "tts_error") }
                         override fun onError(utteranceId: String?, errorCode: Int) { notifyTtsDone(utteranceId, "tts_error_" + errorCode) }
                     })
+                    notifyTtsEngineReady()
+                } else {
+                    notifyTtsEngineError("tts_init_" + status)
                 }
+            }
+            tts = if (enginePackage.isBlank()) {
+                TextToSpeech(activity.applicationContext, listener)
+            } else {
+                TextToSpeech(activity.applicationContext, listener, enginePackage)
             }
         }
     }
+
+    @JavascriptInterface
+    fun listEngines(): String = try {
+        val arr = JSONArray()
+        val engines = tts?.engines.orEmpty()
+        for (engine in engines) {
+            arr.put(
+                JSONObject()
+                    .put("packageName", engine.name)
+                    .put("label", engine.label ?: engine.name)
+                    .put("selected", engine.name == currentTtsEngine)
+            )
+        }
+        arr.toString()
+    } catch (_: Exception) { "[]" }
+
+    @JavascriptInterface
+    fun switchEngine(packageName: String): String {
+        val pkg = packageName.trim()
+        initTts(pkg)
+        return JSONObject().put("ok", true).put("packageName", pkg).toString()
+    }
+
+    @JavascriptInterface
+    fun currentEngine(): String = currentTtsEngine
 
     @JavascriptInterface
     fun listVoices(): String = try {
@@ -582,6 +625,16 @@ private class NativeVoiceBridge(
     private fun notifySttError(code: Int, detail: String? = null) {
         val message = detail ?: "speech_error_" + code
         val js = "window.__xyNativeSttError && window.__xyNativeSttError(" + JSONObject.quote(message) + ");"
+        webView.post { webView.evaluateJavascript(js, null) }
+    }
+
+    private fun notifyTtsEngineReady() {
+        val js = "window.__xyNativeTtsEngineReady && window.__xyNativeTtsEngineReady(" + JSONObject.quote(currentTtsEngine) + ");"
+        webView.post { webView.evaluateJavascript(js, null) }
+    }
+
+    private fun notifyTtsEngineError(error: String) {
+        val js = "window.__xyNativeTtsEngineError && window.__xyNativeTtsEngineError(" + JSONObject.quote(error) + ");"
         webView.post { webView.evaluateJavascript(js, null) }
     }
 
