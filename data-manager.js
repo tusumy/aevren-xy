@@ -319,5 +319,5 @@
   const originalSave=save;
   save=function(){const result=originalSave.apply(this,arguments);autoSnapshot();return result};
   setTimeout(()=>snapshot("打开砚屿时自动保护").catch(()=>{}),1800);
-  window.xyDataManager={stats:()=>stats(collect(true)),statsOf:stats,exportValues:()=>collect(false),restoreValues:(values,mode="merge",label="云端备份")=>restore(values,mode,label),exportBackup:downloadBackup};
+  window.xyDataManager={stats:()=>stats(collect(true)),statsOf:stats,exportValues:()=>collect(false),createSnapshot:(reason="删除对话前")=>snapshot(reason,true),restoreValues:(values,mode="merge",label="云端备份")=>restore(values,mode,label),exportBackup:downloadBackup};
 })();
