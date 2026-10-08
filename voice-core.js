@@ -1,6 +1,7 @@
 (()=>{
   const DEFAULTS={
     voiceMode:"system",
+    systemVoiceURI:"",
     voiceMcpId:"",
     voiceId:"",
     voiceModel:"",
@@ -60,7 +61,10 @@
     if(activeMessage===key){window.speechSynthesis.cancel();activeMessage=null;decorateMessages();return}
     window.speechSynthesis.cancel();
     const utter=new SpeechSynthesisUtterance(plainSpeechText(text));
-    utter.lang="zh-CN";
+    const voices=window.speechSynthesis.getVoices?.()||[];
+    const selected=voices.find(v=>v.voiceURI===voiceSettings.systemVoiceURI);
+    const preferred=selected||voices.find(v=>/^zh(?:-|_)/i.test(v.lang||""))||null;
+    if(preferred){utter.voice=preferred;utter.lang=preferred.lang||"zh-CN"}else utter.lang="zh-CN";
     activeMessage=key;decorateMessages();
     utter.onend=()=>{if(activeMessage===key){activeMessage=null;decorateMessages()}};
     utter.onerror=()=>{if(activeMessage===key){activeMessage=null;decorateMessages()}};
@@ -127,20 +131,9 @@
   }
 
   function decorateMessages(){
-    const c=currentChat(),box=document.querySelector("#messages");
-    if(!c||!box)return;
-    box.querySelectorAll(".message.assistant.has-voice").forEach(x=>x.classList.remove("has-voice"));
+    const box=document.querySelector("#messages");if(!box)return;
     box.querySelectorAll(".xy-voice-row").forEach(x=>x.remove());
-    c.messages.forEach((message,index)=>{
-      if(message.role!=="assistant"||!currentText(message))return;
-      const rows=[...box.querySelectorAll(`.message.assistant[data-message="${index}"]`)];
-      const host=rows.at(-1);if(!host)return;
-      const key=messageKey(c,index),busy=busyMessages.has(key),playing=activeMessage===key;
-      const ready=voiceSettings.voiceMode==="system"||(message.voiceUrl&&message.voiceText===currentText(message));
-      const row=document.createElement("div");row.className="xy-voice-row";
-      row.innerHTML=`<button type="button" class="xy-voice-play${busy?" busy":""}" data-voice-message="${index}" ${busy?"disabled":""}>${busy?"生成中…":playing?"■ 停止":ready?"▶ 播放":"♬ 生成语音"}</button>${voiceSettings.voiceMode==="mcp"&&ready?`<span class="xy-voice-title">${esc(message.voiceTitle||titleFromText(message.text))}</span>`:""}`;
-      host.classList.add("has-voice");host.appendChild(row);
-    });
+    box.querySelectorAll(".message.assistant.has-voice").forEach(x=>x.classList.remove("has-voice"));
   }
 
   function renderVoicePanel(){
@@ -151,7 +144,7 @@
     const selected=resolveVoiceServer()?.id||"";
     body.innerHTML=`<p class="setting-note">默认使用设备自带系统语音，不需要额外服务；也可以切换到任意提供 text_to_speech 的 MCP。录音转写与语音合成互相独立。</p>
       <div class="voice-setting-grid">
-        <div class="voice-setting-card"><label>语音方式</label><select id="voiceMode"><option value="system" ${voiceSettings.voiceMode==="system"?"selected":""}>系统语音（无需 MCP）</option><option value="mcp" ${voiceSettings.voiceMode==="mcp"?"selected":""}>MCP 语音服务</option></select><label>text_to_speech 服务</label><select id="voiceMcp"><option value="">请选择服务</option>${servers.map(x=>`<option value="${esc(x.id)}" ${x.id===selected?"selected":""}>${esc(x.name)}</option>`).join("")}</select><label>Voice ID（可选）</label><input id="voiceId" value="${esc(voiceSettings.voiceId)}" placeholder="由语音服务提供"><label>Model（可选）</label><input id="voiceModel" value="${esc(voiceSettings.voiceModel)}" placeholder="由语音服务提供"><label class="voice-check"><input id="voiceAutoSpeak" type="checkbox" ${voiceSettings.autoSpeak?"checked":""}>每次新回复自动念出来</label></div>
+        <div class="voice-setting-card"><label>语音方式</label><select id="voiceMode"><option value="system" ${voiceSettings.voiceMode==="system"?"selected":""}>系统语音（无需 MCP）</option><option value="mcp" ${voiceSettings.voiceMode==="mcp"?"selected":""}>MCP 语音服务</option></select><label>系统音色</label><select id="systemVoice">${systemVoiceOptions()}</select><label>text_to_speech 服务</label><select id="voiceMcp"><option value="">请选择服务</option>${servers.map(x=>`<option value="${esc(x.id)}" ${x.id===selected?"selected":""}>${esc(x.name)}</option>`).join("")}</select><label>Voice ID（可选）</label><input id="voiceId" value="${esc(voiceSettings.voiceId)}" placeholder="由语音服务提供"><label>Model（可选）</label><input id="voiceModel" value="${esc(voiceSettings.voiceModel)}" placeholder="由语音服务提供"><label class="voice-check"><input id="voiceAutoSpeak" type="checkbox" ${voiceSettings.autoSpeak?"checked":""}>每次新回复自动念出来</label></div>
         <div class="voice-setting-card"><label>语音转写 Base URL（留空跟随当前聊天接口）</label><input id="voiceSttBase" value="${esc(voiceSettings.sttBase)}" placeholder="https://api.example.com/v1"><label>转写 Key（Base 留空时才跟随当前接口）</label><input id="voiceSttKey" type="password" value="${esc(voiceSettings.sttKey)}" placeholder="仅保存在本机"><label>转写模型</label><input id="voiceSttModel" value="${esc(voiceSettings.sttModel)}" placeholder="whisper-1"><label>语言</label><input id="voiceSttLanguage" value="${esc(voiceSettings.sttLanguage)}" placeholder="zh / en"><label class="voice-check"><input id="voiceAutoSend" type="checkbox" ${voiceSettings.sendAfterTranscript?"checked":""}>转写完成后直接发送</label></div>
       </div>
       <div class="voice-test-row"><button class="panel-action" id="voiceOpenMcp">MCP 设置</button><button class="panel-action" id="voiceTest">试听</button></div>
@@ -162,6 +155,7 @@
   function collectVoiceSettings(){
     voiceSettings={...voiceSettings,
       voiceMode:document.querySelector("#voiceMode")?.value||"system",
+      systemVoiceURI:document.querySelector("#systemVoice")?.value||"",
       voiceMcpId:document.querySelector("#voiceMcp")?.value||"",
       voiceId:document.querySelector("#voiceId")?.value.trim()||"",
       voiceModel:document.querySelector("#voiceModel")?.value.trim()||"",
@@ -205,12 +199,12 @@
     if(recordStarting||recorder||voiceBusy)return;
     recordStarting=true;voiceBusy=true;setMicState("requesting");
     try{
-      recordStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+      recordStream=await requestMicStream();
       recordChunks=[];const mime=recorderMime();recorder=new MediaRecorder(recordStream,mime?{mimeType:mime}:undefined);
       recorder.ondataavailable=e=>{if(e.data?.size)recordChunks.push(e.data)};
       recorder.onstop=finishRecording;recorder.start(250);setMicState("recording");toast("正在听，点一下麦克风就发送");
       const liveRecorder=recorder;recordTimer=setTimeout(()=>{if(liveRecorder.state==="recording")liveRecorder.stop()},120000);
-    }catch(error){recordStream?.getTracks().forEach(track=>track.stop());recordStream=null;recorder=null;voiceBusy=false;setMicState("idle");toast(error.name==="NotAllowedError"?"没有拿到麦克风权限":"录音失败："+error.message,true)}
+    }catch(error){recordStream?.getTracks().forEach(track=>track.stop());recordStream=null;recorder=null;voiceBusy=false;setMicState("idle");const sourceFail=error?.name==="NotReadableError"||error?.name==="AbortError"||/audio source|could not start/i.test(String(error?.message||""));toast(error?.name==="NotAllowedError"?"没有拿到麦克风权限":sourceFail?"麦克风启动失败：已重试普通录音模式；请检查砚屿的麦克风权限或是否有别的应用正在占用麦克风":"录音失败："+(error?.message||error),true)}
     finally{recordStarting=false}
   }
 
@@ -298,6 +292,9 @@
     isSpeaking(){
       return Boolean(activeMessage||activeAudio||(window.speechSynthesis&&window.speechSynthesis.speaking));
     },
+    isMessageSpeaking(index,targetChat=currentChat()){
+      return activeMessage===messageKey(targetChat,Number(index));
+    },
     stop(){
       if(activeAudio){activeAudio.pause();activeAudio=null}
       window.speechSynthesis?.cancel?.();
@@ -305,5 +302,6 @@
     }
   };
 
+  if(window.speechSynthesis?.addEventListener)window.speechSynthesis.addEventListener("voiceschanged",refreshSystemVoiceSelect);
   installMic();renderMessages();
 })();
