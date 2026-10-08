@@ -113,12 +113,35 @@
   function downloadBackup(){
     const values=collect(!!$("#xyIncludeConnections")?.checked),s=stats(values);
     const file={format:FORMAT,version:VERSION,exportedAt:new Date().toISOString(),values};
-    const blob=new Blob([JSON.stringify(file,null,2)],{type:"application/json"});
+    const filename="aevren-xy-backup-"+new Date().toISOString().slice(0,10)+".json";
+    const content=JSON.stringify(file,null,2);
+    if(window.__XY_NATIVE_HTTP__||window.AevrenNative){
+      if(typeof window.AevrenBackup?.saveBackup!=="function"){
+        setStatus("当前安装的 APK 还缺少原生文件保存功能。请安装新版 APK 覆盖更新（不要卸载或清数据），然后再导出。",true);
+        return;
+      }
+      try{
+        const bytes=new TextEncoder().encode(content);
+        let binary="";
+        for(let i=0;i<bytes.length;i+=32768){
+          binary+=String.fromCharCode(...bytes.subarray(i,i+32768));
+        }
+        window.AevrenBackup.saveBackup(filename,btoa(binary));
+        setStatus("正在打开安卓文件保存窗口…\n"+describe(s));
+      }catch(error){setStatus("无法启动安卓备份保存："+(error.message||error),true)}
+      return;
+    }
+    const blob=new Blob([content],{type:"application/json"});
     const url=URL.createObjectURL(blob),a=document.createElement("a");
-    a.href=url;a.download="aevren-xy-backup-"+new Date().toISOString().slice(0,10)+".json";
+    a.href=url;a.download=filename;
     document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),15000);
     setStatus("已生成备份文件："+describe(s)+"。请确认浏览器已保存文件。");
   }
+  window.xyNativeBackupResult=result=>{
+    if(result?.status==="saved")setStatus("备份保存成功："+String(result.message||"文件已写入"));
+    else if(result?.status==="cancelled")setStatus(String(result.message||"已取消保存"));
+    else setStatus(String(result?.message||"备份保存失败"),true);
+  };
   function scoreChat(c){
     const messages=Array.isArray(c?.messages)?c.messages:[];
     return messages.reduce((n,m)=>n+String(m?.text??"").length+(Array.isArray(m?.variants)?m.variants.reduce((a,v)=>a+String(v?.text??"").length,0):0),0);
