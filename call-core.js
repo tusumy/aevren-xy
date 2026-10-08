@@ -3,18 +3,23 @@
   let phase="idle",recognition=null,startedAt=0,timerId=null,processing=false,restartTimer=null;
   let callRecorder=null,callStream=null,callChunks=[],callNativeRecording=false,callNativeRecognizing=false;
   let overlay,statusEl,timeEl,transcriptEl,acceptBtn,hangupBtn,fallbackWrap,fallbackInput,pushBtn;
+  let callCharacter=null;
 
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const currentChat=()=>{try{return chat()}catch{return null}};
+  const activeCharacter=()=>{try{return window.xyCurrentCharacter?.()||{id:"xuan-yan",name:document.querySelector(".presence strong")?.textContent?.trim()||"玄砚"}}catch{return {id:"xuan-yan",name:"玄砚"}}};
+  const currentCallCharacter=()=>callCharacter||activeCharacter();
+  const currentCallName=()=>String(currentCallCharacter()?.name||"角色");
+  const currentCallAvatar=()=>{try{const saved=JSON.parse(localStorage.getItem("xy.avatars")||"{}");return saved?.characters?.[currentCallCharacter()?.id]||""}catch{return ""}};
   const fmtTime=ms=>{const s=Math.max(0,Math.floor(ms/1000)),m=Math.floor(s/60);return String(m).padStart(2,"0")+":"+String(s%60).padStart(2,"0")};
 
   function ensureUi(){
     if(overlay)return;
     overlay=document.createElement("div");overlay.className="xy-call";overlay.hidden=true;
-    overlay.innerHTML=`<div class="xy-call-card" role="dialog" aria-modal="true" aria-label="玄砚语音通话">
+    overlay.innerHTML=`<div class="xy-call-card" role="dialog" aria-modal="true" aria-label="语音通话">
       <div class="xy-call-glow"></div>
-      <div class="xy-call-avatar" aria-hidden="true"><span>砚</span></div>
-      <div class="xy-call-name">玄砚</div>
+      <div class="xy-call-avatar" aria-hidden="true"><span>角</span></div>
+      <div class="xy-call-name">角色</div>
       <div class="xy-call-status">语音来电</div>
       <div class="xy-call-time">00:00</div>
       <div class="xy-call-transcript" aria-live="polite"></div>
@@ -33,6 +38,20 @@
     pushBtn.onclick=()=>callNativeRecognizing||callNativeRecording||callRecorder?.state==="recording"?stopFallbackRecording():startFallbackRecording();
     fallbackWrap.querySelector("button").onclick=()=>submitFallback();
     fallbackInput.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();submitFallback()}};
+    syncCallCharacter();
+  }
+
+  function syncCallCharacter(){
+    if(!overlay)return;
+    const ch=currentCallCharacter(),name=String(ch?.name||"角色"),avatar=currentCallAvatar();
+    const card=overlay.querySelector(".xy-call-card"),nameEl=overlay.querySelector(".xy-call-name"),avatarEl=overlay.querySelector(".xy-call-avatar");
+    if(card)card.setAttribute("aria-label",name+"语音通话");
+    if(nameEl)nameEl.textContent=name;
+    if(avatarEl){
+      avatarEl.classList.toggle("has-image",Boolean(avatar));
+      avatarEl.style.backgroundImage=avatar?`url("${String(avatar).replace(/"/g,"%22")}")`:"";
+      const span=avatarEl.querySelector("span");if(span)span.textContent=avatar?"":name.slice(0,1);
+    }
   }
 
   function installEntry(){
@@ -42,7 +61,7 @@
   function addLine(role,text){
     if(!text)return;
     const row=document.createElement("div");row.className="xy-call-line "+role;
-    const who=document.createElement("b");who.textContent=role==="user"?"你":"玄砚";
+    const who=document.createElement("b");who.textContent=role==="user"?"你":currentCallName();
     const body=document.createElement("span");body.textContent=text;
     row.append(who,body);transcriptEl.appendChild(row);transcriptEl.scrollTop=transcriptEl.scrollHeight;
   }
@@ -50,6 +69,7 @@
   function ring(){
     ensureUi();
     if(phase!=="idle")return;
+    callCharacter={...activeCharacter()};syncCallCharacter();
     phase="ringing";processing=false;overlay.hidden=false;overlay.classList.add("show","ringing");overlay.classList.remove("connected");
     transcriptEl.innerHTML="";statusEl.textContent="语音来电";timeEl.textContent="00:00";acceptBtn.hidden=false;hangupBtn.hidden=false;
     fallbackWrap.hidden=true;pushBtn.hidden=true;
@@ -204,7 +224,7 @@
 
   async function handleUserText(text){
     if(!text||phase!=="connected"||processing)return;
-    processing=true;stopListening();addLine("user",text);statusEl.textContent="玄砚在听…";
+    processing=true;stopListening();addLine("user",text);statusEl.textContent=currentCallName()+"在听…";
     const c=currentChat(),before=c?.messages?.length||0,input=document.querySelector("#input");
     if(!c||!input){statusEl.textContent="当前对话不可用";processing=false;return}
     input.value=text;input.dispatchEvent(new Event("input",{bubbles:true}));
@@ -234,7 +254,7 @@
     const duration=startedAt?fmtTime(Date.now()-startedAt):"00:00";
     phase="idle";processing=false;stopListening();if(callNativeRecognizing){try{window.AevrenVoice?.stopNativeRecognition?.()}catch{}callNativeRecognizing=false}if(callNativeRecording){try{window.AevrenVoice?.stopNativeCapture?.()}catch{}callNativeRecording=false}if(callRecorder?.state==="recording"){try{callRecorder.onstop=null;callRecorder.stop()}catch{}}callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];clearInterval(timerId);timerId=null;window.AevrenVoice?.stop?.();
     statusEl.textContent="通话结束 · "+duration;overlay.classList.remove("ringing","connected");overlay.classList.add("ended");
-    setTimeout(()=>{overlay.hidden=true;overlay.classList.remove("show","ended")},650);
+    setTimeout(()=>{overlay.hidden=true;overlay.classList.remove("show","ended");callCharacter=null},650);
   }
 
   ensureUi();installEntry();

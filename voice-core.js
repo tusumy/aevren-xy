@@ -70,10 +70,25 @@
   function hasNativeRecognition(){
     const bridge=nativeVoiceBridge();return Boolean(bridge&&typeof bridge.startRecognition==="function");
   }
+  function canStartNativeRecognitionActivity(){
+    const bridge=nativeVoiceBridge();
+    if(!bridge||typeof bridge.startRecognitionActivity!=="function"||typeof bridge.canStartRecognitionActivity!=="function")return false;
+    try{return Boolean(bridge.canStartRecognitionActivity(voiceSettings.sttLanguage||"zh-CN"))}catch{return false}
+  }
   function startNativeRecognitionActivity(){
     const bridge=nativeVoiceBridge();
-    if(!bridge||typeof bridge.startRecognitionActivity!=="function")return {ok:false,error:"speech_activity_unavailable"};
+    if(!canStartNativeRecognitionActivity())return {ok:false,error:"speech_activity_unavailable"};
     return parseNativeVoiceResult(bridge.startRecognitionActivity(voiceSettings.sttLanguage||"zh-CN"));
+  }
+  function normalizeSpeechError(value){
+    const code=String(value||"speech_error");
+    if(/No Activity found to handle Intent|speech_activity_unavailable/i.test(code))return "speech_activity_unavailable";
+    if(code==="speech_error_7"||code==="speech_error_6")return "speech_no_match";
+    if(code==="speech_error_9"||/permission/i.test(code))return "speech_permission";
+    if(code==="speech_error_8")return "speech_busy";
+    if(code==="speech_error_12"||code==="speech_error_13")return "speech_language";
+    if(code==="speech_error_1"||code==="speech_error_2"||code==="speech_error_4"||code==="speech_error_11")return "speech_service";
+    return code;
   }
   function recognizeNativeOnce(){
     const bridge=nativeVoiceBridge();
@@ -86,7 +101,7 @@
       nativeRecognitionTimer=setTimeout(()=>{
         if(!nativeRecognizing)return;
         try{bridge.stopRecognition?.()}catch{}
-        if(!nativeRecognitionFallbackTried&&typeof bridge.startRecognitionActivity==="function"){
+        if(!nativeRecognitionFallbackTried&&canStartNativeRecognitionActivity()){
           nativeRecognitionFallbackTried=true;
           const fallback=startNativeRecognitionActivity();
           if(fallback.ok){
@@ -105,7 +120,7 @@
       const result=parseNativeVoiceResult(bridge.startRecognition(voiceSettings.sttLanguage||"zh-CN"));
       if(!result.ok){
         clearTimeout(nativeRecognitionTimer);
-        if(typeof bridge.startRecognitionActivity==="function"){
+        if(canStartNativeRecognitionActivity()){
           nativeRecognitionFallbackTried=true;
           const fallback=startNativeRecognitionActivity();
           if(fallback.ok){
@@ -402,11 +417,13 @@
         input.value=text;try{resize()}catch{}
         if(voiceSettings.sendAfterTranscript)await send();else{input.focus();toast("听清了，已经放进输入框")}
       }catch(error){
-        const code=String(error?.message||error);
-        if(code==="permission_requested")toast("已经请求麦克风权限，允许后再点一下麦克风");
-        else if(code==="speech_error_7"||code==="speech_timeout")toast("没听清，再说一次");
-        else if(code==="speech_recognizer_unavailable")toast("系统没有可用的语音识别服务",true);
-        else toast("没听懂："+code,true);
+        const code=normalizeSpeechError(error?.message||error);
+        if(code==="permission_requested"||code==="speech_permission")toast("没有拿到麦克风权限",true);
+        else if(code==="speech_no_match"||code==="speech_timeout")toast("没听清，再说一次");
+        else if(code==="speech_activity_unavailable"||code==="speech_recognizer_unavailable"||code==="speech_service")toast("这台手机没有可供砚屿调用的系统语音识别服务；MultiTTS 只负责朗读，不负责听写",true);
+        else if(code==="speech_language")toast("系统语音识别不支持当前语言",true);
+        else if(code==="speech_busy")toast("系统语音识别正忙，等一下再试",true);
+        else toast("语音识别失败："+code,true);
       }finally{
         nativeRecognizing=false;voiceBusy=false;recordStarting=false;setMicState("idle");
       }
@@ -603,8 +620,7 @@
   };
   window.__xyNativeSttError=error=>{
     clearTimeout(nativeRecognitionTimer);nativeRecognitionTimer=null;
-    const bridge=nativeVoiceBridge();
-    if(nativeRecognizing&&!nativeRecognitionFallbackTried&&typeof bridge?.startRecognitionActivity==="function"){
+    if(nativeRecognizing&&!nativeRecognitionFallbackTried&&canStartNativeRecognitionActivity()){
       nativeRecognitionFallbackTried=true;
       const fallback=startNativeRecognitionActivity();
       if(fallback.ok){
@@ -621,7 +637,7 @@
     }
     const reject=nativeRecognitionReject;
     nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
-    if(reject)reject(new Error(String(error||"speech_error")));
+    if(reject)reject(new Error(normalizeSpeechError(error)));
     refreshComposerAction();
   };
   window.__xyNativeSttPartial=text=>{

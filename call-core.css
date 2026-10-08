@@ -8,3 +8,10 @@
 .xy-call-push.recording{background:rgba(190,82,82,.13);color:#a34949;box-shadow:0 0 0 7px rgba(190,82,82,.05)}
 html[data-theme-mode="dark"] .xy-call-push{background:rgba(111,154,128,.12);color:#c4d3ca}
 html[data-theme-mode="dark"] .xy-call-push.recording{background:rgba(190,82,82,.16);color:#e8aaaa}
+
+.xy-call-avatar.has-image{
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+  color:transparent;
+}
