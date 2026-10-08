@@ -100,7 +100,9 @@
     if(!values||Array.isArray(values)||typeof values!=="object")throw new Error("备份没有有效数据");
     const keys=Object.keys(values);
     if(!keys.length||keys.some(k=>!k.startsWith("xy.")||typeof values[k]!=="string"))throw new Error("备份字段格式不正确");
-    for(const k of keys){try{JSON.parse(values[k])}catch{throw new Error("数据损坏："+k)}}
+    for(const k of ["xy.chats","xy.memories","xy.journals.v1","xy.characters"]){
+      if(k in values){try{JSON.parse(values[k])}catch{throw new Error("数据损坏："+k)}}
+    }
     if("xy.chats" in values){
       const c=JSON.parse(values["xy.chats"]);
       if(!Array.isArray(c)||c.some(x=>!x||typeof x!=="object"||!Array.isArray(x.messages)))throw new Error("聊天数据结构不正确");
@@ -128,11 +130,21 @@
   }
   function mergeChat(current,incoming){
     const out=[...current],position=new Map(out.map((c,i)=>[String(c.id),i]));
+    let nextId=Date.now();
+    const uniqueId=()=>{while(position.has(String(nextId)))nextId++;return nextId++};
     for(const c of incoming){
       const k=String(c.id);
       if(!position.has(k)){position.set(k,out.length);out.push(c);continue}
       const i=position.get(k),old=out[i];
-      if(scoreChat(c)>scoreChat(old))out[i]=c;
+      if(JSON.stringify(old.messages)===JSON.stringify(c.messages))continue;
+      const oldScore=scoreChat(old),newScore=scoreChat(c);
+      if(!oldScore&&newScore){out[i]=c;continue}
+      if(!newScore)continue;
+      // A collision may be two different conversations using the same ID.
+      // Keep both instead of discarding either message history.
+      const copy={...c,id:uniqueId(),title:String(c.title||"导入对话")+"（导入副本）"};
+      position.set(String(copy.id),out.length);
+      out.push(copy);
     }
     return out;
   }
@@ -160,7 +172,10 @@
     if(!keys.length){setStatus("没有需要导入的新数据。");return}
     const action=mode==="replace"?"覆盖备份内对应的数据项":"合并不同记录并优先保留有正文的聊天";
     if(!window.confirm("确定要"+action+"吗？\n来源："+label+"\n执行前会尝试保留一次本机保护快照。"))return;
-    try{await snapshot("恢复前保护",true)}catch(e){
+    try{
+      const protectedCopy=await snapshot("恢复前保护",true);
+      if(!protectedCopy)throw new Error("有另一项备份正在执行，请稍后重试");
+    }catch(e){
       setStatus("无法建立恢复前快照，已停止导入。请先导出当前备份文件。"+e.message,true);return;
     }
     const old=Object.fromEntries(keys.map(k=>[k,localStorage.getItem(k)]));
