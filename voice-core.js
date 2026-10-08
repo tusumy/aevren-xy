@@ -231,8 +231,13 @@
     input.insertAdjacentElement("beforebegin",button);button.addEventListener("click",()=>recorder?.state==="recording"?stopRecording():startRecording());
   }
 
+  function openVoicePanel(){
+    try{return renderVoicePanel()}
+    catch(error){console.error("[AevrenVoice] open panel failed",error);toast("语音工具打开失败："+(error?.message||error),true)}
+  }
+
   const priorOpenPanel=openPanel;
-  openPanel=function(type){if(type==="voice"){renderVoicePanel();return}return priorOpenPanel(type)};
+  openPanel=function(type){if(type==="voice")return openVoicePanel();return priorOpenPanel(type)};
 
   const priorRender=renderMessages;
   renderMessages=function(){const result=priorRender();requestAnimationFrame(decorateMessages);return result};
@@ -276,10 +281,18 @@
   },true);
 
   const sidebarBottom=document.querySelector(".sidebar-bottom");
-  if(sidebarBottom&&!sidebarBottom.querySelector('[data-panel="voice"]')){
-    const voiceNav=document.createElement("button");voiceNav.className="nav-btn";voiceNav.dataset.panel="voice";voiceNav.innerHTML="♬ <span>语音</span>";
-    const settingsNav=sidebarBottom.querySelector('[data-panel="settings"]');sidebarBottom.insertBefore(voiceNav,settingsNav);voiceNav.onclick=()=>openPanel("voice");
+  let voiceNav=sidebarBottom?.querySelector('[data-panel="voice"]')||null;
+  if(sidebarBottom&&!voiceNav){
+    voiceNav=document.createElement("button");voiceNav.className="nav-btn";voiceNav.dataset.panel="voice";voiceNav.innerHTML="♬ <span>语音</span>";
+    const settingsNav=sidebarBottom.querySelector('[data-panel="settings"]');sidebarBottom.insertBefore(voiceNav,settingsNav);
   }
+  if(voiceNav)voiceNav.onclick=e=>{e.preventDefault();e.stopPropagation();openVoicePanel()};
+  window.xyOpenVoicePanel=openVoicePanel;
+
+  document.addEventListener("click",e=>{
+    const target=e.target.closest?.('[data-panel="voice"]');if(!target)return;
+    e.preventDefault();e.stopImmediatePropagation();openVoicePanel();
+  },true);
 
   window.AevrenVoice={
     speakMessage(index,targetChat=currentChat()){
