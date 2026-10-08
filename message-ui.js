@@ -230,6 +230,12 @@
 
   send=async function(){
     if(!await queueCurrentInput())return;
+    const latest=pendingUserQueue.at(-1);
+    if(latest?.attachments?.length){
+      if(flushTimer){clearTimeout(flushTimer);flushTimer=null}
+      await drainQueue();
+      return;
+    }
     scheduleFlush();
   };
   window.xySendQueued=send;
