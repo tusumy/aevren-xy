@@ -4,7 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
-import android.content.ComponentName
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -14,7 +13,6 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
-import android.provider.Settings
 import android.os.Build
 import android.os.Bundle
 import android.util.Base64
@@ -492,13 +490,6 @@ private class NativeVoiceBridge(
         }
     }
 
-    private fun recognitionServiceComponent(): ComponentName? {
-        val flat = runCatching {
-            Settings.Secure.getString(activity.contentResolver, "voice_recognition_service")
-        }.getOrNull().orEmpty()
-        return if (flat.isBlank()) null else ComponentName.unflattenFromString(flat)
-    }
-
     @JavascriptInterface
     @Synchronized
     fun startRecognition(languageTag: String): String {
@@ -511,16 +502,15 @@ private class NativeVoiceBridge(
         if (speechListening) {
             return JSONObject().put("ok", false).put("error", "already_listening").toString()
         }
-        val component = recognitionServiceComponent()
-        if (component == null && !SpeechRecognizer.isRecognitionAvailable(activity)) {
-            return JSONObject().put("ok", false).put("error", "speech_recognizer_unavailable").toString()
-        }
         speechListening = true
         activity.runOnUiThread {
             try {
                 if (speechRecognizer == null) {
-                    speechRecognizer = if (component != null) {
-                        SpeechRecognizer.createSpeechRecognizer(activity, component)
+                    speechRecognizer = if (
+                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                        SpeechRecognizer.isOnDeviceRecognitionAvailable(activity)
+                    ) {
+                        SpeechRecognizer.createOnDeviceSpeechRecognizer(activity)
                     } else {
                         SpeechRecognizer.createSpeechRecognizer(activity)
                     }
@@ -552,7 +542,6 @@ private class NativeVoiceBridge(
                     putExtra(RecognizerIntent.EXTRA_LANGUAGE, normalizedRecognitionLanguage(languageTag))
                     putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
                     putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
-                    putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, activity.packageName)
                     putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1200L)
                     putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 700L)
                 }
@@ -564,7 +553,7 @@ private class NativeVoiceBridge(
                 notifySttError(-1, error.message ?: error.javaClass.simpleName)
             }
         }
-        return JSONObject().put("ok", true).put("service", component?.flattenToShortString() ?: "default").toString()
+        return JSONObject().put("ok", true).toString()
     }
 
     @JavascriptInterface
