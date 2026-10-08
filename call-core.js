@@ -1,7 +1,7 @@
 (()=>{
   const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
   let phase="idle",recognition=null,startedAt=0,timerId=null,processing=false,restartTimer=null;
-  let callRecorder=null,callStream=null,callChunks=[];
+  let callRecorder=null,callStream=null,callChunks=[],callNativeRecording=false;
   let overlay,statusEl,timeEl,transcriptEl,acceptBtn,hangupBtn,fallbackWrap,fallbackInput,pushBtn;
 
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -69,7 +69,23 @@
   }
 
   async function startFallbackRecording(){
-    if(phase!=="connected"||processing||callRecorder?.state==="recording")return;
+    if(phase!=="connected"||processing||callNativeRecording||callRecorder?.state==="recording")return;
+    if(window.AevrenVoice?.hasNativeCapture?.()){
+      try{
+        const result=window.AevrenVoice.startNativeCapture();
+        if(!result?.ok){
+          if(result?.error==="permission_requested")statusEl.textContent="请允许麦克风权限，再点一次";
+          else statusEl.textContent="麦克风启动失败 · 可用文字输入";
+          fallbackWrap.hidden=false;return;
+        }
+        callNativeRecording=true;
+        pushBtn.classList.add("recording");pushBtn.querySelector("span").textContent="结束";
+        statusEl.textContent="正在听你说…";
+      }catch{
+        statusEl.textContent="麦克风启动失败 · 可用文字输入";fallbackWrap.hidden=false;
+      }
+      return;
+    }
     if(!window.MediaRecorder||!window.AevrenVoice?.openMicStream||!window.AevrenVoice?.transcribeBlob){
       statusEl.textContent="当前环境不能录音 · 可用文字输入";fallbackWrap.hidden=false;return;
     }
@@ -89,15 +105,23 @@
     }
   }
 
-  function stopFallbackRecording(){
+  async function stopFallbackRecording(){
+    if(callNativeRecording){
+      callNativeRecording=false;
+      pushBtn.classList.remove("recording");pushBtn.querySelector("span").textContent="说话";
+      try{
+        const result=window.AevrenVoice.stopNativeCapture();
+        if(!result?.ok||!result.blob)throw new Error(result?.error||"native_record_stop_failed");
+        await processCallBlob(result.blob);
+      }catch{
+        statusEl.textContent="录音失败 · 再说一次";
+      }
+      return;
+    }
     if(callRecorder?.state==="recording")callRecorder.stop();
   }
 
-  async function finishFallbackRecording(){
-    const type=callRecorder?.mimeType||callChunks[0]?.type||"audio/webm";
-    const blob=new Blob(callChunks,{type});
-    callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];
-    pushBtn.classList.remove("recording");pushBtn.querySelector("span").textContent="说话";
+  async function processCallBlob(blob){
     if(blob.size<700){statusEl.textContent="这段太短了 · 再说一次";return}
     try{
       processing=true;statusEl.textContent="正在听懂…";
@@ -107,6 +131,14 @@
     }catch(error){
       processing=false;statusEl.textContent="没听懂 · 再说一次";
     }
+  }
+
+  async function finishFallbackRecording(){
+    const type=callRecorder?.mimeType||callChunks[0]?.type||"audio/webm";
+    const blob=new Blob(callChunks,{type});
+    callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];
+    pushBtn.classList.remove("recording");pushBtn.querySelector("span").textContent="说话";
+    await processCallBlob(blob);
   }
 
   function buildRecognition(){
@@ -185,7 +217,7 @@
   function hangup(){
     if(phase==="idle")return;
     const duration=startedAt?fmtTime(Date.now()-startedAt):"00:00";
-    phase="idle";processing=false;stopListening();if(callRecorder?.state==="recording"){try{callRecorder.onstop=null;callRecorder.stop()}catch{}}callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];clearInterval(timerId);timerId=null;window.AevrenVoice?.stop?.();
+    phase="idle";processing=false;stopListening();if(callNativeRecording){try{window.AevrenVoice?.stopNativeCapture?.()}catch{}callNativeRecording=false}if(callRecorder?.state==="recording"){try{callRecorder.onstop=null;callRecorder.stop()}catch{}}callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];clearInterval(timerId);timerId=null;window.AevrenVoice?.stop?.();
     statusEl.textContent="通话结束 · "+duration;overlay.classList.remove("ringing","connected");overlay.classList.add("ended");
     setTimeout(()=>{overlay.hidden=true;overlay.classList.remove("show","ended")},650);
   }
