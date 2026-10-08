@@ -7,7 +7,49 @@
   const findChat=id=>chats.find(c=>idOf(c.id)===idOf(id));
   const titleOf=c=>String(c?.title||"新对话").trim()||"新对话";
   const HOLD_MS=540, MOVE_TOLERANCE=12;
+  const PIN_KEY="xy.pinnedChats";
+  const loadPins=()=>{
+    try{
+      const found=JSON.parse(localStorage.getItem(PIN_KEY)||"[]");
+      return Array.isArray(found)?[...new Set(found.map(idOf))]:[];
+    }catch{return []}
+  };
+  let pinned=loadPins();
+  const isPinned=id=>pinned.includes(idOf(id));
+  const persistPins=next=>{
+    const clean=[...new Set(next.map(idOf))].filter(id=>!!findChat(id));
+    localStorage.setItem(PIN_KEY,JSON.stringify(clean));
+    pinned=clean;
+  };
   let hold=null, menu=null, suppress=null;
+
+  const priorRenderChats=renderChats;
+  renderChats=function(){
+    priorRenderChats();
+    const nodes=[...list.querySelectorAll("button.chat-item[data-id]")];
+    const byId=new Map(nodes.map(node=>[idOf(node.dataset.id),node]));
+    // Keep pinned conversations in pin order while preserving the normal order below.
+    for(const id of [...pinned].reverse()){
+      const node=byId.get(id);
+      if(node)list.insertBefore(node,list.firstChild);
+    }
+    for(const node of nodes){
+      const active=isPinned(node.dataset.id);
+      node.classList.toggle("xy-chat-pinned",active);
+      node.title=active?"已置顶 · 长按管理":"长按管理";
+      node.setAttribute("aria-label",(active?"已置顶：":"")+node.textContent);
+    }
+  };
+
+  function togglePin(conversation){
+    const id=idOf(conversation.id);
+    const next=isPinned(id)?pinned.filter(item=>item!==id):[id,...pinned];
+    try{persistPins(next)}catch(error){
+      window.alert("置顶设置保存失败："+(error?.message||error));
+      return;
+    }
+    renderChats();
+  }
 
   const targetButton=target=>target?.closest?.("button.chat-item[data-id]");
   const cancelHold=()=>{
@@ -31,6 +73,7 @@
     popup.setAttribute("role","menu");
     popup.setAttribute("aria-label","对话操作："+titleOf(c));
     popup.innerHTML=
+      '<button type="button" role="menuitem" data-op="pin">'+(isPinned(c.id)?"取消置顶":"置顶对话")+'</button>'+ 
       '<button type="button" role="menuitem" data-op="rename">重命名</button>'+
       '<button type="button" role="menuitem" data-op="delete" class="danger">删除对话</button>';
     document.body.appendChild(popup);
@@ -49,6 +92,7 @@
       closeMenu();
       const live=findChat(c.id);
       if(!live)return;
+      if(action==="pin")togglePin(live);
       if(action==="rename")renameChat(live);
       if(action==="delete")askDelete(live);
     });
@@ -151,6 +195,9 @@
         if(removingCurrent)current=chats[0].id;
         try{save()}
         catch(err){chats=previous;current=oldCurrent;throw err}
+        if(isPinned(id)){
+          try{persistPins(pinned.filter(p=>p!==id))}catch{}
+        }
         renderChats();
         if(removingCurrent)renderMessages();
         overlay.remove();
@@ -217,4 +264,5 @@
   });
 
   // The standard click handler from app.js remains unchanged.
+  renderChats();
 })();
