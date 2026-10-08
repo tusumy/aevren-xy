@@ -22,7 +22,7 @@
     voiceSettings.voiceModel="";
     store.set("xy.voice",voiceSettings);
   }
-  let recorder=null,recordStream=null,recordChunks=[],recordTimer=null,recordStarting=false,voiceBusy=false;
+  let recorder=null,recordStream=null,recordChunks=[],recordTimer=null,recordStarting=false,voiceBusy=false,nativeRecording=false;
   let activeAudio=null,activeMessage=null;
   const busyMessages=new Set();
 
@@ -31,6 +31,30 @@
   const voiceServers=()=>mcps.filter(server=>server.enabled&&server.tools?.some(tool=>tool.name==="text_to_speech"));
   const resolveVoiceServer=()=>voiceSettings.voiceMcpId?voiceServers().find(x=>x.id===voiceSettings.voiceMcpId)||null:null;
   const currentChat=()=>{try{return chat()}catch{return null}};
+  const nativeVoiceBridge=()=>window.AevrenVoiceNative&&typeof window.AevrenVoiceNative.startRecording==="function"?window.AevrenVoiceNative:null;
+  function parseNativeVoiceResult(raw){
+    try{return typeof raw==="string"?JSON.parse(raw):raw||{}}catch{return {ok:false,error:String(raw||"native_voice_error")}}
+  }
+  function nativeVoiceList(){
+    const bridge=nativeVoiceBridge();if(!bridge?.listVoices)return [];
+    const result=parseNativeVoiceResult(bridge.listVoices());
+    return Array.isArray(result)?result:[];
+  }
+  function base64ToBlob(value,mime){
+    const bin=atob(String(value||"")),bytes=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+    return new Blob([bytes],{type:mime||"audio/mp4"});
+  }
+  function startNativeCapture(){
+    const bridge=nativeVoiceBridge();if(!bridge)return {ok:false,error:"native_voice_unavailable"};
+    return parseNativeVoiceResult(bridge.startRecording());
+  }
+  function stopNativeCapture(){
+    const bridge=nativeVoiceBridge();if(!bridge)return {ok:false,error:"native_voice_unavailable"};
+    const result=parseNativeVoiceResult(bridge.stopRecording());
+    if(result.ok&&result.base64)result.blob=base64ToBlob(result.base64,result.mime||"audio/mp4");
+    return result;
+  }
   const currentText=m=>String(m?.text||"").trim();
   const messageKey=(c,index)=>`${c?.id||"chat"}:${index}`;
 
@@ -56,9 +80,19 @@
   }
 
   function speakWithSystem(text,key){
-    if(!window.speechSynthesis||!window.SpeechSynthesisUtterance){toast("当前设备没有可用的系统语音",true);return}
+    const native=nativeVoiceBridge();
     if(activeAudio){activeAudio.pause();activeAudio=null}
-    if(activeMessage===key){window.speechSynthesis.cancel();activeMessage=null;decorateMessages();return}
+    if(activeMessage===key){
+      try{native?.stopTts?.()}catch{}
+      window.speechSynthesis?.cancel?.();
+      activeMessage=null;decorateMessages();return;
+    }
+    if(native?.speak){
+      const result=parseNativeVoiceResult(native.speak(plainSpeechText(text),voiceSettings.systemVoiceURI||"",String(key)));
+      if(!result.ok){toast(result.error==="tts_not_ready"?"系统语音还在初始化，等一秒再试":"系统语音播放失败："+(result.error||"unknown"),true);return}
+      activeMessage=key;decorateMessages();return;
+    }
+    if(!window.speechSynthesis||!window.SpeechSynthesisUtterance){toast("当前设备没有可用的系统语音",true);return}
     window.speechSynthesis.cancel();
     const utter=new SpeechSynthesisUtterance(plainSpeechText(text));
     const voices=window.speechSynthesis.getVoices?.()||[];
@@ -137,14 +171,17 @@
   }
 
   function systemVoiceOptions(){
-    const voices=window.speechSynthesis?.getVoices?.()||[];
-    const options=['<option value="">系统默认</option>'];
-    for(const item of voices){
-      const uri=String(item.voiceURI||item.name||"");
-      const label=(item.name||"未命名语音")+" · "+(item.lang||"未知语言");
-      options.push('<option value="'+esc(uri)+'" '+(uri===voiceSettings.systemVoiceURI?'selected':'')+'>'+esc(label)+'</option>');
+    const native=nativeVoiceList();
+    if(native.length){
+      const options=['<option value="">系统默认</option>'];
+      for(const item of native){
+        const id=String(item.id||item.name||""),label=(item.name||"系统语音")+" · "+(item.lang||"未知语言");
+        options.push('<option value="'+esc(id)+'" '+(id===voiceSettings.systemVoiceURI?'selected':'')+'>'+esc(label)+'</option>');
+      }
+      return options.join("");
     }
-    return options.join("");
+    const voices=window.speechSynthesis?.getVoices?.()||[];
+    return '<option value="">系统默认</option>'+voices.map(v=>'<option value="'+esc(v.voiceURI)+'" '+(v.voiceURI===voiceSettings.systemVoiceURI?'selected':'')+'>'+esc((v.name||'未命名语音')+' · '+(v.lang||'未知语言'))+'</option>').join('');
   }
 
   function refreshSystemVoiceSelect(){
@@ -230,8 +267,24 @@
   }
 
   async function startRecording(){
+    if(recordStarting||recorder||nativeRecording||voiceBusy)return;
+    const native=nativeVoiceBridge();
+    if(native){
+      recordStarting=true;voiceBusy=true;setMicState("requesting");
+      try{
+        const result=startNativeCapture();
+        if(!result.ok){
+          if(result.error==="permission_requested")toast("已经请求麦克风权限，允许后再点一下麦克风");
+          else throw new Error(result.error||"native_record_failed");
+          voiceBusy=false;setMicState("idle");return;
+        }
+        nativeRecording=true;setMicState("recording");toast("正在听，点一下麦克风就发送");
+        recordTimer=setTimeout(()=>{if(nativeRecording)stopRecording()},120000);
+      }catch(error){voiceBusy=false;setMicState("idle");toast("录音失败："+(error?.message||error),true)}
+      finally{recordStarting=false}
+      return;
+    }
     if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){toast("这个浏览器暂不支持录音",true);return}
-    if(recordStarting||recorder||voiceBusy)return;
     recordStarting=true;voiceBusy=true;setMicState("requesting");
     try{
       recordStream=await requestMicStream();
@@ -243,11 +296,20 @@
     finally{recordStarting=false}
   }
 
-  function stopRecording(){if(recorder?.state==="recording")recorder.stop()}
+  async function stopRecording(){
+    if(nativeRecording){
+      clearTimeout(recordTimer);nativeRecording=false;setMicState("transcribing");
+      try{
+        const result=stopNativeCapture();
+        if(!result.ok||!result.blob)throw new Error(result.error||"native_record_stop_failed");
+        await processRecordedBlob(result.blob);
+      }catch(error){voiceBusy=false;setMicState("idle");toast("录音失败："+(error?.message||error),true)}
+      return;
+    }
+    if(recorder?.state==="recording")recorder.stop();
+  }
 
-  async function finishRecording(){
-    clearTimeout(recordTimer);recordStream?.getTracks().forEach(track=>track.stop());recordStream=null;
-    const type=recorder?.mimeType||recordChunks[0]?.type||"audio/webm",blob=new Blob(recordChunks,{type});recorder=null;recordChunks=[];
+  async function processRecordedBlob(blob){
     if(blob.size<700){voiceBusy=false;setMicState("idle");toast("这段太短了，我没听清",true);return}
     setMicState("transcribing");
     try{
@@ -258,12 +320,18 @@
     finally{voiceBusy=false;setMicState("idle")}
   }
 
+  async function finishRecording(){
+    clearTimeout(recordTimer);recordStream?.getTracks().forEach(track=>track.stop());recordStream=null;
+    const type=recorder?.mimeType||recordChunks[0]?.type||"audio/webm",blob=new Blob(recordChunks,{type});recorder=null;recordChunks=[];
+    await processRecordedBlob(blob);
+  }
+
   function installMic(){
     const composer=document.querySelector(".composer"),input=document.querySelector("#input");
     if(!composer||!input||document.querySelector("#voiceMic"))return;
     const button=document.createElement("button");button.type="button";button.id="voiceMic";button.className="voice-mic";button.title="发送语音";button.setAttribute("aria-label","发送语音");
     button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"></path></svg>';
-    input.insertAdjacentElement("beforebegin",button);button.addEventListener("click",()=>recorder?.state==="recording"?stopRecording():startRecording());
+    input.insertAdjacentElement("beforebegin",button);button.addEventListener("click",()=>nativeRecording||recorder?.state==="recording"?stopRecording():startRecording());
   }
 
   function openVoicePanel(){
@@ -338,7 +406,8 @@
       return index>=0?synthesizeMessage(index,true,targetChat):Promise.resolve();
     },
     isSpeaking(){
-      return Boolean(activeMessage||activeAudio||(window.speechSynthesis&&window.speechSynthesis.speaking));
+      let nativeSpeaking=false;try{nativeSpeaking=Boolean(nativeVoiceBridge()?.isTtsSpeaking?.())}catch{}
+      return Boolean(activeMessage||activeAudio||nativeSpeaking||(window.speechSynthesis&&window.speechSynthesis.speaking));
     },
     isMessageSpeaking(index,targetChat=currentChat()){
       return activeMessage===messageKey(targetChat,Number(index));
@@ -346,13 +415,19 @@
     transcribeBlob(blob){return transcribe(blob)},
     openMicStream(){return requestMicStream()},
     getRecorderMime(){return recorderMime()},
+    hasNativeCapture(){return Boolean(nativeVoiceBridge())},
+    startNativeCapture(){return startNativeCapture()},
+    stopNativeCapture(){return stopNativeCapture()},
     stop(){
       if(activeAudio){activeAudio.pause();activeAudio=null}
+      try{nativeVoiceBridge()?.stopTts?.()}catch{}
       window.speechSynthesis?.cancel?.();
       activeMessage=null;decorateMessages();
     }
   };
 
+  window.__xyNativeTtsDone=id=>{if(activeMessage===String(id)){activeMessage=null;decorateMessages()}};
+  window.__xyNativeTtsError=(id,error)=>{if(activeMessage===String(id)){activeMessage=null;decorateMessages()}toast("系统语音播放失败："+String(error||"unknown"),true)};
   if(window.speechSynthesis?.addEventListener)window.speechSynthesis.addEventListener("voiceschanged",refreshSystemVoiceSelect);
   installMic();renderMessages();
 })();
