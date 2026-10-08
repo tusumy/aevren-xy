@@ -7,6 +7,9 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.media.MediaRecorder
+import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.os.Build
 import android.os.Bundle
 import android.util.Base64
@@ -38,7 +41,9 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.io.IOException
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
@@ -46,7 +51,7 @@ class MainActivity : Activity() {
     companion object {
         private const val HOME = "https://tusumy.github.io/aevren-xy/"
         private const val FILE_CHOOSER = 7001
-        private const val AUDIO_PERMISSION = 7002
+        const val AUDIO_PERMISSION = 7002
     }
 
     private lateinit var webView: WebView
@@ -54,6 +59,7 @@ class MainActivity : Activity() {
     private var pageRevealed = false
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var pendingAudioPermission: PermissionRequest? = null
+    private var nativeVoiceBridge: NativeVoiceBridge? = null
 
     private val http = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -107,6 +113,8 @@ class MainActivity : Activity() {
         installImeInsetBridge()
 
         webView.addJavascriptInterface(NativeHttpBridge(webView, http), "AevrenNative")
+        nativeVoiceBridge = NativeVoiceBridge(this, webView)
+        webView.addJavascriptInterface(nativeVoiceBridge!!, "AevrenVoiceNative")
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val uri = request.url
@@ -172,7 +180,7 @@ class MainActivity : Activity() {
         }
 
         if (savedInstanceState == null) {
-            webView.loadUrl("${HOME}?app=android&shell=5&t=${System.currentTimeMillis()}")
+            webView.loadUrl("${HOME}?app=android&shell=6&t=${System.currentTimeMillis()}")
         } else {
             webView.restoreState(savedInstanceState)
         }
@@ -283,6 +291,12 @@ class MainActivity : Activity() {
         if (hasFocus) applyImmersiveUi()
     }
 
+    override fun onDestroy() {
+        nativeVoiceBridge?.shutdown()
+        nativeVoiceBridge = null
+        super.onDestroy()
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         webView.saveState(outState)
         super.onSaveInstanceState(outState)
@@ -310,6 +324,168 @@ class MainActivity : Activity() {
         if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
             request.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE))
         } else request.deny()
+    }
+}
+
+
+private class NativeVoiceBridge(
+    private val activity: Activity,
+    private val webView: WebView
+) {
+    @Volatile private var ttsReady = false
+    private var tts: TextToSpeech? = null
+    private var recorder: MediaRecorder? = null
+    private var recordingFile: File? = null
+
+    init {
+        activity.runOnUiThread {
+            tts = TextToSpeech(activity.applicationContext) { status ->
+                ttsReady = status == TextToSpeech.SUCCESS
+                if (ttsReady) {
+                    tts?.language = Locale.SIMPLIFIED_CHINESE
+                    tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+                        override fun onStart(utteranceId: String?) = Unit
+                        override fun onDone(utteranceId: String?) { notifyTtsDone(utteranceId, null) }
+                        @Deprecated("Deprecated in Java")
+                        override fun onError(utteranceId: String?) { notifyTtsDone(utteranceId, "tts_error") }
+                        override fun onError(utteranceId: String?, errorCode: Int) { notifyTtsDone(utteranceId, "tts_error_" + errorCode) }
+                    })
+                }
+            }
+        }
+    }
+
+    @JavascriptInterface
+    fun listVoices(): String = try {
+        val arr = JSONArray()
+        val voices = tts?.voices?.sortedWith(compareBy({ it.locale?.toLanguageTag().orEmpty() }, { it.name.orEmpty() })).orEmpty()
+        for (voice in voices) {
+            arr.put(
+                JSONObject()
+                    .put("id", voice.name)
+                    .put("name", voice.name)
+                    .put("lang", voice.locale?.toLanguageTag().orEmpty())
+                    .put("network", voice.isNetworkConnectionRequired)
+            )
+        }
+        arr.toString()
+    } catch (_: Exception) { "[]" }
+
+    @JavascriptInterface
+    fun speak(text: String, voiceName: String, utteranceId: String): String {
+        if (!ttsReady) return JSONObject().put("ok", false).put("error", "tts_not_ready").toString()
+        val value = text.trim()
+        if (value.isEmpty()) return JSONObject().put("ok", false).put("error", "empty_text").toString()
+        activity.runOnUiThread {
+            val engine = tts ?: return@runOnUiThread
+            val chosen = if (voiceName.isNotBlank()) {
+                engine.voices?.firstOrNull { it.name == voiceName }
+            } else {
+                engine.voices?.firstOrNull { it.locale?.language == Locale.CHINESE.language && !it.isNetworkConnectionRequired }
+                    ?: engine.voices?.firstOrNull { it.locale?.language == Locale.CHINESE.language }
+            }
+            if (chosen != null) engine.voice = chosen else engine.language = Locale.SIMPLIFIED_CHINESE
+            engine.speak(value, TextToSpeech.QUEUE_FLUSH, null, utteranceId)
+        }
+        return JSONObject().put("ok", true).toString()
+    }
+
+    @JavascriptInterface
+    fun stopTts() { activity.runOnUiThread { tts?.stop() } }
+
+    @JavascriptInterface
+    fun isTtsSpeaking(): Boolean = tts?.isSpeaking == true
+
+    @JavascriptInterface
+    @Synchronized
+    fun startRecording(): String {
+        if (activity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            activity.runOnUiThread {
+                activity.requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), MainActivity.AUDIO_PERMISSION)
+            }
+            return JSONObject().put("ok", false).put("error", "permission_requested").toString()
+        }
+        if (recorder != null) return JSONObject().put("ok", false).put("error", "already_recording").toString()
+        return try {
+            val file = File(activity.cacheDir, "aevren-voice-" + System.currentTimeMillis() + ".m4a")
+            val mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                MediaRecorder(activity)
+            } else {
+                @Suppress("DEPRECATION")
+                MediaRecorder()
+            }
+            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
+            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+            mediaRecorder.setAudioEncodingBitRate(64_000)
+            mediaRecorder.setAudioSamplingRate(44_100)
+            mediaRecorder.setOutputFile(file.absolutePath)
+            mediaRecorder.prepare()
+            mediaRecorder.start()
+            recorder = mediaRecorder
+            recordingFile = file
+            JSONObject().put("ok", true).put("mime", "audio/mp4").toString()
+        } catch (error: Exception) {
+            runCatching { recorder?.release() }
+            recorder = null
+            recordingFile?.delete()
+            recordingFile = null
+            JSONObject().put("ok", false).put("error", error.message ?: error.javaClass.simpleName).toString()
+        }
+    }
+
+    @JavascriptInterface
+    @Synchronized
+    fun stopRecording(): String {
+        val active = recorder ?: return JSONObject().put("ok", false).put("error", "not_recording").toString()
+        val file = recordingFile
+        recorder = null
+        recordingFile = null
+        return try {
+            active.stop()
+            active.release()
+            if (file == null || !file.exists()) {
+                JSONObject().put("ok", false).put("error", "missing_recording").toString()
+            } else {
+                val bytes = file.readBytes()
+                file.delete()
+                JSONObject()
+                    .put("ok", true)
+                    .put("mime", "audio/mp4")
+                    .put("base64", Base64.encodeToString(bytes, Base64.NO_WRAP))
+                    .toString()
+            }
+        } catch (error: Exception) {
+            runCatching { active.release() }
+            file?.delete()
+            JSONObject().put("ok", false).put("error", error.message ?: error.javaClass.simpleName).toString()
+        }
+    }
+
+    fun shutdown() {
+        synchronized(this) {
+            runCatching { recorder?.stop() }
+            runCatching { recorder?.release() }
+            recorder = null
+            recordingFile?.delete()
+            recordingFile = null
+        }
+        activity.runOnUiThread {
+            tts?.stop()
+            tts?.shutdown()
+            tts = null
+            ttsReady = false
+        }
+    }
+
+    private fun notifyTtsDone(utteranceId: String?, error: String?) {
+        val id = utteranceId ?: return
+        val js = if (error == null) {
+            "window.__xyNativeTtsDone && window.__xyNativeTtsDone(" + JSONObject.quote(id) + ");"
+        } else {
+            "window.__xyNativeTtsError && window.__xyNativeTtsError(" + JSONObject.quote(id) + ", " + JSONObject.quote(error) + ");"
+        }
+        webView.post { webView.evaluateJavascript(js, null) }
     }
 }
 
