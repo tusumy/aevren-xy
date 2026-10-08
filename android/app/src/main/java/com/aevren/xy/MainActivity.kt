@@ -8,6 +8,9 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.media.MediaRecorder
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.os.Build
@@ -180,7 +183,7 @@ class MainActivity : Activity() {
         }
 
         if (savedInstanceState == null) {
-            webView.loadUrl("${HOME}?app=android&shell=6&t=${System.currentTimeMillis()}")
+            webView.loadUrl("${HOME}?app=android&shell=7&t=${System.currentTimeMillis()}")
         } else {
             webView.restoreState(savedInstanceState)
         }
@@ -336,6 +339,8 @@ private class NativeVoiceBridge(
     private var tts: TextToSpeech? = null
     private var recorder: MediaRecorder? = null
     private var recordingFile: File? = null
+    private var speechRecognizer: SpeechRecognizer? = null
+    @Volatile private var speechListening = false
 
     init {
         activity.runOnUiThread {
@@ -358,7 +363,10 @@ private class NativeVoiceBridge(
     @JavascriptInterface
     fun listVoices(): String = try {
         val arr = JSONArray()
-        val voices = tts?.voices?.sortedWith(compareBy({ it.locale?.toLanguageTag().orEmpty() }, { it.name.orEmpty() })).orEmpty()
+        val all = tts?.voices.orEmpty()
+        val chinese = all.filter { it.locale?.language == Locale.CHINESE.language }
+        val voices = (if (chinese.isNotEmpty()) chinese else all)
+            .sortedWith(compareBy({ it.isNetworkConnectionRequired }, { it.locale?.toLanguageTag().orEmpty() }, { it.name.orEmpty() }))
         for (voice in voices) {
             arr.put(
                 JSONObject()
@@ -366,6 +374,8 @@ private class NativeVoiceBridge(
                     .put("name", voice.name)
                     .put("lang", voice.locale?.toLanguageTag().orEmpty())
                     .put("network", voice.isNetworkConnectionRequired)
+                    .put("quality", voice.quality)
+                    .put("latency", voice.latency)
             )
         }
         arr.toString()
@@ -395,6 +405,78 @@ private class NativeVoiceBridge(
 
     @JavascriptInterface
     fun isTtsSpeaking(): Boolean = tts?.isSpeaking == true
+
+    @JavascriptInterface
+    @Synchronized
+    fun startRecognition(languageTag: String): String {
+        if (activity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            activity.runOnUiThread {
+                activity.requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), MainActivity.AUDIO_PERMISSION)
+            }
+            return JSONObject().put("ok", false).put("error", "permission_requested").toString()
+        }
+        if (!SpeechRecognizer.isRecognitionAvailable(activity)) {
+            return JSONObject().put("ok", false).put("error", "speech_recognizer_unavailable").toString()
+        }
+        if (speechListening) {
+            return JSONObject().put("ok", false).put("error", "already_listening").toString()
+        }
+        speechListening = true
+        activity.runOnUiThread {
+            try {
+                val recognizer = speechRecognizer ?: SpeechRecognizer.createSpeechRecognizer(activity).also {
+                    speechRecognizer = it
+                }
+                recognizer.setRecognitionListener(object : RecognitionListener {
+                    override fun onReadyForSpeech(params: Bundle?) { notifySttState("ready") }
+                    override fun onBeginningOfSpeech() { notifySttState("speech") }
+                    override fun onRmsChanged(rmsdB: Float) = Unit
+                    override fun onBufferReceived(buffer: ByteArray?) = Unit
+                    override fun onEndOfSpeech() { notifySttState("processing") }
+                    override fun onError(error: Int) {
+                        speechListening = false
+                        notifySttError(error)
+                    }
+                    override fun onResults(results: Bundle?) {
+                        speechListening = false
+                        val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).orEmpty()
+                        notifySttResult(matches.firstOrNull().orEmpty())
+                    }
+                    override fun onPartialResults(partialResults: Bundle?) {
+                        val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).orEmpty()
+                        notifySttPartial(matches.firstOrNull().orEmpty())
+                    }
+                    override fun onEvent(eventType: Int, params: Bundle?) = Unit
+                })
+                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, languageTag.ifBlank { "zh-CN" })
+                    putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+                    putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+                }
+                recognizer.startListening(intent)
+            } catch (error: Exception) {
+                speechListening = false
+                notifySttError(-1, error.message ?: error.javaClass.simpleName)
+            }
+        }
+        return JSONObject().put("ok", true).toString()
+    }
+
+    @JavascriptInterface
+    @Synchronized
+    fun stopRecognition(): String {
+        if (!speechListening) return JSONObject().put("ok", false).put("error", "not_listening").toString()
+        activity.runOnUiThread { runCatching { speechRecognizer?.stopListening() } }
+        return JSONObject().put("ok", true).toString()
+    }
+
+    @JavascriptInterface
+    @Synchronized
+    fun cancelRecognition() {
+        speechListening = false
+        activity.runOnUiThread { runCatching { speechRecognizer?.cancel() } }
+    }
 
     @JavascriptInterface
     @Synchronized
@@ -471,11 +553,36 @@ private class NativeVoiceBridge(
             recordingFile = null
         }
         activity.runOnUiThread {
+            runCatching { speechRecognizer?.cancel() }
+            runCatching { speechRecognizer?.destroy() }
+            speechRecognizer = null
+            speechListening = false
             tts?.stop()
             tts?.shutdown()
             tts = null
             ttsReady = false
         }
+    }
+
+    private fun notifySttResult(text: String) {
+        val js = "window.__xyNativeSttResult && window.__xyNativeSttResult(" + JSONObject.quote(text) + ");"
+        webView.post { webView.evaluateJavascript(js, null) }
+    }
+
+    private fun notifySttPartial(text: String) {
+        val js = "window.__xyNativeSttPartial && window.__xyNativeSttPartial(" + JSONObject.quote(text) + ");"
+        webView.post { webView.evaluateJavascript(js, null) }
+    }
+
+    private fun notifySttState(state: String) {
+        val js = "window.__xyNativeSttState && window.__xyNativeSttState(" + JSONObject.quote(state) + ");"
+        webView.post { webView.evaluateJavascript(js, null) }
+    }
+
+    private fun notifySttError(code: Int, detail: String? = null) {
+        val message = detail ?: "speech_error_" + code
+        val js = "window.__xyNativeSttError && window.__xyNativeSttError(" + JSONObject.quote(message) + ");"
+        webView.post { webView.evaluateJavascript(js, null) }
     }
 
     private fun notifyTtsDone(utteranceId: String?, error: String?) {
