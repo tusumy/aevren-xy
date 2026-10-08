@@ -36,8 +36,8 @@
     if(document.querySelector("#xyCallBtn"))return;
     const header=document.querySelector(".main > header");if(!header)return;
     const btn=document.createElement("button");btn.className="icon-btn xy-call-entry";btn.id="xyCallBtn";btn.type="button";btn.title="语音通话";btn.setAttribute("aria-label","语音通话");
-    btn.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 3.8 9.8 7a1.4 1.4 0 0 1-.1 1.8L8.3 10.3c1.1 2.3 3 4.2 5.4 5.4l1.5-1.4a1.4 1.4 0 0 1 1.8-.1l3.2 2.6a1.4 1.4 0 0 1 .4 1.6c-.5 1.5-1.8 2.5-3.4 2.5C9.4 20.9 3.1 14.6 3.1 6.8c0-1.6 1-2.9 2.5-3.4a1.4 1.4 0 0 1 1.6.4Z"/></svg>';
-    const settings=document.querySelector("#memoryBtn");header.insertBefore(btn,settings||null);btn.onclick=()=>ring({source:"manual"});
+    btn.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6.3 6.3l1.3-1.3a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6A2 2 0 0 1 22 16.9Z"/></svg>';
+    const settings=document.querySelector("#memoryBtn");if(settings)settings.insertAdjacentElement("afterend",btn);else header.appendChild(btn);btn.onclick=()=>ring({source:"manual"});
   }
 
   function addLine(role,text){
