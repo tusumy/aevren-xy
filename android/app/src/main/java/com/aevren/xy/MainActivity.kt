@@ -575,6 +575,16 @@ private class NativeVoiceBridge(
     }
 
     @JavascriptInterface
+    fun canStartRecognitionActivity(languageTag: String): Boolean {
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, normalizedRecognitionLanguage(languageTag))
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+        }
+        return intent.resolveActivity(activity.packageManager) != null
+    }
+
+    @JavascriptInterface
     @Synchronized
     fun startRecognitionActivity(languageTag: String): String {
         if (activity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
@@ -583,26 +593,24 @@ private class NativeVoiceBridge(
             }
             return JSONObject().put("ok", false).put("error", "permission_requested").toString()
         }
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, normalizedRecognitionLanguage(languageTag))
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+            putExtra(RecognizerIntent.EXTRA_PROMPT, "说话")
+        }
+        if (intent.resolveActivity(activity.packageManager) == null) {
+            return JSONObject().put("ok", false).put("error", "speech_activity_unavailable").toString()
+        }
         return try {
             speechListening = true
-            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, normalizedRecognitionLanguage(languageTag))
-                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
-                putExtra(RecognizerIntent.EXTRA_PROMPT, "说话")
-            }
             activity.runOnUiThread {
-                try {
-                    activity.startActivityForResult(intent, MainActivity.VOICE_RECOGNIZER)
-                } catch (error: Exception) {
-                    speechListening = false
-                    notifySttError(-2, error.message ?: error.javaClass.simpleName)
-                }
+                activity.startActivityForResult(intent, MainActivity.VOICE_RECOGNIZER)
             }
             JSONObject().put("ok", true).toString()
         } catch (error: Exception) {
             speechListening = false
-            JSONObject().put("ok", false).put("error", error.message ?: error.javaClass.simpleName).toString()
+            JSONObject().put("ok", false).put("error", "speech_activity_unavailable").toString()
         }
     }
 
