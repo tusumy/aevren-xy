@@ -1,0 +1,10 @@
+.xy-chat-row{display:flex;align-items:center;gap:3px;min-width:0;width:100%;border-radius:11px}
+.xy-chat-row>.chat-item{flex:1;min-width:0;width:0}
+.xy-chat-delete{flex:0 0 29px;width:29px;height:30px;display:grid;place-items:center;border:0;border-radius:9px;background:transparent;color:var(--muted,#8c8881);font:400 21px/1 system-ui,sans-serif;cursor:pointer;opacity:.6}
+.xy-chat-delete:hover,.xy-chat-delete:focus-visible{color:#b15e5e;background:rgba(176,85,85,.1);opacity:1;outline:none}
+.xy-chat-delete:active{transform:scale(.94)}
+.xy-chat-delete-error{color:#b55c5c}
+.xy-chat-delete-backdrop .xy-delete-card{margin-bottom:max(12px,env(safe-area-inset-bottom))}
+@media(pointer:coarse){.xy-chat-delete{opacity:.9;flex-basis:34px;width:34px;height:36px;font-size:22px}}
+html[data-theme-mode="dark"] .xy-chat-delete{color:#b6bdb9}
+html[data-theme-mode="dark"] .xy-chat-delete:hover,html[data-theme-mode="dark"] .xy-chat-delete:focus-visible{color:#f1aaaa;background:rgba(190,100,100,.16)}
