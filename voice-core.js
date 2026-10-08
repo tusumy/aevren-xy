@@ -24,7 +24,8 @@
     store.set("xy.voice",voiceSettings);
   }
   let recorder=null,recordStream=null,recordChunks=[],recordTimer=null,recordStarting=false,voiceBusy=false,nativeRecording=false,nativeRecognizing=false;
-  let nativeRecognitionResolve=null,nativeRecognitionReject=null,nativeRecognitionTimer=null;
+  let nativeRecognitionResolve=null,nativeRecognitionReject=null,nativeRecognitionTimer=null,nativeRecognitionFallbackTried=false;
+  let composerActionState="idle";
   let activeAudio=null,activeMessage=null;
   const busyMessages=new Set();
 
@@ -69,23 +70,53 @@
   function hasNativeRecognition(){
     const bridge=nativeVoiceBridge();return Boolean(bridge&&typeof bridge.startRecognition==="function");
   }
+  function startNativeRecognitionActivity(){
+    const bridge=nativeVoiceBridge();
+    if(!bridge||typeof bridge.startRecognitionActivity!=="function")return {ok:false,error:"speech_activity_unavailable"};
+    return parseNativeVoiceResult(bridge.startRecognitionActivity(voiceSettings.sttLanguage||"zh-CN"));
+  }
   function recognizeNativeOnce(){
     const bridge=nativeVoiceBridge();
     if(!bridge||typeof bridge.startRecognition!=="function")return Promise.reject(new Error("native_speech_unavailable"));
     if(nativeRecognizing)return Promise.reject(new Error("already_listening"));
-    nativeRecognizing=true;
+    nativeRecognizing=true;nativeRecognitionFallbackTried=false;
     return new Promise((resolve,reject)=>{
       nativeRecognitionResolve=resolve;nativeRecognitionReject=reject;
       clearTimeout(nativeRecognitionTimer);
       nativeRecognitionTimer=setTimeout(()=>{
         if(!nativeRecognizing)return;
         try{bridge.stopRecognition?.()}catch{}
+        if(!nativeRecognitionFallbackTried&&typeof bridge.startRecognitionActivity==="function"){
+          nativeRecognitionFallbackTried=true;
+          const fallback=startNativeRecognitionActivity();
+          if(fallback.ok){
+            toast("切到系统语音输入");
+            nativeRecognitionTimer=setTimeout(()=>{
+              if(!nativeRecognizing)return;
+              nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
+              reject(new Error("speech_timeout"));
+            },30000);
+            return;
+          }
+        }
         nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
         reject(new Error("speech_timeout"));
-      },15000);
+      },12000);
       const result=parseNativeVoiceResult(bridge.startRecognition(voiceSettings.sttLanguage||"zh-CN"));
       if(!result.ok){
         clearTimeout(nativeRecognitionTimer);
+        if(typeof bridge.startRecognitionActivity==="function"){
+          nativeRecognitionFallbackTried=true;
+          const fallback=startNativeRecognitionActivity();
+          if(fallback.ok){
+            nativeRecognitionTimer=setTimeout(()=>{
+              if(!nativeRecognizing)return;
+              nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
+              reject(new Error("speech_timeout"));
+            },30000);
+            return;
+          }
+        }
         nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
         reject(new Error(result.error||"native_speech_start_failed"));
       }
@@ -238,6 +269,7 @@
       }
       return options.join("");
     }
+    if(voiceSettings.systemEnginePackage)return '<option value="">由当前 TTS 引擎决定</option>';
     const voices=window.speechSynthesis?.getVoices?.()||[];
     return '<option value="">系统默认</option>'+voices.filter(v=>/^zh(?:-|_)/i.test(v.lang||"")).map(v=>'<option value="'+esc(v.voiceURI)+'" '+(v.voiceURI===voiceSettings.systemVoiceURI?'selected':'')+'>'+esc((v.lang||'中文')+' · '+(v.localService===false?'网络':'本地'))+'</option>').join('');
   }
@@ -327,10 +359,35 @@
     return text;
   }
 
+  const micIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"></path></svg>';
+  const stopIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"></rect></svg>';
+  const sendIcon='<span class="xy-send-arrow">↑</span>';
+
+  function hasComposerPayload(){
+    const text=document.querySelector("#input")?.value.trim()||"";
+    const attachments=window.xyAttachments?.peek?.()||[];
+    return Boolean(text||(Array.isArray(attachments)&&attachments.length));
+  }
+
+  function refreshComposerAction(){
+    const button=document.querySelector("#sendBtn");if(!button)return;
+    const recording=nativeRecognizing||nativeRecording||recorder?.state==="recording";
+    const listening=recording||composerActionState==="requesting"||composerActionState==="transcribing";
+    const mode=recording?"recording":hasComposerPayload()?"send":"mic";
+    button.dataset.mode=mode;
+    button.classList.toggle("is-mic",mode==="mic");
+    button.classList.toggle("is-recording",mode==="recording");
+    button.classList.toggle("is-transcribing",composerActionState==="transcribing"||composerActionState==="requesting");
+    button.innerHTML=mode==="send"?sendIcon:mode==="recording"?stopIcon:micIcon;
+    button.title=mode==="send"?"发送":mode==="recording"?"结束说话":"语音输入";
+    button.setAttribute("aria-label",button.title);
+    button.disabled=composerActionState==="transcribing"||composerActionState==="requesting";
+    if(!listening&&composerActionState!=="idle")composerActionState="idle";
+  }
+
   function setMicState(state){
-    const button=document.querySelector("#voiceMic");if(!button)return;
-    button.classList.toggle("recording",state==="recording");button.classList.toggle("transcribing",state==="transcribing"||state==="requesting");button.disabled=state==="transcribing"||state==="requesting";
-    button.title=state==="recording"?"点击结束录音":state==="transcribing"?"正在听懂…":state==="requesting"?"正在请求麦克风…":"发送语音";
+    composerActionState=state||"idle";
+    refreshComposerAction();
   }
 
   async function startRecording(){
@@ -414,12 +471,20 @@
     await processRecordedBlob(blob);
   }
 
-  function installMic(){
-    const composer=document.querySelector(".composer"),input=document.querySelector("#input");
-    if(!composer||!input||document.querySelector("#voiceMic"))return;
-    const button=document.createElement("button");button.type="button";button.id="voiceMic";button.className="voice-mic";button.title="发送语音";button.setAttribute("aria-label","发送语音");
-    button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"></path></svg>';
-    input.insertAdjacentElement("beforebegin",button);button.addEventListener("click",()=>nativeRecognizing||nativeRecording||recorder?.state==="recording"?stopRecording():startRecording());
+  function installComposerAction(){
+    document.querySelector("#voiceMic")?.remove();
+    const input=document.querySelector("#input"),button=document.querySelector("#sendBtn");
+    if(!input||!button)return;
+    const refresh=()=>refreshComposerAction();
+    input.addEventListener("input",refresh);
+    button.onclick=e=>{
+      e?.preventDefault?.();e?.stopPropagation?.();
+      if(nativeRecognizing||nativeRecording||recorder?.state==="recording"){stopRecording();return}
+      if(hasComposerPayload()){send();return}
+      startRecording();
+    };
+    window.xyVoiceRefreshComposer=refresh;
+    refresh();
   }
 
   function openVoicePanel(){
@@ -442,7 +507,7 @@
     }
     return result;
   };
-  const sendButton=document.querySelector("#sendBtn");if(sendButton)sendButton.onclick=send;
+  const sendButton=document.querySelector("#sendBtn");if(sendButton)requestAnimationFrame(refreshComposerAction);
 
   document.querySelector("#messages")?.addEventListener("click",e=>{
     const button=e.target.closest?.("[data-voice-message]");if(!button)return;
@@ -520,6 +585,7 @@
     hasNativeRecognition(){return hasNativeRecognition()},
     recognizeNativeOnce(){return recognizeNativeOnce()},
     stopNativeRecognition(){return stopNativeRecognition()},
+    startNativeRecognitionActivity(){return startNativeRecognitionActivity()},
     stop(){
       if(activeAudio){activeAudio.pause();activeAudio=null}
       try{nativeVoiceBridge()?.stopTts?.()}catch{}
@@ -533,15 +599,33 @@
     const resolve=nativeRecognitionResolve;
     nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
     if(resolve)resolve(String(text||""));
+    refreshComposerAction();
   };
   window.__xyNativeSttError=error=>{
     clearTimeout(nativeRecognitionTimer);nativeRecognitionTimer=null;
+    const bridge=nativeVoiceBridge();
+    if(nativeRecognizing&&!nativeRecognitionFallbackTried&&typeof bridge?.startRecognitionActivity==="function"){
+      nativeRecognitionFallbackTried=true;
+      const fallback=startNativeRecognitionActivity();
+      if(fallback.ok){
+        setMicState("recording");
+        toast("内嵌识别没接上，已切到系统语音输入");
+        nativeRecognitionTimer=setTimeout(()=>{
+          if(!nativeRecognizing)return;
+          const reject=nativeRecognitionReject;
+          nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
+          if(reject)reject(new Error("speech_timeout"));
+        },30000);
+        return;
+      }
+    }
     const reject=nativeRecognitionReject;
     nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
     if(reject)reject(new Error(String(error||"speech_error")));
+    refreshComposerAction();
   };
   window.__xyNativeSttPartial=text=>{
-    if(nativeRecognizing){const button=document.querySelector("#voiceMic");if(button)button.title="你在说："+String(text||"").slice(0,18)}
+    if(nativeRecognizing){const button=document.querySelector("#sendBtn");if(button)button.title="你在说："+String(text||"").slice(0,18)}
   };
   window.__xyNativeSttState=state=>{
     if(!nativeRecognizing)return;
@@ -558,5 +642,5 @@
   window.__xyNativeTtsError=(id,error)=>{if(activeMessage===String(id)){activeMessage=null;decorateMessages()}toast("系统语音播放失败："+String(error||"unknown"),true)};
   if(window.speechSynthesis?.addEventListener)window.speechSynthesis.addEventListener("voiceschanged",refreshSystemVoiceSelect);
   if(voiceSettings.systemEnginePackage)switchNativeEngine(voiceSettings.systemEnginePackage);
-  installMic();renderMessages();
+  installComposerAction();renderMessages();
 })();
