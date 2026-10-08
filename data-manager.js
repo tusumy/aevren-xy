@@ -1,7 +1,7 @@
 (()=>{
   "use strict";
   const FORMAT="AevrenXYBackup", VERSION=1, DB_NAME="xy-data-safety-v1", BUCKET="snapshots";
-  const PRIVATE_KEYS=new Set(["xy.endpoints","xy.mcps","xy.settings"]);
+  const PRIVATE_KEYS=new Set(["xy.endpoints","xy.mcps","xy.settings","xy.supabase.config","xy.supabase.session"]);
   const AUTO_MS=60*60*1000, KEEP=8;
   let pendingImport=null, timer=0, snapshotBusy=false, dbPromise=null;
   const $=s=>document.querySelector(s);
@@ -319,5 +319,5 @@
   const originalSave=save;
   save=function(){const result=originalSave.apply(this,arguments);autoSnapshot();return result};
   setTimeout(()=>snapshot("打开砚屿时自动保护").catch(()=>{}),1800);
-  window.xyDataManager={stats:()=>stats(collect(true)),exportBackup:downloadBackup};
+  window.xyDataManager={stats:()=>stats(collect(true)),statsOf:stats,exportValues:()=>collect(false),restoreValues:(values,mode="merge",label="云端备份")=>restore(values,mode,label),exportBackup:downloadBackup};
 })();
