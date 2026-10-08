@@ -100,11 +100,12 @@
     tray.id="xyAttachmentTray";
     tray.className="xy-attachment-tray";
     tray.hidden=true;
-    wrap.insertBefore(tray,composer);
   }
+  if(tray.parentElement!==composer)composer.prepend(tray);
 
   function render(){
     tray.hidden=!pending.length&&!busy;
+    window.xyVoiceRefreshComposer?.();
     tray.innerHTML="";
     if(busy){
       const loading=document.createElement("div");
@@ -114,7 +115,7 @@
     }
     pending.forEach((a,i)=>{
       const chip=document.createElement("div");
-      chip.className="xy-attachment-chip";
+      chip.className="xy-attachment-chip "+(a.kind==="image"?"image":"file");
       if(a.kind==="image"){
         const img=document.createElement("img");
         img.src=a.previewDataUrl||a.dataUrl||"";
@@ -146,7 +147,7 @@
     menu.id="xyAttachMenu";
     menu.className="xy-attach-menu";
     menu.hidden=true;
-    menu.innerHTML='<button type="button" data-attach="image"><span>▧</span><b>图片</b><small>相册 / 多选</small></button><button type="button" data-attach="file"><span>▤</span><b>文件</b><small>文本 / Markdown / JSON / 代码</small></button>';
+    menu.innerHTML='<button type="button" data-attach="image"><span>▧</span><b>图片</b><small>相册 / 多选</small></button><button type="button" data-attach="file"><span>▤</span><b>文件</b><small>文本 / Markdown / JSON / 代码</small></button><button type="button" data-attach="call"><span>☎</span><b>语音通话</b><small>和玄砚通话</small></button>';
     document.body.appendChild(menu);
   }
 
@@ -168,6 +169,11 @@
     const type=e.target.closest?.("[data-attach]")?.dataset.attach;
     if(!type)return;
     menu.hidden=true;
+    if(type==="call"){
+      if(window.AevrenCall?.ring)window.AevrenCall.ring({source:"composer"});
+      else toast("通话功能还没准备好",true);
+      return;
+    }
     (type==="image"?imageInput:fileInput).click();
   };
   document.addEventListener("click",e=>{if(!menu.hidden&&!menu.contains(e.target)&&e.target!==button)menu.hidden=true});
