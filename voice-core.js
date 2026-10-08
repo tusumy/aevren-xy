@@ -1,6 +1,7 @@
 (()=>{
   const DEFAULTS={
     voiceMode:"system",
+    systemEnginePackage:"",
     systemVoiceURI:"",
     voiceMcpId:"",
     voiceId:"",
@@ -40,6 +41,15 @@
     const bridge=nativeVoiceBridge();if(!bridge?.listVoices)return [];
     const result=parseNativeVoiceResult(bridge.listVoices());
     return Array.isArray(result)?result:[];
+  }
+  function nativeEngineList(){
+    const bridge=nativeVoiceBridge();if(!bridge?.listEngines)return [];
+    const result=parseNativeVoiceResult(bridge.listEngines());
+    return Array.isArray(result)?result:[];
+  }
+  function switchNativeEngine(packageName){
+    const bridge=nativeVoiceBridge();if(!bridge?.switchEngine)return {ok:false,error:"native_tts_engine_unavailable"};
+    return parseNativeVoiceResult(bridge.switchEngine(String(packageName||"")));
   }
   function base64ToBlob(value,mime){
     const bin=atob(String(value||"")),bytes=new Uint8Array(bin.length);
@@ -191,6 +201,18 @@
     box.querySelectorAll(".message.assistant.has-voice").forEach(x=>x.classList.remove("has-voice"));
   }
 
+  function systemEngineOptions(){
+    const engines=nativeEngineList();
+    if(!engines.length)return '<option value="">系统默认引擎</option>';
+    const options=['<option value="">系统默认引擎</option>'];
+    for(const item of engines){
+      const pkg=String(item.packageName||"");
+      const label=String(item.label||pkg||"未命名引擎");
+      options.push('<option value="'+esc(pkg)+'" '+(pkg===voiceSettings.systemEnginePackage?'selected':'')+'>'+esc(label)+'</option>');
+    }
+    return options.join("");
+  }
+
   function systemVoiceOptions(){
     const native=nativeVoiceList();
     if(native.length){
@@ -244,7 +266,7 @@
     const selected=resolveVoiceServer()?.id||"";
     body.innerHTML=`<p class="setting-note">默认使用设备自带系统语音，不需要额外服务；也可以切换到任意提供 text_to_speech 的 MCP。录音转写与语音合成互相独立。</p>
       <div class="voice-setting-grid">
-        <div class="voice-setting-card"><label>语音方式</label><select id="voiceMode"><option value="system" ${voiceSettings.voiceMode==="system"?"selected":""}>系统语音（无需 MCP）</option><option value="mcp" ${voiceSettings.voiceMode==="mcp"?"selected":""}>MCP 语音服务</option></select><label>系统音色</label><select id="systemVoice">${systemVoiceOptions()}</select><label>text_to_speech 服务</label><select id="voiceMcp"><option value="">请选择服务</option>${servers.map(x=>`<option value="${esc(x.id)}" ${x.id===selected?"selected":""}>${esc(x.name)}</option>`).join("")}</select><label>Voice ID（可选）</label><input id="voiceId" value="${esc(voiceSettings.voiceId)}" placeholder="由语音服务提供"><label>Model（可选）</label><input id="voiceModel" value="${esc(voiceSettings.voiceModel)}" placeholder="由语音服务提供"><label class="voice-check"><input id="voiceAutoSpeak" type="checkbox" ${voiceSettings.autoSpeak?"checked":""}>每次新回复自动念出来</label></div>
+        <div class="voice-setting-card"><label>语音方式</label><select id="voiceMode"><option value="system" ${voiceSettings.voiceMode==="system"?"selected":""}>系统语音（无需 MCP）</option><option value="mcp" ${voiceSettings.voiceMode==="mcp"?"selected":""}>MCP 语音服务</option></select><label>系统 TTS 引擎</label><select id="systemEngine">${systemEngineOptions()}</select><label>系统音色</label><select id="systemVoice">${systemVoiceOptions()}</select><label>text_to_speech 服务</label><select id="voiceMcp"><option value="">请选择服务</option>${servers.map(x=>`<option value="${esc(x.id)}" ${x.id===selected?"selected":""}>${esc(x.name)}</option>`).join("")}</select><label>Voice ID（可选）</label><input id="voiceId" value="${esc(voiceSettings.voiceId)}" placeholder="由语音服务提供"><label>Model（可选）</label><input id="voiceModel" value="${esc(voiceSettings.voiceModel)}" placeholder="由语音服务提供"><label class="voice-check"><input id="voiceAutoSpeak" type="checkbox" ${voiceSettings.autoSpeak?"checked":""}>每次新回复自动念出来</label></div>
         <div class="voice-setting-card"><label>语音转写 Base URL（留空跟随当前聊天接口）</label><input id="voiceSttBase" value="${esc(voiceSettings.sttBase)}" placeholder="https://api.example.com/v1"><label>转写 Key（Base 留空时才跟随当前接口）</label><input id="voiceSttKey" type="password" value="${esc(voiceSettings.sttKey)}" placeholder="仅保存在本机"><label>转写模型</label><input id="voiceSttModel" value="${esc(voiceSettings.sttModel)}" placeholder="whisper-1"><label>语言</label><input id="voiceSttLanguage" value="${esc(voiceSettings.sttLanguage)}" placeholder="zh / en"><label class="voice-check"><input id="voiceAutoSend" type="checkbox" ${voiceSettings.sendAfterTranscript?"checked":""}>转写完成后直接发送</label></div>
       </div>
       <div class="voice-test-row"><button class="panel-action" id="voiceOpenMcp">MCP 设置</button><button class="panel-action" id="voiceTest">试听</button></div>
@@ -255,6 +277,7 @@
   function collectVoiceSettings(){
     voiceSettings={...voiceSettings,
       voiceMode:document.querySelector("#voiceMode")?.value||"system",
+      systemEnginePackage:document.querySelector("#systemEngine")?.value||"",
       systemVoiceURI:document.querySelector("#systemVoice")?.value||"",
       voiceMcpId:document.querySelector("#voiceMcp")?.value||"",
       voiceId:document.querySelector("#voiceId")?.value.trim()||"",
@@ -417,6 +440,17 @@
     e.preventDefault();e.stopPropagation();synthesizeMessage(Number(button.dataset.voiceMessage),true);
   });
 
+  document.addEventListener("change",e=>{
+    if(e.target?.id!=="systemEngine")return;
+    const pkg=e.target.value||"";
+    voiceSettings.systemEnginePackage=pkg;
+    voiceSettings.systemVoiceURI="";
+    persist();
+    const result=switchNativeEngine(pkg);
+    if(!result.ok){toast("切换系统语音引擎失败："+(result.error||"unknown"),true);return}
+    toast("正在切换系统语音引擎…");
+  });
+
   document.addEventListener("click",async e=>{
     if(e.target.id==="voiceSave"){collectVoiceSettings();toast("语音设置保存了");renderVoicePanel()}
     if(e.target.id==="voiceOpenMcp")openPanel("mcp");
@@ -502,8 +536,16 @@
     if(!nativeRecognizing)return;
     if(state==="processing")setMicState("transcribing");
   };
+  window.__xyNativeTtsEngineReady=()=>{
+    refreshSystemVoiceSelect();
+    const select=document.querySelector("#systemVoice");
+    if(select)select.value=voiceSettings.systemVoiceURI||"";
+    toast("系统语音引擎已切换");
+  };
+  window.__xyNativeTtsEngineError=error=>toast("系统语音引擎启动失败："+String(error||"unknown"),true);
   window.__xyNativeTtsDone=id=>{if(activeMessage===String(id)){activeMessage=null;decorateMessages()}};
   window.__xyNativeTtsError=(id,error)=>{if(activeMessage===String(id)){activeMessage=null;decorateMessages()}toast("系统语音播放失败："+String(error||"unknown"),true)};
   if(window.speechSynthesis?.addEventListener)window.speechSynthesis.addEventListener("voiceschanged",refreshSystemVoiceSelect);
+  if(voiceSettings.systemEnginePackage)switchNativeEngine(voiceSettings.systemEnginePackage);
   installMic();renderMessages();
 })();
