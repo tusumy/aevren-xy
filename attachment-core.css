@@ -25,3 +25,44 @@
 html[data-theme-mode="dark"] .xy-attach-menu,html[data-theme-mode="dark"] .xy-attachment-chip{background:rgba(28,35,31,.9);border-color:rgba(255,255,255,.08)}
 html[data-theme-mode="dark"] .xy-attach-menu button,html[data-theme-mode="dark"] .xy-attachment-name{color:#edf1ee}
 @media(max-width:760px){.xy-attach-menu{width:205px}.xy-attachment-tray{padding-bottom:6px}.xy-message-attachments{max-width:280px}.xy-message-image{max-height:210px}}
+/* Composer attachment previews: keep selected media visibly attached to the input box. */
+.composer{flex-wrap:wrap}
+.composer .xy-attachment-tray{
+  order:-1;
+  flex:0 0 100%;
+  width:100%;
+  padding:2px 4px 8px;
+  margin:0;
+}
+.composer .xy-attachment-chip.image{
+  width:64px;
+  max-width:64px;
+  height:64px;
+  padding:0;
+  overflow:visible;
+  border-radius:14px;
+  background:rgba(255,255,255,.72);
+}
+.composer .xy-attachment-chip.image img{
+  width:62px;
+  height:62px;
+  border-radius:13px;
+  object-fit:cover;
+}
+.composer .xy-attachment-chip.image .xy-attachment-name{display:none}
+.composer .xy-attachment-chip.image .xy-attachment-remove{
+  right:-5px;
+  top:-5px;
+  width:22px;
+  height:22px;
+  background:rgba(45,52,48,.88);
+  color:#fff;
+  box-shadow:0 4px 12px rgba(0,0,0,.18);
+}
+.composer .xy-attachment-chip.file{height:38px}
+@media(max-width:760px){
+  .composer .attach{display:grid!important}
+  .composer .xy-attachment-tray{padding:1px 2px 7px}
+  .composer .xy-attachment-chip.image{width:60px;max-width:60px;height:60px}
+  .composer .xy-attachment-chip.image img{width:58px;height:58px}
+}
