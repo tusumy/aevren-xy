@@ -1,7 +1,8 @@
 (()=>{
   const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
   let phase="idle",recognition=null,startedAt=0,timerId=null,processing=false,restartTimer=null;
-  let overlay,statusEl,timeEl,transcriptEl,acceptBtn,hangupBtn,fallbackWrap,fallbackInput;
+  let callRecorder=null,callStream=null,callChunks=[];
+  let overlay,statusEl,timeEl,transcriptEl,acceptBtn,hangupBtn,fallbackWrap,fallbackInput,pushBtn;
 
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const currentChat=()=>{try{return chat()}catch{return null}};
@@ -17,7 +18,8 @@
       <div class="xy-call-status">语音来电</div>
       <div class="xy-call-time">00:00</div>
       <div class="xy-call-transcript" aria-live="polite"></div>
-      <div class="xy-call-fallback" hidden><input type="text" placeholder="当前浏览器不能连续听写，可在这里输入"><button type="button">发送</button></div>
+      <button type="button" class="xy-call-push" hidden aria-label="按一下开始或结束说话"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"></path></svg><span>说话</span></button>
+      <div class="xy-call-fallback" hidden><input type="text" placeholder="也可以在这里输入"><button type="button">发送</button></div>
       <div class="xy-call-actions">
         <button type="button" class="xy-call-answer" aria-label="接听"><span>接听</span></button>
         <button type="button" class="xy-call-hangup" aria-label="挂断"><span>挂断</span></button>
@@ -26,8 +28,9 @@
     document.body.appendChild(overlay);
     statusEl=overlay.querySelector(".xy-call-status");timeEl=overlay.querySelector(".xy-call-time");
     transcriptEl=overlay.querySelector(".xy-call-transcript");acceptBtn=overlay.querySelector(".xy-call-answer");hangupBtn=overlay.querySelector(".xy-call-hangup");
-    fallbackWrap=overlay.querySelector(".xy-call-fallback");fallbackInput=fallbackWrap.querySelector("input");
+    fallbackWrap=overlay.querySelector(".xy-call-fallback");fallbackInput=fallbackWrap.querySelector("input");pushBtn=overlay.querySelector(".xy-call-push");
     acceptBtn.onclick=answer;hangupBtn.onclick=hangup;
+    pushBtn.onclick=()=>callRecorder?.state==="recording"?stopFallbackRecording():startFallbackRecording();
     fallbackWrap.querySelector("button").onclick=()=>submitFallback();
     fallbackInput.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();submitFallback()}};
   }
@@ -53,7 +56,7 @@
     if(phase!=="idle")return;
     phase="ringing";processing=false;overlay.hidden=false;overlay.classList.add("show","ringing");overlay.classList.remove("connected");
     transcriptEl.innerHTML="";statusEl.textContent="语音来电";timeEl.textContent="00:00";acceptBtn.hidden=false;hangupBtn.hidden=false;
-    fallbackWrap.hidden=true;
+    fallbackWrap.hidden=true;pushBtn.hidden=true;
     navigator.vibrate?.([180,120,180]);
   }
 
@@ -61,8 +64,49 @@
     if(phase!=="ringing")return;
     phase="connected";startedAt=Date.now();overlay.classList.remove("ringing");overlay.classList.add("connected");acceptBtn.hidden=true;statusEl.textContent=SpeechRecognition?"正在接通…":"已接通";
     timerId=setInterval(()=>{if(phase==="connected")timeEl.textContent=fmtTime(Date.now()-startedAt)},500);
-    if(!SpeechRecognition){fallbackWrap.hidden=false;statusEl.textContent="已接通 · 文字备用输入";fallbackInput.focus();return}
+    if(!SpeechRecognition){fallbackWrap.hidden=false;pushBtn.hidden=false;statusEl.textContent="已接通 · 点麦克风说话";return}
     await startListening();
+  }
+
+  async function startFallbackRecording(){
+    if(phase!=="connected"||processing||callRecorder?.state==="recording")return;
+    if(!window.MediaRecorder||!window.AevrenVoice?.openMicStream||!window.AevrenVoice?.transcribeBlob){
+      statusEl.textContent="当前环境不能录音 · 可用文字输入";fallbackWrap.hidden=false;return;
+    }
+    try{
+      callStream=await window.AevrenVoice.openMicStream();
+      callChunks=[];
+      const mime=window.AevrenVoice.getRecorderMime?.()||"";
+      callRecorder=new MediaRecorder(callStream,mime?{mimeType:mime}:undefined);
+      callRecorder.ondataavailable=e=>{if(e.data?.size)callChunks.push(e.data)};
+      callRecorder.onstop=finishFallbackRecording;
+      callRecorder.start(250);
+      pushBtn.classList.add("recording");pushBtn.querySelector("span").textContent="结束";
+      statusEl.textContent="正在听你说…";
+    }catch(error){
+      callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;
+      statusEl.textContent="麦克风启动失败 · 可用文字输入";fallbackWrap.hidden=false;
+    }
+  }
+
+  function stopFallbackRecording(){
+    if(callRecorder?.state==="recording")callRecorder.stop();
+  }
+
+  async function finishFallbackRecording(){
+    const type=callRecorder?.mimeType||callChunks[0]?.type||"audio/webm";
+    const blob=new Blob(callChunks,{type});
+    callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];
+    pushBtn.classList.remove("recording");pushBtn.querySelector("span").textContent="说话";
+    if(blob.size<700){statusEl.textContent="这段太短了 · 再说一次";return}
+    try{
+      processing=true;statusEl.textContent="正在听懂…";
+      const text=await window.AevrenVoice.transcribeBlob(blob);
+      processing=false;
+      if(text)await handleUserText(text);
+    }catch(error){
+      processing=false;statusEl.textContent="没听懂 · 再说一次";
+    }
   }
 
   function buildRecognition(){
@@ -80,7 +124,7 @@
     };
     rec.onerror=e=>{
       if(e.error==="not-allowed"||e.error==="service-not-allowed"){
-        statusEl.textContent="麦克风未授权 · 可用文字输入";fallbackWrap.hidden=false;
+        statusEl.textContent="麦克风未授权 · 可用文字输入";fallbackWrap.hidden=false;pushBtn.hidden=false;
       }
     };
     rec.onend=()=>{
@@ -130,7 +174,7 @@
     }catch(error){addLine("assistant","通话发送失败："+(error?.message||error))}
     finally{
       processing=false;
-      if(phase==="connected"){statusEl.textContent="正在听…";startListening()}
+      if(phase==="connected"){if(SpeechRecognition){statusEl.textContent="正在听…";startListening()}else{statusEl.textContent="点麦克风说话";pushBtn.hidden=false;fallbackWrap.hidden=false}}
     }
   }
 
@@ -141,7 +185,7 @@
   function hangup(){
     if(phase==="idle")return;
     const duration=startedAt?fmtTime(Date.now()-startedAt):"00:00";
-    phase="idle";processing=false;stopListening();clearInterval(timerId);timerId=null;window.AevrenVoice?.stop?.();
+    phase="idle";processing=false;stopListening();if(callRecorder?.state==="recording"){try{callRecorder.onstop=null;callRecorder.stop()}catch{}}callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];clearInterval(timerId);timerId=null;window.AevrenVoice?.stop?.();
     statusEl.textContent="通话结束 · "+duration;overlay.classList.remove("ringing","connected");overlay.classList.add("ended");
     setTimeout(()=>{overlay.hidden=true;overlay.classList.remove("show","ended")},650);
   }
