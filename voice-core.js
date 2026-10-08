@@ -343,6 +343,9 @@
     isMessageSpeaking(index,targetChat=currentChat()){
       return activeMessage===messageKey(targetChat,Number(index));
     },
+    transcribeBlob(blob){return transcribe(blob)},
+    openMicStream(){return requestMicStream()},
+    getRecorderMime(){return recorderMime()},
     stop(){
       if(activeAudio){activeAudio.pause();activeAudio=null}
       window.speechSynthesis?.cancel?.();
