@@ -24,7 +24,7 @@
     store.set("xy.voice",voiceSettings);
   }
   let recorder=null,recordStream=null,recordChunks=[],recordTimer=null,recordStarting=false,voiceBusy=false,nativeRecording=false,nativeRecognizing=false;
-  let nativeRecognitionResolve=null,nativeRecognitionReject=null;
+  let nativeRecognitionResolve=null,nativeRecognitionReject=null,nativeRecognitionTimer=null;
   let activeAudio=null,activeMessage=null;
   const busyMessages=new Set();
 
@@ -76,8 +76,16 @@
     nativeRecognizing=true;
     return new Promise((resolve,reject)=>{
       nativeRecognitionResolve=resolve;nativeRecognitionReject=reject;
+      clearTimeout(nativeRecognitionTimer);
+      nativeRecognitionTimer=setTimeout(()=>{
+        if(!nativeRecognizing)return;
+        try{bridge.stopRecognition?.()}catch{}
+        nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
+        reject(new Error("speech_timeout"));
+      },15000);
       const result=parseNativeVoiceResult(bridge.startRecognition(voiceSettings.sttLanguage||"zh-CN"));
       if(!result.ok){
+        clearTimeout(nativeRecognitionTimer);
         nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
         reject(new Error(result.error||"native_speech_start_failed"));
       }
@@ -339,7 +347,8 @@
       }catch(error){
         const code=String(error?.message||error);
         if(code==="permission_requested")toast("已经请求麦克风权限，允许后再点一下麦克风");
-        else if(code==="speech_error_7")toast("没听清，再说一次");
+        else if(code==="speech_error_7"||code==="speech_timeout")toast("没听清，再说一次");
+        else if(code==="speech_recognizer_unavailable")toast("系统没有可用的语音识别服务",true);
         else toast("没听懂："+code,true);
       }finally{
         nativeRecognizing=false;voiceBusy=false;recordStarting=false;setMicState("idle");
@@ -520,11 +529,13 @@
   };
 
   window.__xyNativeSttResult=text=>{
+    clearTimeout(nativeRecognitionTimer);nativeRecognitionTimer=null;
     const resolve=nativeRecognitionResolve;
     nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
     if(resolve)resolve(String(text||""));
   };
   window.__xyNativeSttError=error=>{
+    clearTimeout(nativeRecognitionTimer);nativeRecognitionTimer=null;
     const reject=nativeRecognitionReject;
     nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
     if(reject)reject(new Error(String(error||"speech_error")));
