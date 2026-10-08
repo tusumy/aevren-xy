@@ -30,3 +30,35 @@ html[data-theme-mode="dark"] .xy-voice-play,html[data-theme-mode="dark"] .voice-
 html[data-theme-mode="dark"] .voice-setting-card input,html[data-theme-mode="dark"] .voice-setting-card select{background:rgba(12,16,14,.46);border-color:rgba(255,255,255,.08);color:#edf1ee}
 
 @media(max-width:760px){.composer .attach{display:none}.xy-voice-title{max-width:150px}.voice-mic{flex-basis:36px;width:36px}.xy-voice-row{margin-left:4px}}
+
+/* One right-side composer action: mic when empty, send when there is content. */
+.composer #sendBtn{
+  display:grid;
+  place-items:center;
+}
+.composer #sendBtn svg{
+  width:18px;
+  height:18px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.composer #sendBtn.is-mic{
+  background:transparent;
+  color:#747f78;
+  box-shadow:none;
+}
+.composer #sendBtn.is-mic:hover{background:rgba(54,93,74,.08);color:var(--theme-accent,#365d4a)}
+.composer #sendBtn.is-recording{
+  background:rgba(168,79,79,.12);
+  color:#a84f4f;
+  animation:voice-pulse 1.1s ease-in-out infinite;
+}
+.composer #sendBtn.is-recording svg{fill:currentColor;stroke:none}
+.composer #sendBtn.is-transcribing{opacity:.68;cursor:wait}
+.xy-send-arrow{font-size:20px;line-height:1}
+@media(max-width:760px){
+  .composer .attach{display:grid!important}
+}

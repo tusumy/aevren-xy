@@ -55,6 +55,7 @@ class MainActivity : Activity() {
         private const val HOME = "https://tusumy.github.io/aevren-xy/"
         private const val FILE_CHOOSER = 7001
         const val AUDIO_PERMISSION = 7002
+        const val VOICE_RECOGNIZER = 7003
     }
 
     private lateinit var webView: WebView
@@ -183,7 +184,7 @@ class MainActivity : Activity() {
         }
 
         if (savedInstanceState == null) {
-            webView.loadUrl("${HOME}?app=android&shell=8&t=${System.currentTimeMillis()}")
+            webView.loadUrl("${HOME}?app=android&shell=9&t=${System.currentTimeMillis()}")
         } else {
             webView.restoreState(savedInstanceState)
         }
@@ -313,6 +314,10 @@ class MainActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == VOICE_RECOGNIZER) {
+            nativeVoiceBridge?.handleRecognitionActivityResult(resultCode, data)
+            return
+        }
         if (requestCode != FILE_CHOOSER) return
         val result = if (resultCode == RESULT_OK) WebChromeClient.FileChooserParams.parseResult(resultCode, data) else null
         fileCallback?.onReceiveValue(result)
@@ -385,6 +390,15 @@ private class NativeVoiceBridge(
         }
     }
 
+    private fun speechLocale(text: String): Locale {
+        return when {
+            text.any { it in '\u3040'..'\u30ff' } -> Locale.forLanguageTag("ja-JP")
+            text.any { it in '\uac00'..'\ud7af' } -> Locale.forLanguageTag("ko-KR")
+            text.any { it in '\u4e00'..'\u9fff' } -> Locale.forLanguageTag("zh-CN")
+            else -> Locale.US
+        }
+    }
+
     private fun speakNow(request: PendingSpeech) {
         activity.runOnUiThread {
             val engine = tts
@@ -398,11 +412,15 @@ private class NativeVoiceBridge(
 
             if (chosen != null) {
                 engine.voice = chosen
-            } else if (currentTtsEngine.isBlank()) {
-                val chinese = engine.voices?.firstOrNull {
-                    it.locale?.language == Locale.CHINESE.language && !it.isNetworkConnectionRequired
-                } ?: engine.voices?.firstOrNull { it.locale?.language == Locale.CHINESE.language }
-                if (chinese != null) engine.voice = chinese
+            } else {
+                val locale = speechLocale(request.text)
+                runCatching { engine.setLanguage(locale) }
+                if (currentTtsEngine.isBlank()) {
+                    val matching = engine.voices?.firstOrNull {
+                        it.locale?.language == locale.language && !it.isNetworkConnectionRequired
+                    } ?: engine.voices?.firstOrNull { it.locale?.language == locale.language }
+                    if (matching != null) engine.voice = matching
+                }
             }
 
             val result = engine.speak(request.text, TextToSpeech.QUEUE_FLUSH, null, request.utteranceId)
@@ -554,6 +572,50 @@ private class NativeVoiceBridge(
             }
         }
         return JSONObject().put("ok", true).toString()
+    }
+
+    @JavascriptInterface
+    @Synchronized
+    fun startRecognitionActivity(languageTag: String): String {
+        if (activity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            activity.runOnUiThread {
+                activity.requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), MainActivity.AUDIO_PERMISSION)
+            }
+            return JSONObject().put("ok", false).put("error", "permission_requested").toString()
+        }
+        return try {
+            speechListening = true
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, normalizedRecognitionLanguage(languageTag))
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+                putExtra(RecognizerIntent.EXTRA_PROMPT, "说话")
+            }
+            activity.runOnUiThread {
+                try {
+                    activity.startActivityForResult(intent, MainActivity.VOICE_RECOGNIZER)
+                } catch (error: Exception) {
+                    speechListening = false
+                    notifySttError(-2, error.message ?: error.javaClass.simpleName)
+                }
+            }
+            JSONObject().put("ok", true).toString()
+        } catch (error: Exception) {
+            speechListening = false
+            JSONObject().put("ok", false).put("error", error.message ?: error.javaClass.simpleName).toString()
+        }
+    }
+
+    fun handleRecognitionActivityResult(resultCode: Int, data: Intent?) {
+        speechListening = false
+        if (resultCode != Activity.RESULT_OK) {
+            notifySttError(-3, "speech_activity_cancelled")
+            return
+        }
+        val matches = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS).orEmpty()
+        val text = matches.firstOrNull().orEmpty().trim()
+        if (text.isBlank()) notifySttError(SpeechRecognizer.ERROR_NO_MATCH)
+        else notifySttResult(text)
     }
 
     @JavascriptInterface

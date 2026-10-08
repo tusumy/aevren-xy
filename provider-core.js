@@ -61,21 +61,55 @@
   };
   const safeJson=s=>{try{return JSON.parse(s)}catch{return {result:String(s??'')}}};
 
+  function openAIText(content){
+    if(typeof content==="string")return content;
+    if(!Array.isArray(content))return String(content??"");
+    return content.map(part=>{
+      if(typeof part==="string")return part;
+      if(part?.type==="text")return String(part.text||"");
+      return "";
+    }).filter(Boolean).join("\n");
+  }
+
+  function anthropicBlocks(content){
+    const parts=Array.isArray(content)?content:[content];
+    const out=[];
+    for(const part of parts){
+      if(typeof part==="string"){
+        if(part.trim())out.push({type:"text",text:part});
+        continue;
+      }
+      if(!part||typeof part!=="object")continue;
+      if(part.type==="text"){
+        const text=String(part.text||"");if(text.trim())out.push({type:"text",text});
+        continue;
+      }
+      if(part.type==="image"&&part.source){out.push(part);continue}
+      if(part.type==="image_url"){
+        const url=String(part.image_url?.url||part.url||"");
+        const match=url.match(/^data:([^;,]+);base64,(.+)$/s);
+        if(match)out.push({type:"image",source:{type:"base64",media_type:match[1],data:match[2]}});
+        else if(url)out.push({type:"text",text:"[图片："+url+"]"});
+      }
+    }
+    return out;
+  }
+
   function toAnthropicMessages(messages){
     const out=[];
     for(const m of messages||[]){
-      if(m.role==='system')continue;
-      if(m.role==='assistant'){
-        const blocks=[];
-        if(m.content)blocks.push({type:'text',text:String(m.content)});
+      if(m.role==="system")continue;
+      if(m.role==="assistant"){
+        const blocks=anthropicBlocks(m.content);
         for(const tc of m.tool_calls||[]){
-          blocks.push({type:'tool_use',id:tc.id,name:tc.function?.name||'tool',input:safeJson(tc.function?.arguments||'{}')});
+          blocks.push({type:"tool_use",id:tc.id,name:tc.function?.name||"tool",input:safeJson(tc.function?.arguments||"{}")});
         }
-        pushRole(out,'assistant',blocks);
-      }else if(m.role==='tool'){
-        pushRole(out,'user',[{type:'tool_result',tool_use_id:m.tool_call_id,content:String(m.content??'')}]);
+        pushRole(out,"assistant",blocks);
+      }else if(m.role==="tool"){
+        pushRole(out,"user",[{type:"tool_result",tool_use_id:m.tool_call_id,content:String(m.content??"")}]);
       }else{
-        pushRole(out,'user',[{type:'text',text:String(m.content??'')}]);
+        const blocks=anthropicBlocks(m.content);
+        pushRole(out,"user",blocks.length?blocks:[{type:"text",text:"[Empty]"}]);
       }
     }
     return out;
@@ -93,7 +127,7 @@
     }
     if(!/\/chat\/completions(?:\?|$)/.test(url))return nextFetch(input,init);
     const payload=await parseBody(input,init);
-    const system=(payload.messages||[]).filter(x=>x.role==='system').map(x=>String(x.content||'')).filter(Boolean).join('\n\n');
+    const system=(payload.messages||[]).filter(x=>x.role==='system').map(x=>openAIText(x.content)).filter(Boolean).join('\n\n');
     const body={model:payload.model,max_tokens:Number(payload.max_tokens||2048),messages:toAnthropicMessages(payload.messages),temperature:payload.temperature};
     if(system)body.system=system;
     const tools=openAIToolsToAnthropic(payload.tools);if(tools.length)body.tools=tools;
@@ -108,18 +142,51 @@
     return jsonResponse({choices:[{message,finish_reason:calls.length?'tool_calls':'stop'}],model:data.model,usage:data.usage},200,res.headers);
   }
 
+  function geminiParts(content){
+    const parts=Array.isArray(content)?content:[content];
+    const out=[];
+    for(const part of parts){
+      if(typeof part==="string"){
+        if(part.trim())out.push({text:part});
+        continue;
+      }
+      if(!part||typeof part!=="object")continue;
+      if(part.type==="text"){
+        const text=String(part.text||"");if(text.trim())out.push({text});
+        continue;
+      }
+      if(part.type==="image_url"){
+        const url=String(part.image_url?.url||part.url||"");
+        const match=url.match(/^data:([^;,]+);base64,(.+)$/s);
+        if(match)out.push({inlineData:{mimeType:match[1],data:match[2]}});
+        else if(url)out.push({text:"[图片："+url+"]"});
+      }else if(part.inlineData||part.inline_data){
+        const inline=part.inlineData||part.inline_data;
+        out.push({inlineData:{mimeType:inline.mimeType||inline.mime_type||"image/jpeg",data:inline.data||""}});
+      }
+    }
+    return out;
+  }
+
   function toGeminiContents(messages){
     const out=[],callNames=new Map();
     for(const m of messages||[]){
-      if(m.role==='system')continue;
-      if(m.role==='assistant'){
-        const parts=[];if(m.content)parts.push({text:String(m.content)});
-        for(const tc of m.tool_calls||[]){const name=tc.function?.name||'tool';callNames.set(tc.id,name);parts.push({functionCall:{name,args:safeJson(tc.function?.arguments||'{}')}})}
-        if(parts.length)out.push({role:'model',parts});
-      }else if(m.role==='tool'){
-        const name=callNames.get(m.tool_call_id)||'tool';
-        out.push({role:'user',parts:[{functionResponse:{name,response:safeJson(m.content)}}]});
-      }else out.push({role:'user',parts:[{text:String(m.content??'')}]});
+      if(m.role==="system")continue;
+      if(m.role==="assistant"){
+        const parts=geminiParts(m.content);
+        for(const tc of m.tool_calls||[]){
+          const name=tc.function?.name||"tool";
+          callNames.set(tc.id,name);
+          parts.push({functionCall:{name,args:safeJson(tc.function?.arguments||"{}")}});
+        }
+        if(parts.length)out.push({role:"model",parts});
+      }else if(m.role==="tool"){
+        const name=callNames.get(m.tool_call_id)||"tool";
+        out.push({role:"user",parts:[{functionResponse:{name,response:safeJson(m.content)}}]});
+      }else{
+        const parts=geminiParts(m.content);
+        if(parts.length)out.push({role:"user",parts});
+      }
     }
     return out;
   }
@@ -141,7 +208,7 @@
     }
     if(!/\/chat\/completions(?:\?|$)/.test(url))return nextFetch(input,init);
     const payload=await parseBody(input,init);
-    const system=(payload.messages||[]).filter(x=>x.role==='system').map(x=>String(x.content||'')).filter(Boolean).join('\n\n');
+    const system=(payload.messages||[]).filter(x=>x.role==='system').map(x=>openAIText(x.content)).filter(Boolean).join('\n\n');
     const body={contents:toGeminiContents(payload.messages),generationConfig:{temperature:payload.temperature,maxOutputTokens:Number(payload.max_tokens||2048)}};
     if(system)body.systemInstruction={parts:[{text:system}]};
     const tools=openAIToolsToGemini(payload.tools);if(tools)body.tools=tools;
