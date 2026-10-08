@@ -93,7 +93,7 @@
     if(wrap)return wrap;
     wrap=document.createElement("div");wrap.id="xyHeaderMessageStats";wrap.className="xy-header-message-stats";
     wrap.innerHTML='<button type="button" class="xy-header-count" aria-label="查看消息统计" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg><span>0</span></button><div class="xy-header-stats-sheet" hidden></div>';
-    const settings=header.querySelector("#memoryBtn");header.insertBefore(wrap,settings||null);
+    const presence=header.querySelector(".presence");if(presence)presence.appendChild(wrap);else{const settings=header.querySelector("#memoryBtn");header.insertBefore(wrap,settings||null)}
     const button=wrap.querySelector(".xy-header-count"),sheet=wrap.querySelector(".xy-header-stats-sheet");
     button.addEventListener("click",e=>{
       e.preventDefault();e.stopPropagation();
