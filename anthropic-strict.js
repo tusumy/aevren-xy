@@ -35,8 +35,22 @@
       for(const part of content){
         if(typeof part==='string'&&part.trim())out.push({type:'text',text:part});
         else if(part&&typeof part==='object'){
-          if(part.type==='text'&&String(part.text||'').trim())out.push({type:'text',text:String(part.text)});
-          else if(part.type==='image'||part.type==='image_url')out.push(part);
+          if(part.type==='text'&&String(part.text||'').trim()){
+            out.push({type:'text',text:String(part.text)});
+          }else if(part.type==='image_url'){
+            const url=String(part.image_url?.url||part.url||'');
+            const match=url.match(/^data:([^;,]+);base64,(.+)$/s);
+            if(match){
+              out.push({type:'image',source:{type:'base64',media_type:match[1],data:match[2]}});
+            }else if(url){
+              out.push({type:'text',text:'[图片：'+url+']'});
+            }
+          }else if(part.type==='image'){
+            if(part.source)out.push(part);
+            else if(part.data){
+              out.push({type:'image',source:{type:'base64',media_type:part.media_type||'image/jpeg',data:part.data}});
+            }
+          }
         }
       }
       return out;
