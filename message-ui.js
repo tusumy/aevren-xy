@@ -87,15 +87,39 @@
     if(button)button.hidden=!pendingUserQueue.length||queueDraining||sending;
   }
 
+  function ensureHeaderMessageStats(){
+    const header=document.querySelector(".main > header");if(!header)return null;
+    let wrap=header.querySelector("#xyHeaderMessageStats");
+    if(wrap)return wrap;
+    wrap=document.createElement("div");wrap.id="xyHeaderMessageStats";wrap.className="xy-header-message-stats";
+    wrap.innerHTML='<button type="button" class="xy-header-count" aria-label="查看消息统计" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg><span>0</span></button><div class="xy-header-stats-sheet" hidden></div>';
+    const settings=header.querySelector("#memoryBtn");header.insertBefore(wrap,settings||null);
+    const button=wrap.querySelector(".xy-header-count"),sheet=wrap.querySelector(".xy-header-stats-sheet");
+    button.addEventListener("click",e=>{
+      e.preventDefault();e.stopPropagation();
+      sheet.hidden=!sheet.hidden;button.setAttribute("aria-expanded",String(!sheet.hidden));
+    });
+    document.addEventListener("click",e=>{
+      if(!wrap.contains(e.target)&&!sheet.hidden){sheet.hidden=true;button.setAttribute("aria-expanded","false")}
+    });
+    return wrap;
+  }
+
   function updateMessageCount(){
     const c=chat(),day=document.querySelector("#messages .day");
-    if(!c||!day)return;
+    if(!c)return;
     const saved=(c.messages||[]).filter(m=>m?.role==="user"||m?.role==="assistant");
     const total=saved.length+pendingUserQueue.length;
     const users=saved.filter(m=>m.role==="user").length+pendingUserQueue.length;
     const assistants=saved.filter(m=>m.role==="assistant").length;
-    day.textContent="AEVREN · XY · "+total+" 条消息";
-    day.title="你 "+users+" · "+currentCharacterName()+" "+assistants;
+    if(day){day.textContent="AEVREN · XY";day.title="你 "+users+" · "+currentCharacterName()+" "+assistants}
+    const wrap=ensureHeaderMessageStats();if(!wrap)return;
+    const count=wrap.querySelector(".xy-header-count span"),sheet=wrap.querySelector(".xy-header-stats-sheet");
+    if(count)count.textContent=String(total);
+    const limit=String(localStorage.getItem("xy.contextMessageLimit")||"40");
+    const contextLabel=limit==="0"?"全部消息":("最近 "+limit+" 条");
+    if(sheet)sheet.innerHTML='<span>当前对话</span><strong>'+total+' 条消息</strong><div><span>你</span><b>'+users+'</b></div><div><span>'+esc(currentCharacterName())+'</span><b>'+assistants+'</b></div><div class="is-highlight"><span>发送给模型</span><b>'+contextLabel+'</b></div>';
+    wrap.querySelector(".xy-header-count")?.setAttribute("aria-label","当前对话 "+total+" 条消息");
   }
 
   function renderPendingQueue(){

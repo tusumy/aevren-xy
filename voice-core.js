@@ -136,6 +136,41 @@
     box.querySelectorAll(".message.assistant.has-voice").forEach(x=>x.classList.remove("has-voice"));
   }
 
+  function systemVoiceOptions(){
+    const voices=window.speechSynthesis?.getVoices?.()||[];
+    const options=['<option value="">系统默认</option>'];
+    for(const item of voices){
+      const uri=String(item.voiceURI||item.name||"");
+      const label=(item.name||"未命名语音")+" · "+(item.lang||"未知语言");
+      options.push('<option value="'+esc(uri)+'" '+(uri===voiceSettings.systemVoiceURI?'selected':'')+'>'+esc(label)+'</option>');
+    }
+    return options.join("");
+  }
+
+  function refreshSystemVoiceSelect(){
+    const select=document.querySelector("#systemVoice");if(!select)return;
+    const wanted=voiceSettings.systemVoiceURI||select.value||"";
+    select.innerHTML=systemVoiceOptions();
+    if([...select.options].some(option=>option.value===wanted))select.value=wanted;
+  }
+
+  async function requestMicStream(){
+    const attempts=[
+      {audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true}},
+      {audio:true}
+    ];
+    let lastError=null;
+    for(const constraints of attempts){
+      try{return await navigator.mediaDevices.getUserMedia(constraints)}
+      catch(error){
+        lastError=error;
+        if(error?.name==="NotAllowedError"||error?.name==="SecurityError")throw error;
+        await new Promise(resolve=>setTimeout(resolve,260));
+      }
+    }
+    throw lastError||new Error("Could not start audio source");
+  }
+
   function renderVoicePanel(){
     document.querySelector("#sidebar")?.classList.remove("open");
     document.querySelector("#panelEyebrow").textContent="VOICE";
@@ -308,6 +343,9 @@
     isMessageSpeaking(index,targetChat=currentChat()){
       return activeMessage===messageKey(targetChat,Number(index));
     },
+    transcribeBlob(blob){return transcribe(blob)},
+    openMicStream(){return requestMicStream()},
+    getRecorderMime(){return recorderMime()},
     stop(){
       if(activeAudio){activeAudio.pause();activeAudio=null}
       window.speechSynthesis?.cancel?.();
