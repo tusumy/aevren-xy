@@ -36,11 +36,7 @@
   }
 
   function installEntry(){
-    if(document.querySelector("#xyCallBtn"))return;
-    const header=document.querySelector(".main > header");if(!header)return;
-    const btn=document.createElement("button");btn.className="icon-btn xy-call-entry";btn.id="xyCallBtn";btn.type="button";btn.title="语音通话";btn.setAttribute("aria-label","语音通话");
-    btn.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.1-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.5 2.1L8 9.7a16 16 0 0 0 6.3 6.3l1.3-1.3a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6A2 2 0 0 1 22 16.9Z"/></svg>';
-    const settings=document.querySelector("#memoryBtn");if(settings)settings.insertAdjacentElement("afterend",btn);else header.appendChild(btn);btn.onclick=()=>ring({source:"manual"});
+    document.querySelector("#xyCallBtn")?.remove();
   }
 
   function addLine(role,text){
