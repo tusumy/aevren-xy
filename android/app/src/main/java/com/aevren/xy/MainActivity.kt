@@ -390,6 +390,15 @@ private class NativeVoiceBridge(
         }
     }
 
+    private fun speechLocale(text: String): Locale {
+        return when {
+            text.any { it in '\u3040'..'\u30ff' } -> Locale.forLanguageTag("ja-JP")
+            text.any { it in '\uac00'..'\ud7af' } -> Locale.forLanguageTag("ko-KR")
+            text.any { it in '\u4e00'..'\u9fff' } -> Locale.forLanguageTag("zh-CN")
+            else -> Locale.US
+        }
+    }
+
     private fun speakNow(request: PendingSpeech) {
         activity.runOnUiThread {
             val engine = tts
@@ -403,11 +412,15 @@ private class NativeVoiceBridge(
 
             if (chosen != null) {
                 engine.voice = chosen
-            } else if (currentTtsEngine.isBlank()) {
-                val chinese = engine.voices?.firstOrNull {
-                    it.locale?.language == Locale.CHINESE.language && !it.isNetworkConnectionRequired
-                } ?: engine.voices?.firstOrNull { it.locale?.language == Locale.CHINESE.language }
-                if (chinese != null) engine.voice = chinese
+            } else {
+                val locale = speechLocale(request.text)
+                runCatching { engine.setLanguage(locale) }
+                if (currentTtsEngine.isBlank()) {
+                    val matching = engine.voices?.firstOrNull {
+                        it.locale?.language == locale.language && !it.isNetworkConnectionRequired
+                    } ?: engine.voices?.firstOrNull { it.locale?.language == locale.language }
+                    if (matching != null) engine.voice = matching
+                }
             }
 
             val result = engine.speak(request.text, TextToSpeech.QUEUE_FLUSH, null, request.utteranceId)
