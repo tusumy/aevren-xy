@@ -47,6 +47,7 @@ class MainActivity : Activity() {
         private const val HOME = "https://tusumy.github.io/aevren-xy/"
         private const val FILE_CHOOSER = 7001
         private const val AUDIO_PERMISSION = 7002
+        private const val BACKUP_SAVE = 7003
     }
 
     private lateinit var webView: WebView
@@ -54,6 +55,7 @@ class MainActivity : Activity() {
     private var pageRevealed = false
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var pendingAudioPermission: PermissionRequest? = null
+    private var pendingBackupBytes: ByteArray? = null
 
     private val http = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -107,6 +109,7 @@ class MainActivity : Activity() {
         installImeInsetBridge()
 
         webView.addJavascriptInterface(NativeHttpBridge(webView, http), "AevrenNative")
+        webView.addJavascriptInterface(NativeBackupBridge(), "AevrenBackup")
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val uri = request.url
@@ -176,6 +179,48 @@ class MainActivity : Activity() {
         } else {
             webView.restoreState(savedInstanceState)
         }
+    }
+
+    private inner class NativeBackupBridge {
+        @JavascriptInterface
+        fun saveBackup(fileName: String, base64: String) {
+            // WebView JavaScript interface methods run on a worker thread.
+            val bytes = try {
+                Base64.decode(base64, Base64.DEFAULT)
+            } catch (_: IllegalArgumentException) {
+                runOnUiThread { reportBackupResult("error", "备份内容无法解码") }
+                return
+            }
+            if (bytes.isEmpty() || bytes.size > 25 * 1024 * 1024) {
+                runOnUiThread { reportBackupResult("error", "备份文件为空或大于 25 MB") }
+                return
+            }
+            runOnUiThread {
+                if (pendingBackupBytes != null) {
+                    reportBackupResult("error", "已有备份正在保存，请先完成或取消")
+                    return@runOnUiThread
+                }
+                pendingBackupBytes = bytes
+                val safeName = fileName.replace(Regex("[^a-zA-Z0-9._-]"), "_").take(90)
+                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "application/json"
+                    putExtra(Intent.EXTRA_TITLE, if (safeName.endsWith(".json")) safeName else "aevren-xy-backup.json")
+                }
+                try {
+                    startActivityForResult(intent, BACKUP_SAVE)
+                } catch (error: Exception) {
+                    pendingBackupBytes = null
+                    reportBackupResult("error", error.message ?: "无法打开安卓文件保存窗口")
+                }
+            }
+        }
+    }
+
+    private fun reportBackupResult(status: String, message: String) {
+        if (!::webView.isInitialized) return
+        val data = JSONObject().put("status", status).put("message", message).toString()
+        webView.evaluateJavascript("window.xyNativeBackupResult?.($data)", null)
     }
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).roundToInt()
@@ -296,6 +341,25 @@ class MainActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == BACKUP_SAVE) {
+            val bytes = pendingBackupBytes
+            pendingBackupBytes = null
+            if (resultCode != RESULT_OK || data?.data == null) {
+                reportBackupResult("cancelled", "已取消备份文件保存")
+                return
+            }
+            try {
+                if (bytes == null) throw IOException("备份内容不存在")
+                contentResolver.openOutputStream(data.data!!)?.use { stream ->
+                    stream.write(bytes)
+                    stream.flush()
+                } ?: throw IOException("无法写入所选文件")
+                reportBackupResult("saved", "备份文件已经保存到你选择的位置")
+            } catch (error: Exception) {
+                reportBackupResult("error", "备份保存失败：" + (error.message ?: "写入错误"))
+            }
+            return
+        }
         if (requestCode != FILE_CHOOSER) return
         val result = if (resultCode == RESULT_OK) WebChromeClient.FileChooserParams.parseResult(resultCode, data) else null
         fileCallback?.onReceiveValue(result)
