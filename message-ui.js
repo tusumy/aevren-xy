@@ -87,15 +87,27 @@
     if(button)button.hidden=!pendingUserQueue.length||queueDraining||sending;
   }
 
+  function updateMessageCount(){
+    const c=chat(),day=document.querySelector("#messages .day");
+    if(!c||!day)return;
+    const saved=(c.messages||[]).filter(m=>m?.role==="user"||m?.role==="assistant");
+    const total=saved.length+pendingUserQueue.length;
+    const users=saved.filter(m=>m.role==="user").length+pendingUserQueue.length;
+    const assistants=saved.filter(m=>m.role==="assistant").length;
+    day.textContent="AEVREN · XY · "+total+" 条消息";
+    day.title="你 "+users+" · "+currentCharacterName()+" "+assistants;
+  }
+
   function renderPendingQueue(){
     const box=document.querySelector("#messages");if(!box)return;
     box.querySelectorAll(".xy-pending").forEach(x=>x.remove());
-    if(!pendingUserQueue.length){updateReplyNow();return}
+    if(!pendingUserQueue.length){updateReplyNow();updateMessageCount();return}
     const html=pendingUserQueue.map(pendingHtml).join("");
     const typing=box.querySelector("#typing");
     if(typing)typing.insertAdjacentHTML("beforebegin",html);else box.insertAdjacentHTML("beforeend",html);
     box.scrollTop=box.scrollHeight;
     updateReplyNow();
+    updateMessageCount();
   }
 
   renderMessages=function(){
@@ -106,6 +118,7 @@
     box.scrollTop=box.scrollHeight;
     const name=document.querySelector(".presence strong");if(name)name.textContent=currentCharacterName();
     updatePlaceholder();
+    updateMessageCount();
   };
 
   async function performOriginalSend(text,createdAt=Date.now(),attachments=[]){
