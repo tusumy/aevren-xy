@@ -202,17 +202,26 @@
   const previousSave=typeof save==="function"?save:null;
   if(previousSave){
     save=function(){
+      // Only remove large attachment payloads while serializing.
+      // Never touch message.text or variants[].text: these are the chat history.
       const hidden=[];
       const visit=value=>{
         if(!value||typeof value!=="object")return;
         if(Array.isArray(value)){value.forEach(visit);return}
-        for(const key of ["dataUrl","text"]){
-          if(Object.prototype.hasOwnProperty.call(value,key)){
-            hidden.push([value,key,value[key]]);
-            delete value[key];
+        if(Array.isArray(value.attachments)){
+          for(const attachment of value.attachments){
+            if(!attachment||typeof attachment!=="object")continue;
+            for(const key of ["dataUrl","text"]){
+              if(Object.prototype.hasOwnProperty.call(attachment,key)){
+                hidden.push([attachment,key,attachment[key]]);
+                delete attachment[key];
+              }
+            }
           }
         }
-        Object.keys(value).forEach(k=>visit(value[k]));
+        Object.keys(value).forEach(key=>{
+          if(key!=="attachments")visit(value[key]);
+        });
       };
       try{
         visit(chats);
