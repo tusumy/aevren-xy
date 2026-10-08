@@ -22,7 +22,8 @@
     voiceSettings.voiceModel="";
     store.set("xy.voice",voiceSettings);
   }
-  let recorder=null,recordStream=null,recordChunks=[],recordTimer=null,recordStarting=false,voiceBusy=false,nativeRecording=false;
+  let recorder=null,recordStream=null,recordChunks=[],recordTimer=null,recordStarting=false,voiceBusy=false,nativeRecording=false,nativeRecognizing=false;
+  let nativeRecognitionResolve=null,nativeRecognitionReject=null;
   let activeAudio=null,activeMessage=null;
   const busyMessages=new Set();
 
@@ -54,6 +55,26 @@
     const result=parseNativeVoiceResult(bridge.stopRecording());
     if(result.ok&&result.base64)result.blob=base64ToBlob(result.base64,result.mime||"audio/mp4");
     return result;
+  }
+  function hasNativeRecognition(){
+    const bridge=nativeVoiceBridge();return Boolean(bridge&&typeof bridge.startRecognition==="function");
+  }
+  function recognizeNativeOnce(){
+    const bridge=nativeVoiceBridge();
+    if(!bridge||typeof bridge.startRecognition!=="function")return Promise.reject(new Error("native_speech_unavailable"));
+    if(nativeRecognizing)return Promise.reject(new Error("already_listening"));
+    nativeRecognizing=true;
+    return new Promise((resolve,reject)=>{
+      nativeRecognitionResolve=resolve;nativeRecognitionReject=reject;
+      const result=parseNativeVoiceResult(bridge.startRecognition(voiceSettings.sttLanguage||"zh-CN"));
+      if(!result.ok){
+        nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
+        reject(new Error(result.error||"native_speech_start_failed"));
+      }
+    });
+  }
+  function stopNativeRecognition(){
+    try{return parseNativeVoiceResult(nativeVoiceBridge()?.stopRecognition?.())}catch{return {ok:false,error:"native_speech_stop_failed"}}
   }
   const currentText=m=>String(m?.text||"").trim();
   const messageKey=(c,index)=>`${c?.id||"chat"}:${index}`;
@@ -174,14 +195,21 @@
     const native=nativeVoiceList();
     if(native.length){
       const options=['<option value="">系统默认</option>'];
+      const seen=new Set();
       for(const item of native){
-        const id=String(item.id||item.name||""),label=(item.name||"系统语音")+" · "+(item.lang||"未知语言");
+        const id=String(item.id||item.name||"");
+        const lang=String(item.lang||"未知语言");
+        const kind=item.network?"网络":"本地";
+        const dedupe=lang+"|"+kind+"|"+String(item.quality??"");
+        if(seen.has(dedupe))continue;
+        seen.add(dedupe);
+        const label=lang+" · "+kind;
         options.push('<option value="'+esc(id)+'" '+(id===voiceSettings.systemVoiceURI?'selected':'')+'>'+esc(label)+'</option>');
       }
       return options.join("");
     }
     const voices=window.speechSynthesis?.getVoices?.()||[];
-    return '<option value="">系统默认</option>'+voices.map(v=>'<option value="'+esc(v.voiceURI)+'" '+(v.voiceURI===voiceSettings.systemVoiceURI?'selected':'')+'>'+esc((v.name||'未命名语音')+' · '+(v.lang||'未知语言'))+'</option>').join('');
+    return '<option value="">系统默认</option>'+voices.filter(v=>/^zh(?:-|_)/i.test(v.lang||"")).map(v=>'<option value="'+esc(v.voiceURI)+'" '+(v.voiceURI===voiceSettings.systemVoiceURI?'selected':'')+'>'+esc((v.lang||'中文')+' · '+(v.localService===false?'网络':'本地'))+'</option>').join('');
   }
 
   function refreshSystemVoiceSelect(){
@@ -249,15 +277,23 @@
     const ep=activeEndpoint(),customBase=voiceSettings.sttBase.trim();
     const base=(customBase||ep.base||"").trim().replace(/\/$/,"");
     const key=voiceSettings.sttKey||(!customBase?ep.key:"")||"";
-    if(!base)throw new Error("先在语音设置或接口设置里填写转写 Base URL");
+    if(!base)throw new Error("先在语音设置里填写转写 Base URL");
     const ext=blob.type.includes("mp4")?"m4a":"webm",form=new FormData();
-    form.append("file",blob,`amao-${Date.now()}.${ext}`);form.append("model",voiceSettings.sttModel||"whisper-1");
+    form.append("file",blob,"amao-"+Date.now()+"."+ext);form.append("model",voiceSettings.sttModel||"whisper-1");
     if(voiceSettings.sttLanguage)form.append("language",voiceSettings.sttLanguage);
     const headers={Accept:"application/json"};if(key)headers.Authorization="Bearer "+key;
     const response=await fetch(base+"/audio/transcriptions",{method:"POST",headers,body:form});
-    if(!response.ok){const detail=await response.text().catch(()=>"");throw new Error("HTTP "+response.status+(detail?" · "+detail.slice(0,120):""))}
-    const data=await response.json(),text=String(data.text||data.transcript||"").trim();
-    if(!text)throw new Error("转写接口没有返回文字");return text;
+    const raw=await response.text().catch(()=>"");
+    if(!response.ok)throw new Error("HTTP "+response.status+(raw?" · "+raw.slice(0,120):""));
+    let data;
+    try{data=JSON.parse(raw)}
+    catch{
+      if(/^\s*</.test(raw))throw new Error("这个转写地址返回了网页，不是语音转写 API");
+      throw new Error("转写接口没有返回有效 JSON");
+    }
+    const text=String(data.text||data.transcript||"").trim();
+    if(!text)throw new Error("转写接口没有返回文字");
+    return text;
   }
 
   function setMicState(state){
@@ -267,7 +303,26 @@
   }
 
   async function startRecording(){
-    if(recordStarting||recorder||nativeRecording||voiceBusy)return;
+    if(recordStarting||recorder||nativeRecording||nativeRecognizing||voiceBusy)return;
+    if(hasNativeRecognition()){
+      recordStarting=true;voiceBusy=true;setMicState("requesting");
+      try{
+        setMicState("recording");toast("正在听，你说完我会自己收口");
+        const text=String(await recognizeNativeOnce()).trim();
+        const input=document.querySelector("#input");
+        if(!input)return;
+        input.value=text;try{resize()}catch{}
+        if(voiceSettings.sendAfterTranscript)await send();else{input.focus();toast("听清了，已经放进输入框")}
+      }catch(error){
+        const code=String(error?.message||error);
+        if(code==="permission_requested")toast("已经请求麦克风权限，允许后再点一下麦克风");
+        else if(code==="speech_error_7")toast("没听清，再说一次");
+        else toast("没听懂："+code,true);
+      }finally{
+        nativeRecognizing=false;voiceBusy=false;recordStarting=false;setMicState("idle");
+      }
+      return;
+    }
     const native=nativeVoiceBridge();
     if(native){
       recordStarting=true;voiceBusy=true;setMicState("requesting");
@@ -292,11 +347,12 @@
       recorder.ondataavailable=e=>{if(e.data?.size)recordChunks.push(e.data)};
       recorder.onstop=finishRecording;recorder.start(250);setMicState("recording");toast("正在听，点一下麦克风就发送");
       const liveRecorder=recorder;recordTimer=setTimeout(()=>{if(liveRecorder.state==="recording")liveRecorder.stop()},120000);
-    }catch(error){recordStream?.getTracks().forEach(track=>track.stop());recordStream=null;recorder=null;voiceBusy=false;setMicState("idle");const sourceFail=error?.name==="NotReadableError"||error?.name==="AbortError"||/audio source|could not start/i.test(String(error?.message||""));toast(error?.name==="NotAllowedError"?"没有拿到麦克风权限":sourceFail?"麦克风启动失败：已重试普通录音模式；请检查砚屿的麦克风权限或是否有别的应用正在占用麦克风":"录音失败："+(error?.message||error),true)}
+    }catch(error){recordStream?.getTracks().forEach(track=>track.stop());recordStream=null;recorder=null;voiceBusy=false;setMicState("idle");const sourceFail=error?.name==="NotReadableError"||error?.name==="AbortError"||/audio source|could not start/i.test(String(error?.message||""));toast(error?.name==="NotAllowedError"?"没有拿到麦克风权限":sourceFail?"麦克风启动失败：请检查是否有别的应用正在占用麦克风":"录音失败："+(error?.message||error),true)}
     finally{recordStarting=false}
   }
 
   async function stopRecording(){
+    if(nativeRecognizing){stopNativeRecognition();return}
     if(nativeRecording){
       clearTimeout(recordTimer);nativeRecording=false;setMicState("transcribing");
       try{
@@ -331,7 +387,7 @@
     if(!composer||!input||document.querySelector("#voiceMic"))return;
     const button=document.createElement("button");button.type="button";button.id="voiceMic";button.className="voice-mic";button.title="发送语音";button.setAttribute("aria-label","发送语音");
     button.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"></path></svg>';
-    input.insertAdjacentElement("beforebegin",button);button.addEventListener("click",()=>nativeRecording||recorder?.state==="recording"?stopRecording():startRecording());
+    input.insertAdjacentElement("beforebegin",button);button.addEventListener("click",()=>nativeRecognizing||nativeRecording||recorder?.state==="recording"?stopRecording():startRecording());
   }
 
   function openVoicePanel(){
@@ -418,6 +474,9 @@
     hasNativeCapture(){return Boolean(nativeVoiceBridge())},
     startNativeCapture(){return startNativeCapture()},
     stopNativeCapture(){return stopNativeCapture()},
+    hasNativeRecognition(){return hasNativeRecognition()},
+    recognizeNativeOnce(){return recognizeNativeOnce()},
+    stopNativeRecognition(){return stopNativeRecognition()},
     stop(){
       if(activeAudio){activeAudio.pause();activeAudio=null}
       try{nativeVoiceBridge()?.stopTts?.()}catch{}
@@ -426,6 +485,23 @@
     }
   };
 
+  window.__xyNativeSttResult=text=>{
+    const resolve=nativeRecognitionResolve;
+    nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
+    if(resolve)resolve(String(text||""));
+  };
+  window.__xyNativeSttError=error=>{
+    const reject=nativeRecognitionReject;
+    nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
+    if(reject)reject(new Error(String(error||"speech_error")));
+  };
+  window.__xyNativeSttPartial=text=>{
+    if(nativeRecognizing){const button=document.querySelector("#voiceMic");if(button)button.title="你在说："+String(text||"").slice(0,18)}
+  };
+  window.__xyNativeSttState=state=>{
+    if(!nativeRecognizing)return;
+    if(state==="processing")setMicState("transcribing");
+  };
   window.__xyNativeTtsDone=id=>{if(activeMessage===String(id)){activeMessage=null;decorateMessages()}};
   window.__xyNativeTtsError=(id,error)=>{if(activeMessage===String(id)){activeMessage=null;decorateMessages()}toast("系统语音播放失败："+String(error||"unknown"),true)};
   if(window.speechSynthesis?.addEventListener)window.speechSynthesis.addEventListener("voiceschanged",refreshSystemVoiceSelect);

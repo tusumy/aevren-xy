@@ -1,7 +1,7 @@
 (()=>{
   const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
   let phase="idle",recognition=null,startedAt=0,timerId=null,processing=false,restartTimer=null;
-  let callRecorder=null,callStream=null,callChunks=[],callNativeRecording=false;
+  let callRecorder=null,callStream=null,callChunks=[],callNativeRecording=false,callNativeRecognizing=false;
   let overlay,statusEl,timeEl,transcriptEl,acceptBtn,hangupBtn,fallbackWrap,fallbackInput,pushBtn;
 
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -30,7 +30,7 @@
     transcriptEl=overlay.querySelector(".xy-call-transcript");acceptBtn=overlay.querySelector(".xy-call-answer");hangupBtn=overlay.querySelector(".xy-call-hangup");
     fallbackWrap=overlay.querySelector(".xy-call-fallback");fallbackInput=fallbackWrap.querySelector("input");pushBtn=overlay.querySelector(".xy-call-push");
     acceptBtn.onclick=answer;hangupBtn.onclick=hangup;
-    pushBtn.onclick=()=>callRecorder?.state==="recording"?stopFallbackRecording():startFallbackRecording();
+    pushBtn.onclick=()=>callNativeRecognizing||callNativeRecording||callRecorder?.state==="recording"?stopFallbackRecording():startFallbackRecording();
     fallbackWrap.querySelector("button").onclick=()=>submitFallback();
     fallbackInput.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();submitFallback()}};
   }
@@ -69,7 +69,25 @@
   }
 
   async function startFallbackRecording(){
-    if(phase!=="connected"||processing||callNativeRecording||callRecorder?.state==="recording")return;
+    if(phase!=="connected"||processing||callNativeRecognizing||callNativeRecording||callRecorder?.state==="recording")return;
+    if(window.AevrenVoice?.hasNativeRecognition?.()){
+      callNativeRecognizing=true;
+      pushBtn.classList.add("recording");pushBtn.querySelector("span").textContent="结束";
+      statusEl.textContent="正在听你说…";
+      try{
+        const text=String(await window.AevrenVoice.recognizeNativeOnce()).trim();
+        callNativeRecognizing=false;
+        pushBtn.classList.remove("recording");pushBtn.querySelector("span").textContent="说话";
+        if(text)await handleUserText(text);else statusEl.textContent="没听清 · 再说一次";
+      }catch(error){
+        callNativeRecognizing=false;
+        pushBtn.classList.remove("recording");pushBtn.querySelector("span").textContent="说话";
+        const code=String(error?.message||error);
+        statusEl.textContent=code==="permission_requested"?"请允许麦克风权限，再点一次":"没听懂 · 再说一次";
+        fallbackWrap.hidden=false;
+      }
+      return;
+    }
     if(window.AevrenVoice?.hasNativeCapture?.()){
       try{
         const result=window.AevrenVoice.startNativeCapture();
@@ -106,6 +124,7 @@
   }
 
   async function stopFallbackRecording(){
+    if(callNativeRecognizing){window.AevrenVoice?.stopNativeRecognition?.();return}
     if(callNativeRecording){
       callNativeRecording=false;
       pushBtn.classList.remove("recording");pushBtn.querySelector("span").textContent="说话";
@@ -217,7 +236,7 @@
   function hangup(){
     if(phase==="idle")return;
     const duration=startedAt?fmtTime(Date.now()-startedAt):"00:00";
-    phase="idle";processing=false;stopListening();if(callNativeRecording){try{window.AevrenVoice?.stopNativeCapture?.()}catch{}callNativeRecording=false}if(callRecorder?.state==="recording"){try{callRecorder.onstop=null;callRecorder.stop()}catch{}}callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];clearInterval(timerId);timerId=null;window.AevrenVoice?.stop?.();
+    phase="idle";processing=false;stopListening();if(callNativeRecognizing){try{window.AevrenVoice?.stopNativeRecognition?.()}catch{}callNativeRecognizing=false}if(callNativeRecording){try{window.AevrenVoice?.stopNativeCapture?.()}catch{}callNativeRecording=false}if(callRecorder?.state==="recording"){try{callRecorder.onstop=null;callRecorder.stop()}catch{}}callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];clearInterval(timerId);timerId=null;window.AevrenVoice?.stop?.();
     statusEl.textContent="通话结束 · "+duration;overlay.classList.remove("ringing","connected");overlay.classList.add("ended");
     setTimeout(()=>{overlay.hidden=true;overlay.classList.remove("show","ended")},650);
   }
