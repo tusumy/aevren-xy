@@ -66,10 +66,15 @@
     row.append(who,body);transcriptEl.appendChild(row);transcriptEl.scrollTop=transcriptEl.scrollHeight;
   }
 
-  function ring(){
+  function ring(payload){
     ensureUi();
     if(phase!=="idle")return;
-    callCharacter={...activeCharacter()};syncCallCharacter();
+    const active=activeCharacter(),incoming=payload&&typeof payload==="object"?payload:{};
+    callCharacter={
+      id:String(incoming.id||active.id||"xuan-yan"),
+      name:String(incoming.name||active.name||"玄砚")
+    };
+    syncCallCharacter();
     phase="ringing";processing=false;overlay.hidden=false;overlay.classList.add("show","ringing");overlay.classList.remove("connected");
     transcriptEl.innerHTML="";statusEl.textContent="语音来电";timeEl.textContent="00:00";acceptBtn.hidden=false;hangupBtn.hidden=false;
     fallbackWrap.hidden=true;pushBtn.hidden=true;
@@ -249,6 +254,25 @@
     const text=fallbackInput.value.trim();if(!text)return;fallbackInput.value="";handleUserText(text);
   }
 
+  function parseNativeCallResult(raw){
+    try{return typeof raw==="string"?JSON.parse(raw):raw||{}}catch{return {ok:false,error:String(raw||"native_call_error")}}
+  }
+
+  function nativeIncomingCall(payload){
+    const bridge=window.AevrenCallNative;
+    if(!bridge?.showIncomingCall)return {ok:false,error:"native_call_unavailable"};
+    const active=activeCharacter(),incoming=payload&&typeof payload==="object"?payload:{};
+    const id=String(incoming.id||active.id||"xuan-yan");
+    const name=String(incoming.name||active.name||"玄砚");
+    return parseNativeCallResult(bridge.showIncomingCall(id,name));
+  }
+
+  async function acceptNativeCall(payload){
+    if(phase!=="idle")hangup();
+    ring(payload);
+    await answer();
+  }
+
   function hangup(){
     if(phase==="idle")return;
     const duration=startedAt?fmtTime(Date.now()-startedAt):"00:00";
@@ -258,5 +282,12 @@
   }
 
   ensureUi();installEntry();
-  window.AevrenCall={ring,answer,hangup,getState:()=>({phase,startedAt})};
+  window.AevrenCall={
+    ring,
+    answer,
+    hangup,
+    nativeIncomingCall,
+    acceptNativeCall,
+    getState:()=>({phase,startedAt,character:currentCallCharacter()})
+  };
 })();
