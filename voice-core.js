@@ -575,6 +575,30 @@
     e.preventDefault();e.stopPropagation();synthesizeMessage(Number(button.dataset.voiceMessage),true);
   });
 
+  document.querySelector("#messages")?.addEventListener("click",e=>{
+    const button=e.target.closest?.(".xy-message-voice-note[data-voice-note-src]");
+    if(!button)return;
+    e.preventDefault();e.stopPropagation();
+    const src=button.dataset.voiceNoteSrc||"";
+    if(!src)return;
+    const icon=button.querySelector(".xy-message-voice-icon");
+    if(activeAudio&&button.classList.contains("playing")){
+      activeAudio.pause();activeAudio=null;button.classList.remove("playing");
+      if(icon)icon.textContent="▶";
+      return;
+    }
+    if(activeAudio){activeAudio.pause();activeAudio=null}
+    document.querySelectorAll(".xy-message-voice-note.playing").forEach(node=>{
+      node.classList.remove("playing");
+      const nodeIcon=node.querySelector(".xy-message-voice-icon");if(nodeIcon)nodeIcon.textContent="▶";
+    });
+    const audio=new Audio(src);activeAudio=audio;activeMessage=null;
+    button.classList.add("playing");if(icon)icon.textContent="Ⅱ";
+    const finish=()=>{if(activeAudio===audio)activeAudio=null;button.classList.remove("playing");if(icon)icon.textContent="▶"};
+    audio.onended=finish;audio.onerror=()=>{finish();toast("这条语音现在播不了",true)};
+    audio.play().catch(error=>{finish();toast("播放失败："+error.message,true)});
+  });
+
   document.addEventListener("change",e=>{
     if(e.target?.id!=="systemEngine")return;
     const pkg=e.target.value||"";
