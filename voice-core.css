@@ -62,3 +62,69 @@ html[data-theme-mode="dark"] .voice-setting-card input,html[data-theme-mode="dar
 @media(max-width:760px){
   .composer .attach{display:grid!important}
 }
+
+/* Sent voice notes */
+.xy-message-voice-note{
+  border:0;
+  min-width:138px;
+  max-width:230px;
+  height:42px;
+  padding:0 12px;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  background:rgba(255,255,255,.15);
+  color:inherit;
+  cursor:pointer;
+  text-align:left;
+}
+.xy-message-voice-note:disabled{
+  opacity:.48;
+  cursor:default;
+}
+.xy-message-voice-icon{
+  width:18px;
+  flex:0 0 18px;
+  font-size:13px;
+  line-height:1;
+  text-align:center;
+}
+.xy-message-voice-wave{
+  flex:1;
+  min-width:64px;
+  height:20px;
+  display:flex;
+  align-items:center;
+  gap:3px;
+}
+.xy-message-voice-wave i{
+  display:block;
+  width:2px;
+  border-radius:999px;
+  background:currentColor;
+  opacity:.62;
+}
+.xy-message-voice-wave i:nth-child(1){height:6px}
+.xy-message-voice-wave i:nth-child(2){height:12px}
+.xy-message-voice-wave i:nth-child(3){height:17px}
+.xy-message-voice-wave i:nth-child(4){height:10px}
+.xy-message-voice-wave i:nth-child(5){height:15px}
+.xy-message-voice-wave i:nth-child(6){height:8px}
+.xy-message-voice-note b{
+  font-size:10px;
+  font-weight:500;
+  opacity:.76;
+  white-space:nowrap;
+}
+.xy-message-voice-note.playing .xy-message-voice-wave i{
+  animation:xy-note-wave .75s ease-in-out infinite alternate;
+}
+.xy-message-voice-note.playing .xy-message-voice-wave i:nth-child(2){animation-delay:.08s}
+.xy-message-voice-note.playing .xy-message-voice-wave i:nth-child(3){animation-delay:.16s}
+.xy-message-voice-note.playing .xy-message-voice-wave i:nth-child(4){animation-delay:.24s}
+.xy-message-voice-note.playing .xy-message-voice-wave i:nth-child(5){animation-delay:.32s}
+.xy-message-voice-note.playing .xy-message-voice-wave i:nth-child(6){animation-delay:.4s}
+@keyframes xy-note-wave{to{transform:scaleY(.55);opacity:.9}}
+.user .xy-message-voice-note{background:rgba(255,255,255,.1)}
+html[data-theme-mode="dark"] .xy-message-voice-note{background:rgba(255,255,255,.08)}
