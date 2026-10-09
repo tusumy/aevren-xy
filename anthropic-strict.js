@@ -50,6 +50,8 @@
             else if(part.data){
               out.push({type:'image',source:{type:'base64',media_type:part.media_type||'image/jpeg',data:part.data}});
             }
+          }else if(part.type==='input_audio'){
+            out.push({type:'text',text:'[用户发送了一条语音消息；当前 Anthropic 接口不支持直接读取音频]'});
           }
         }
       }
