@@ -25,7 +25,7 @@
   }
   let recorder=null,recordStream=null,recordChunks=[],recordTimer=null,recordStarting=false,voiceBusy=false,nativeRecording=false,nativeRecognizing=false;
   let nativeRecognitionResolve=null,nativeRecognitionReject=null,nativeRecognitionTimer=null,nativeRecognitionFallbackTried=false;
-  let composerActionState="idle";
+  let composerActionState="idle",voiceNoteStartedAt=0;
   let activeAudio=null,activeMessage=null;
   const busyMessages=new Set();
 
@@ -386,7 +386,7 @@
 
   function refreshComposerAction(){
     const button=document.querySelector("#sendBtn");if(!button)return;
-    const recording=nativeRecognizing||nativeRecording||recorder?.state==="recording";
+    const recording=nativeRecording||recorder?.state==="recording";
     const listening=recording||composerActionState==="requesting"||composerActionState==="transcribing";
     const mode=recording?"recording":hasComposerPayload()?"send":"mic";
     button.dataset.mode=mode;
@@ -394,7 +394,7 @@
     button.classList.toggle("is-recording",mode==="recording");
     button.classList.toggle("is-transcribing",composerActionState==="transcribing"||composerActionState==="requesting");
     button.innerHTML=mode==="send"?sendIcon:mode==="recording"?stopIcon:micIcon;
-    button.title=mode==="send"?"发送":mode==="recording"?"结束说话":"语音输入";
+    button.title=mode==="send"?"发送":mode==="recording"?"结束并发送语音":"录制语音";
     button.setAttribute("aria-label",button.title);
     button.disabled=composerActionState==="transcribing"||composerActionState==="requesting";
     if(!listening&&composerActionState!=="idle")composerActionState="idle";
@@ -405,30 +405,58 @@
     refreshComposerAction();
   }
 
-  async function startRecording(){
-    if(recordStarting||recorder||nativeRecording||nativeRecognizing||voiceBusy)return;
-    if(hasNativeRecognition()){
-      recordStarting=true;voiceBusy=true;setMicState("requesting");
-      try{
-        setMicState("recording");toast("正在听，你说完我会自己收口");
-        const text=String(await recognizeNativeOnce()).trim();
-        const input=document.querySelector("#input");
-        if(!input)return;
-        input.value=text;try{resize()}catch{}
-        if(voiceSettings.sendAfterTranscript)await send();else{input.focus();toast("听清了，已经放进输入框")}
-      }catch(error){
-        const code=normalizeSpeechError(error?.message||error);
-        if(code==="permission_requested"||code==="speech_permission")toast("没有拿到麦克风权限",true);
-        else if(code==="speech_no_match"||code==="speech_timeout")toast("没听清，再说一次");
-        else if(code==="speech_activity_unavailable"||code==="speech_recognizer_unavailable"||code==="speech_service")toast("这台手机没有可供砚屿调用的系统语音识别服务；MultiTTS 只负责朗读，不负责听写",true);
-        else if(code==="speech_language")toast("系统语音识别不支持当前语言",true);
-        else if(code==="speech_busy")toast("系统语音识别正忙，等一下再试",true);
-        else toast("语音识别失败："+code,true);
-      }finally{
-        nativeRecognizing=false;voiceBusy=false;recordStarting=false;setMicState("idle");
-      }
+  const blobDataUrl=blob=>new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||""));
+    reader.onerror=()=>reject(reader.error||new Error("语音读取失败"));
+    reader.readAsDataURL(blob);
+  });
+
+  function voiceNoteFormat(type){
+    const mime=String(type||"").toLowerCase();
+    if(mime.includes("wav"))return "wav";
+    if(mime.includes("mpeg")||mime.includes("mp3"))return "mp3";
+    if(mime.includes("mp4")||mime.includes("m4a")||mime.includes("aac"))return "m4a";
+    if(mime.includes("webm"))return "webm";
+    if(mime.includes("ogg"))return "ogg";
+    return "audio";
+  }
+
+  async function sendVoiceNoteBlob(blob){
+    const elapsed=Math.max(1,Math.round((Date.now()-(voiceNoteStartedAt||Date.now()))/1000));
+    if(!blob||blob.size<700){
+      toast("这段太短了，没录下来",true);
       return;
     }
+    setMicState("transcribing");
+    try{
+      const dataUrl=await blobDataUrl(blob);
+      const format=voiceNoteFormat(blob.type);
+      const attachment={
+        kind:"audio",
+        name:"语音 "+elapsed+"秒",
+        type:blob.type||"audio/mp4",
+        size:blob.size,
+        duration:elapsed,
+        format,
+        dataUrl
+      };
+      const api=window.xyAttachments;
+      if(!api?.restore)throw new Error("语音附件模块还没准备好");
+      api.restore([attachment]);
+      window.xyVoiceRefreshComposer?.();
+      await send();
+    }catch(error){
+      toast("语音发送失败："+(error?.message||error),true);
+    }finally{
+      voiceBusy=false;
+      voiceNoteStartedAt=0;
+      setMicState("idle");
+    }
+  }
+
+  async function startRecording(){
+    if(recordStarting||recorder||nativeRecording||voiceBusy)return;
     const native=nativeVoiceBridge();
     if(native){
       recordStarting=true;voiceBusy=true;setMicState("requesting");
@@ -439,53 +467,69 @@
           else throw new Error(result.error||"native_record_failed");
           voiceBusy=false;setMicState("idle");return;
         }
-        nativeRecording=true;setMicState("recording");toast("正在听，点一下麦克风就发送");
-        recordTimer=setTimeout(()=>{if(nativeRecording)stopRecording()},120000);
-      }catch(error){voiceBusy=false;setMicState("idle");toast("录音失败："+(error?.message||error),true)}
-      finally{recordStarting=false}
+        voiceNoteStartedAt=Date.now();
+        nativeRecording=true;
+        setMicState("recording");
+        toast("正在录语音，点一下结束并发送");
+        recordTimer=setTimeout(()=>{if(nativeRecording)stopRecording()},60000);
+      }catch(error){
+        voiceBusy=false;setMicState("idle");
+        toast("录音失败："+(error?.message||error),true);
+      }finally{recordStarting=false}
       return;
     }
-    if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){toast("这个浏览器暂不支持录音",true);return}
+
+    if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){
+      toast("这个浏览器暂不支持录音",true);return;
+    }
     recordStarting=true;voiceBusy=true;setMicState("requesting");
     try{
       recordStream=await requestMicStream();
-      recordChunks=[];const mime=recorderMime();recorder=new MediaRecorder(recordStream,mime?{mimeType:mime}:undefined);
+      recordChunks=[];
+      const mime=recorderMime();
+      recorder=new MediaRecorder(recordStream,mime?{mimeType:mime}:undefined);
       recorder.ondataavailable=e=>{if(e.data?.size)recordChunks.push(e.data)};
-      recorder.onstop=finishRecording;recorder.start(250);setMicState("recording");toast("正在听，点一下麦克风就发送");
-      const liveRecorder=recorder;recordTimer=setTimeout(()=>{if(liveRecorder.state==="recording")liveRecorder.stop()},120000);
-    }catch(error){recordStream?.getTracks().forEach(track=>track.stop());recordStream=null;recorder=null;voiceBusy=false;setMicState("idle");const sourceFail=error?.name==="NotReadableError"||error?.name==="AbortError"||/audio source|could not start/i.test(String(error?.message||""));toast(error?.name==="NotAllowedError"?"没有拿到麦克风权限":sourceFail?"麦克风启动失败：请检查是否有别的应用正在占用麦克风":"录音失败："+(error?.message||error),true)}
-    finally{recordStarting=false}
+      recorder.onstop=finishRecording;
+      voiceNoteStartedAt=Date.now();
+      recorder.start(250);
+      setMicState("recording");
+      toast("正在录语音，点一下结束并发送");
+      const liveRecorder=recorder;
+      recordTimer=setTimeout(()=>{if(liveRecorder.state==="recording")liveRecorder.stop()},60000);
+    }catch(error){
+      recordStream?.getTracks().forEach(track=>track.stop());
+      recordStream=null;recorder=null;voiceBusy=false;setMicState("idle");
+      const sourceFail=error?.name==="NotReadableError"||error?.name==="AbortError"||/audio source|could not start/i.test(String(error?.message||""));
+      toast(error?.name==="NotAllowedError"?"没有拿到麦克风权限":sourceFail?"麦克风启动失败：请检查是否有别的应用正在占用麦克风":"录音失败："+(error?.message||error),true);
+    }finally{recordStarting=false}
   }
 
   async function stopRecording(){
-    if(nativeRecognizing){stopNativeRecognition();return}
     if(nativeRecording){
-      clearTimeout(recordTimer);nativeRecording=false;setMicState("transcribing");
+      clearTimeout(recordTimer);
+      nativeRecording=false;
+      setMicState("transcribing");
       try{
         const result=stopNativeCapture();
         if(!result.ok||!result.blob)throw new Error(result.error||"native_record_stop_failed");
-        await processRecordedBlob(result.blob);
-      }catch(error){voiceBusy=false;setMicState("idle");toast("录音失败："+(error?.message||error),true)}
+        await sendVoiceNoteBlob(result.blob);
+      }catch(error){
+        voiceBusy=false;voiceNoteStartedAt=0;setMicState("idle");
+        toast("录音失败："+(error?.message||error),true);
+      }
       return;
     }
     if(recorder?.state==="recording")recorder.stop();
   }
 
-  async function processRecordedBlob(blob){
-    if(blob.size<700){voiceBusy=false;setMicState("idle");toast("这段太短了，我没听清",true);return}
-    setMicState("transcribing");
-    try{
-      const text=await transcribe(blob),input=document.querySelector("#input");
-      if(!input)return;input.value=text;try{resize()}catch{}
-      if(voiceSettings.sendAfterTranscript)await send();else{input.focus();toast("听清了，已经放进输入框")}
-    }catch(error){toast("没听懂："+error.message,true)}
-    finally{voiceBusy=false;setMicState("idle")}
-  }
-
   async function finishRecording(){
-    clearTimeout(recordTimer);recordStream?.getTracks().forEach(track=>track.stop());recordStream=null;
-    const type=recorder?.mimeType||recordChunks[0]?.type||"audio/webm",blob=new Blob(recordChunks,{type});recorder=null;recordChunks=[];
-    await processRecordedBlob(blob);
+    clearTimeout(recordTimer);
+    recordStream?.getTracks().forEach(track=>track.stop());
+    recordStream=null;
+    const type=recorder?.mimeType||recordChunks[0]?.type||"audio/webm";
+    const blob=new Blob(recordChunks,{type});
+    recorder=null;recordChunks=[];
+    await sendVoiceNoteBlob(blob);
   }
 
   function installComposerAction(){
@@ -496,7 +540,7 @@
     input.addEventListener("input",refresh);
     button.onclick=e=>{
       e?.preventDefault?.();e?.stopPropagation?.();
-      if(nativeRecognizing||nativeRecording||recorder?.state==="recording"){stopRecording();return}
+      if(nativeRecording||recorder?.state==="recording"){stopRecording();return}
       if(hasComposerPayload()){send();return}
       startRecording();
     };
