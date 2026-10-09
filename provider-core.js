@@ -85,6 +85,9 @@
         continue;
       }
       if(part.type==="image"&&part.source){out.push(part);continue}
+      if(part.type==="input_audio"){
+        out.push({type:"text",text:"[用户发送了一条语音消息；当前 Anthropic 接口不支持直接读取音频]"});continue;
+      }
       if(part.type==="image_url"){
         const url=String(part.image_url?.url||part.url||"");
         const match=url.match(/^data:([^;,]+);base64,(.+)$/s);
@@ -160,6 +163,11 @@
         const match=url.match(/^data:([^;,]+);base64,(.+)$/s);
         if(match)out.push({inlineData:{mimeType:match[1],data:match[2]}});
         else if(url)out.push({text:"[图片："+url+"]"});
+      }else if(part.type==="input_audio"){
+        const audio=part.input_audio||{};
+        const format=String(audio.format||"m4a").toLowerCase();
+        const mime=format==="wav"?"audio/wav":format==="mp3"?"audio/mpeg":format==="webm"?"audio/webm":format==="ogg"?"audio/ogg":"audio/mp4";
+        if(audio.data)out.push({inlineData:{mimeType:mime,data:String(audio.data)}});
       }else if(part.inlineData||part.inline_data){
         const inline=part.inlineData||part.inline_data;
         out.push({inlineData:{mimeType:inline.mimeType||inline.mime_type||"image/jpeg",data:inline.data||""}});

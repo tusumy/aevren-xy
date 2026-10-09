@@ -52,10 +52,20 @@
     const parts=[];
     if(text)parts.push({type:'text',text});
     else if(attachments.some(a=>a?.kind==='image'&&a.dataUrl))parts.push({type:'text',text:'请查看我发送的图片。'});
+    else if(attachments.some(a=>a?.kind==='audio'&&a.dataUrl))parts.push({type:'text',text:'请听我发送的语音消息并直接回应内容。'});
     for(const a of attachments){
       if(a?.kind==='image'&&a.dataUrl)parts.push({type:'image_url',image_url:{url:String(a.dataUrl)}});
-      else if(a?.kind==='text'&&typeof a.text==='string'){
+      else if(a?.kind==='audio'&&a.dataUrl){
+        const match=String(a.dataUrl).match(/^data:audio\/[^;,]+;base64,(.+)$/s);
+        if(match){
+          parts.push({type:'input_audio',input_audio:{data:match[1],format:String(a.format||'m4a')}});
+        }else{
+          parts.push({type:'text',text:'[语音消息 '+Math.max(1,Math.round(Number(a.duration||1)))+' 秒]'});
+        }
+      }else if(a?.kind==='text'&&typeof a.text==='string'){
         parts.push({type:'text',text:'[附件：'+String(a.name||'文本文件')+(a.truncated?'；内容已截断':'')+']\n'+a.text});
+      }else if(a?.kind==='audio'){
+        parts.push({type:'text',text:'[语音消息 '+Math.max(1,Math.round(Number(a.duration||1)))+' 秒；音频缓存当前不可用]'});
       }else if(a?.name){
         parts.push({type:'text',text:'[附件：'+String(a.name)+'；内容当前不可用]'});
       }
