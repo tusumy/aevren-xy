@@ -124,7 +124,7 @@
       }else{
         const icon=document.createElement("span");
         icon.className="xy-attachment-file-icon";
-        icon.textContent="▤";
+        icon.textContent=a.kind==="audio"?"◖":"▤";
         chip.appendChild(icon);
       }
       const name=document.createElement("span");
@@ -211,6 +211,7 @@
     if(!a||typeof a!=="object")return a;
     return {
       kind:a.kind,name:a.name,type:a.type,size:a.size,width:a.width,height:a.height,
+      duration:Number(a.duration||0),format:a.format||"",
       truncated:!!a.truncated,previewDataUrl:a.previewDataUrl||""
     };
   };
