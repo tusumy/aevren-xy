@@ -128,3 +128,5 @@ html[data-theme-mode="dark"] .voice-setting-card input,html[data-theme-mode="dar
 @keyframes xy-note-wave{to{transform:scaleY(.55);opacity:.9}}
 .user .xy-message-voice-note{background:rgba(255,255,255,.1)}
 html[data-theme-mode="dark"] .xy-message-voice-note{background:rgba(255,255,255,.08)}
+
+.xy-message-attachments:has(.xy-message-voice-note:only-child){display:block}
