@@ -170,7 +170,16 @@
     if(!type)return;
     menu.hidden=true;
     if(type==="call"){
-      if(window.AevrenCall?.ring)window.AevrenCall.ring({source:"composer"});
+      if(window.AevrenCall?.nativeIncomingCall){
+        const result=window.AevrenCall.nativeIncomingCall();
+        if(result?.ok){
+          if(result.fullScreenAllowed===false)toast("来电已发出；锁屏全屏来电权限还没开启");
+        }else if(result?.error==="notification_permission_requested"){
+          toast("先允许砚屿发送来电通知，再点一次语音通话");
+        }else if(window.AevrenCall?.ring){
+          window.AevrenCall.ring({source:"composer"});
+        }else toast("通话功能还没准备好",true);
+      }else if(window.AevrenCall?.ring)window.AevrenCall.ring({source:"composer"});
       else toast("通话功能还没准备好",true);
       return;
     }
