@@ -56,6 +56,8 @@ class MainActivity : Activity() {
         private const val FILE_CHOOSER = 7001
         const val AUDIO_PERMISSION = 7002
         const val VOICE_RECOGNIZER = 7003
+        const val CALL_NOTIFICATION_PERMISSION = 7004
+        const val ACTION_NATIVE_CALL_ANSWER = "com.aevren.xy.action.OPEN_NATIVE_CALL"
     }
 
     private lateinit var webView: WebView
@@ -64,6 +66,8 @@ class MainActivity : Activity() {
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var pendingAudioPermission: PermissionRequest? = null
     private var nativeVoiceBridge: NativeVoiceBridge? = null
+    private var nativeCallBridge: NativeCallBridge? = null
+    private var pendingNativeCallPayload: String? = null
 
     private val http = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -119,6 +123,9 @@ class MainActivity : Activity() {
         webView.addJavascriptInterface(NativeHttpBridge(webView, http), "AevrenNative")
         nativeVoiceBridge = NativeVoiceBridge(this, webView)
         webView.addJavascriptInterface(nativeVoiceBridge!!, "AevrenVoiceNative")
+        nativeCallBridge = NativeCallBridge(this)
+        webView.addJavascriptInterface(nativeCallBridge!!, "AevrenCallNative")
+        captureNativeCallIntent(intent)
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val uri = request.url
@@ -142,6 +149,7 @@ class MainActivity : Activity() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     view.requestApplyInsets()
                 }
+                deliverPendingNativeCall()
             }
         }
 
@@ -184,7 +192,7 @@ class MainActivity : Activity() {
         }
 
         if (savedInstanceState == null) {
-            webView.loadUrl("${HOME}?app=android&shell=9&t=${System.currentTimeMillis()}")
+            webView.loadUrl("${HOME}?app=android&shell=10&t=${System.currentTimeMillis()}")
         } else {
             webView.restoreState(savedInstanceState)
         }
@@ -298,12 +306,46 @@ class MainActivity : Activity() {
     override fun onDestroy() {
         nativeVoiceBridge?.shutdown()
         nativeVoiceBridge = null
+        nativeCallBridge = null
         super.onDestroy()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         webView.saveState(outState)
         super.onSaveInstanceState(outState)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        captureNativeCallIntent(intent)
+        deliverPendingNativeCall()
+    }
+
+    private fun captureNativeCallIntent(intent: Intent?) {
+        if (intent?.action != ACTION_NATIVE_CALL_ANSWER) return
+        val payload = JSONObject()
+            .put(
+                "id",
+                intent.getStringExtra(NativeCallManager.EXTRA_CHARACTER_ID).orEmpty()
+            )
+            .put(
+                "name",
+                intent.getStringExtra(NativeCallManager.EXTRA_CHARACTER_NAME).orEmpty()
+            )
+        pendingNativeCallPayload = payload.toString()
+    }
+
+    private fun deliverPendingNativeCall() {
+        if (!::webView.isInitialized) return
+        val payload = pendingNativeCallPayload ?: return
+        webView.post {
+            webView.evaluateJavascript(
+                "window.AevrenCall && window.AevrenCall.acceptNativeCall && window.AevrenCall.acceptNativeCall($payload);",
+                null
+            )
+            pendingNativeCallPayload = null
+        }
     }
 
     @Deprecated("Deprecated in Java")
@@ -326,6 +368,7 @@ class MainActivity : Activity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == CALL_NOTIFICATION_PERMISSION) return
         if (requestCode != AUDIO_PERMISSION) return
         val request = pendingAudioPermission ?: return
         pendingAudioPermission = null
