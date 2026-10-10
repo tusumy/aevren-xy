@@ -206,18 +206,19 @@
     return {url,title:structured.title||titleFromText(structured.text)};
   }
 
-  async function synthesizeMessage(index,autoplay=true,targetChat=currentChat()){
+  async function synthesizeMessage(index,autoplay=true,targetChat=currentChat(),playbackAllowed=null){
+    const mayPlay=()=>typeof playbackAllowed!=="function"||playbackAllowed();
     const c=targetChat,message=c?.messages?.[index];
     if(!message||message.role!=="assistant")return;
     const text=currentText(message);
     if(!text)return;
     const key=messageKey(c,index);
     if(voiceSettings.voiceMode==="system"){
-      if(autoplay)speakWithSystem(text,key);
+      if(autoplay&&mayPlay())speakWithSystem(text,key);
       return;
     }
     if(message.voiceUrl&&message.voiceText===text){
-      if(autoplay)playAudio(message.voiceUrl,key,message);
+      if(autoplay&&mayPlay())playAudio(message.voiceUrl,key,message);
       return;
     }
     const server=resolveVoiceServer();
@@ -232,7 +233,7 @@
       const audio=parseVoiceResult(result);
       message.voiceUrl=audio.url;message.voiceTitle=audio.title||args.title;message.voiceText=text;
       save();decorateMessages();
-      if(autoplay)playAudio(message.voiceUrl,key,message);
+      if(autoplay&&mayPlay())playAudio(message.voiceUrl,key,message);
     }catch(error){toast("语音生成失败："+error.message,true)}
     finally{busyMessages.delete(key);decorateMessages()}
   }
@@ -648,8 +649,8 @@
   },true);
 
   window.AevrenVoice={
-    speakMessage(index,targetChat=currentChat()){
-      return synthesizeMessage(Number(index),true,targetChat);
+    speakMessage(index,targetChat=currentChat(),playbackAllowed=null){
+      return synthesizeMessage(Number(index),true,targetChat,playbackAllowed);
     },
     speakLatest(targetChat=currentChat()){
       const index=targetChat?.messages?.findLastIndex?.(m=>m.role==="assistant")??-1;
