@@ -7,6 +7,9 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Person
+import android.util.Base64
+import java.io.File
+import java.security.MessageDigest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -27,6 +30,26 @@ object NativeCallManager {
 
     const val EXTRA_CHARACTER_ID = "character_id"
     const val EXTRA_CHARACTER_NAME = "character_name"
+    private fun avatarFile(context: Context, id: String): File {
+        val hex = MessageDigest.getInstance("SHA-256").digest(id.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
+        return File(context.filesDir, "incoming_avatar_$hex.webp")
+    }
+    fun saveAvatar(context: Context, id: String, dataUrl: String): Boolean {
+        if (id.isBlank() || id.length > 128) return false
+        val file = avatarFile(context, id)
+        if (dataUrl.isBlank()) { file.delete(); return true }
+        if (!dataUrl.startsWith("data:image/") || !dataUrl.contains(";base64,")) return false
+        val content = dataUrl.substringAfter(";base64,")
+        if (content.length > 600000) return false
+        return try {
+            val bytes = Base64.decode(content, Base64.DEFAULT)
+            if (bytes.size > 450000) false else { file.writeBytes(bytes); true }
+        } catch (_: Exception) { false }
+    }
+    fun loadAvatar(context: Context, id: String): android.graphics.Bitmap? = try {
+        val file = avatarFile(context, id)
+        if (file.isFile) android.graphics.BitmapFactory.decodeFile(file.absolutePath) else null
+    } catch (_: Exception) { null }
 
     private fun notificationManager(context: Context): NotificationManager =
         context.getSystemService(NotificationManager::class.java)
@@ -148,6 +171,10 @@ object NativeCallManager {
 class NativeCallBridge(
     private val activity: Activity
 ) {
+    @JavascriptInterface
+    fun setCharacterAvatar(characterId: String, avatarDataUrl: String): Boolean =
+        NativeCallManager.saveAvatar(activity, characterId, avatarDataUrl)
+
     @JavascriptInterface
     fun showIncomingCall(characterId: String, characterName: String): String {
         if (

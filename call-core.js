@@ -335,6 +335,10 @@
     const active=activeCharacter(),incoming=payload&&typeof payload==="object"?payload:{};
     const id=String(incoming.id||active.id||"xuan-yan");
     const name=String(incoming.name||active.name||"玄砚");
+    try{
+      const saved=JSON.parse(localStorage.getItem("xy.avatars")||"{}");
+      bridge.setCharacterAvatar?.(id,String(saved?.characters?.[id]||""));
+    }catch{}
     return parseNativeCallResult(bridge.showIncomingCall(id,name));
   }
 
