@@ -52,9 +52,14 @@
     const parts=[];
     if(text)parts.push({type:'text',text});
     else if(attachments.some(a=>a?.kind==='image'&&a.dataUrl))parts.push({type:'text',text:'请查看我发送的图片。'});
+    else if(attachments.some(a=>a?.kind==='audio'&&a.transcript))parts.push({type:'text',text:'用户发来一段语音；以下是实际识别出的文字。'});
     for(const a of attachments){
       if(a?.kind==='image'&&a.dataUrl)parts.push({type:'image_url',image_url:{url:String(a.dataUrl)}});
-      else if(a?.kind==='text'&&typeof a.text==='string'){
+      else if(a?.kind==='audio'&&a.transcript){
+        parts.push({type:'text',text:'[语音转写] '+String(a.transcript).slice(0,5000)});
+      }else if(a?.kind==='audio'){
+        parts.push({type:'text',text:'[收到语音条，但未识别到内容；请如实说明无法理解，不要猜测语音内容]'});
+      }else if(a?.kind==='text'&&typeof a.text==='string'){
         parts.push({type:'text',text:'[附件：'+String(a.name||'文本文件')+(a.truncated?'；内容已截断':'')+']\n'+a.text});
       }else if(a?.name){
         parts.push({type:'text',text:'[附件：'+String(a.name)+'；内容当前不可用]'});
