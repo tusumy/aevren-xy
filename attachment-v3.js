@@ -147,7 +147,7 @@
     menu.id="xyAttachMenu";
     menu.className="xy-attach-menu";
     menu.hidden=true;
-    menu.innerHTML='<button type="button" data-attach="image"><span>▧</span><b>图片</b><small>相册 / 多选</small></button><button type="button" data-attach="file"><span>▤</span><b>文件</b><small>文本 / Markdown / JSON / 代码</small></button><button type="button" data-attach="call"><span>☎</span><b>语音通话</b><small>和玄砚通话</small></button>';
+    menu.innerHTML='<button type="button" data-attach="image"><span>▧</span><b>图片</b><small>相册 / 多选</small></button><button type="button" data-attach="file"><span>▤</span><b>文件</b><small>文本 / Markdown / JSON / 代码</small></button><button type="button" data-attach="call"><span>☎</span><b>语音通话</b><small>和角色通话</small></button>';
     document.body.appendChild(menu);
   }
 
@@ -158,6 +158,10 @@
   document.body.append(imageInput,fileInput);
 
   const positionMenu=()=>{
+    const character=window.xyCurrentCharacter?.();
+    const name=String(character?.name||document.querySelector(".presence strong")?.textContent||"角色").trim();
+    const subtitle=menu.querySelector('[data-attach="call"] small');
+    if(subtitle)subtitle.textContent="和"+name+"通话";
     menu.hidden=false;
     const br=button.getBoundingClientRect(),mr=menu.getBoundingClientRect();
     menu.style.left=Math.max(10,Math.min(br.left,innerWidth-mr.width-10))+"px";
