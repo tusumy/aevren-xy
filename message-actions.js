@@ -177,12 +177,14 @@
     bubble?.classList.add('xy-context-active');
     const wrap=document.createElement('div');wrap.className='xy-context-backdrop';
     const assistant=m.role==='assistant';
+    const voiceActive=assistant&&window.AevrenVoice?.isMessageSpeaking?.(index,currentChat());
     wrap.innerHTML=`<div class="xy-context-menu" role="menu" aria-label="消息操作">
       <button type="button" data-context-act="copy">复制</button>
       <button type="button" data-context-act="quote">引用整条</button>
       ${assistant?'<button type="button" data-context-act="quote-one">引用一句</button>':''}
       <button type="button" data-context-act="edit">编辑</button>
       <button type="button" data-context-act="remember">记住</button>
+      ${assistant?'<button type="button" data-context-act="voice">'+(voiceActive?'停止播放':'播放语音')+'</button>':''}
       ${assistant?'<button type="button" data-context-act="retry">重新生成</button>':''}
       <button type="button" class="danger" data-context-act="delete">删除</button>
     </div>`;
@@ -210,6 +212,7 @@
       else if(act==='quote-one'){showQuotePicker(index,point);return}
       else if(act==='edit')editMessage(index);
       else if(act==='remember')rememberMessage(index);
+      else if(act==='voice'){if(window.AevrenVoice?.speakMessage)window.AevrenVoice.speakMessage(index,currentChat());else showNotice('语音模块还没准备好',true)}
       else if(act==='retry')regenerate(index);
       else if(act==='delete')deleteMessage(index);
     });
