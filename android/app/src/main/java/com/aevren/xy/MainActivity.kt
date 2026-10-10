@@ -567,14 +567,12 @@ private class NativeVoiceBridge(
         activity.runOnUiThread {
             try {
                 if (speechRecognizer == null) {
-                    speechRecognizer = if (
-                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
-                        SpeechRecognizer.isOnDeviceRecognitionAvailable(activity)
-                    ) {
-                        SpeechRecognizer.createOnDeviceSpeechRecognizer(activity)
-                    } else {
-                        SpeechRecognizer.createSpeechRecognizer(activity)
+                    // A device may report on-device STT as available while its language pack is missing.
+                    // Prefer the default recognizer, which can use the installed system service.
+                    if (!SpeechRecognizer.isRecognitionAvailable(activity)) {
+                        throw IllegalStateException("speech_recognizer_unavailable")
                     }
+                    speechRecognizer = SpeechRecognizer.createSpeechRecognizer(activity)
                 }
                 val recognizer = speechRecognizer ?: throw IllegalStateException("speech_recognizer_unavailable")
                 recognizer.setRecognitionListener(object : RecognitionListener {
@@ -601,6 +599,7 @@ private class NativeVoiceBridge(
                 val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                     putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                     putExtra(RecognizerIntent.EXTRA_LANGUAGE, normalizedRecognitionLanguage(languageTag))
+                    putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, false)
                     putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
                     putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
                     putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1200L)
