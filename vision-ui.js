@@ -27,10 +27,9 @@
     if(e.target.closest?.(".edit-endpoint")){const i=Number(e.target.closest(".edit-endpoint").dataset.i);queueMicrotask(()=>{injectSettings();const input=document.querySelector("#xyVisionToggle");if(input)input.checked=vision(endpoints[i])})}
     if(e.target?.id==="addEndpoint"){queueMicrotask(()=>{injectSettings();const input=document.querySelector("#xyVisionToggle");if(input)input.checked=false})}
     if(e.target?.id==="saveEndpoint"){
-      const input=document.querySelector("#xyVisionToggle");const form=document.querySelector("#endpointForm");
-      const editing=form?.dataset.edit??"";
-      const checked=!!input?.checked;
-      queueMicrotask(()=>{const i=editing!==""?Number(editing):endpoints.length-1;if(endpoints[i]){endpoints[i].vision=checked;save();updateBadge()}})
+      // app.js persists the checkbox with all other endpoint fields in one save.
+      // No deferred second save: it could overwrite the reopened form's state.
+      queueMicrotask(updateBadge);
     }
     if(e.target.closest?.(".endpoint-card[data-endpoint]")&&!e.target.closest("button"))queueMicrotask(updateBadge);
   },true);
