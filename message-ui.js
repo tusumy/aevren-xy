@@ -197,6 +197,14 @@
     }
     const attachments=api?.take?.();
     const files=Array.isArray(attachments)?attachments:[];
+    if(files.some(a=>a?.kind==="image"&&!a.dataUrl)){
+      await window.xyImagePayload?.hydrate?.([{attachments:files}]);
+      if(files.some(a=>a?.kind==="image"&&!a.dataUrl)){
+        api?.restore?.(files);
+        api?.toast?.("图片正文读取失败，已保留在输入框，请重新选择图片",true);
+        return false;
+      }
+    }
     if(!text&&!files.length)return false;
     pendingUserQueue.push({id:++pendingSeq,text,attachments:files,createdAt:Date.now()});
     input.value="";
