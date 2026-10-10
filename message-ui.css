@@ -50,3 +50,15 @@ html[data-theme-mode="dark"] .xy-reply-now{background:rgba(28,35,31,.76);border-
   .presence .xy-header-count svg{display:none}
   .presence .xy-header-stats-sheet{left:-44px;right:auto}
 }
+
+.xy-call-record{display:flex;justify-content:center;margin:14px 0 18px!important}
+.xy-call-history{width:min(86%,520px);color:var(--muted,#738078);font-size:12px}
+.xy-call-history>summary{list-style:none;display:flex;gap:8px;align-items:center;justify-content:center;cursor:pointer;padding:8px 12px;border-radius:14px;background:rgba(80,113,92,.07)}
+.xy-call-history>summary::-webkit-details-marker{display:none}
+.xy-call-history-icon{font-size:15px}
+.xy-call-history summary small{font-size:10px;opacity:.66;margin-left:5px}
+.xy-call-history-content{margin-top:7px;padding:12px;border-radius:14px;background:rgba(80,113,92,.055);max-height:260px;overflow:auto}
+.xy-call-history-turn{display:flex;gap:10px;padding:5px 0;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.xy-call-history-turn b{flex:0 0 45px;font-size:10px}
+.xy-call-history-turn span{flex:1}
+.xy-call-history-empty{text-align:center;opacity:.7}
