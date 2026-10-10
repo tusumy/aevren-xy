@@ -3,7 +3,7 @@
   let phase="idle",recognition=null,startedAt=0,timerId=null,processing=false,restartTimer=null;
   let callRecorder=null,callStream=null,callChunks=[],callNativeRecording=false,callNativeRecognizing=false;
   let overlay,statusEl,timeEl,transcriptEl,acceptBtn,hangupBtn,fallbackWrap,fallbackInput,pushBtn;
-  let callCharacter=null,callUseNative=false,nativeAutoTimer=null,callGeneration=0;
+  let callCharacter=null,callUseNative=false,nativeAutoTimer=null,callGeneration=0,callChat=null,callLines=[],missedSpeech=0;
 
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const currentChat=()=>{try{return chat()}catch{return null}};
@@ -64,6 +64,7 @@
     const who=document.createElement("b");who.textContent=role==="user"?"你":currentCallName();
     const body=document.createElement("span");body.textContent=text;
     row.append(who,body);transcriptEl.appendChild(row);transcriptEl.scrollTop=transcriptEl.scrollHeight;
+    if(phase==="connected"&&callLines.length<160)callLines.push({role,text:String(text).slice(0,1200)});
   }
 
   function ring(payload){
@@ -75,6 +76,7 @@
       name:String(incoming.name||active.name||"玄砚")
     };
     syncCallCharacter();
+    callChat=currentChat();callLines=[];missedSpeech=0;startedAt=0;
     callGeneration++;phase="ringing";processing=false;overlay.hidden=false;overlay.classList.add("show","ringing");overlay.classList.remove("connected");
     transcriptEl.innerHTML="";statusEl.textContent="语音来电";timeEl.textContent="00:00";acceptBtn.hidden=false;hangupBtn.hidden=false;
     fallbackWrap.hidden=true;pushBtn.hidden=true;
@@ -107,14 +109,20 @@
       const text=String(await window.AevrenVoice.recognizeNativeOnce({allowActivityFallback:false})).trim();
       callNativeRecognizing=false;
       if(phase!=="connected"||!callUseNative||generation!==callGeneration)return;
-      if(text)await handleUserText(text);
-      else scheduleNativeListening(500);
+      if(text){missedSpeech=0;await handleUserText(text)}
+      else{missedSpeech++;if(missedSpeech>=5){callUseNative=false;pushBtn.hidden=false;fallbackWrap.hidden=false;statusEl.textContent="没有识别到声音 · 可点麦克风重试"}else scheduleNativeListening(500)}
     }catch(error){
       callNativeRecognizing=false;
       if(phase!=="connected"||!callUseNative||generation!==callGeneration)return;
-      if(["speech_no_match","speech_timeout"].includes(String(error?.message||error)))return scheduleNativeListening(500);
+      if(["speech_no_match","speech_timeout"].includes(String(error?.message||error))){
+        missedSpeech++;
+        if(missedSpeech<5)return scheduleNativeListening(500);
+        callUseNative=false;pushBtn.hidden=false;fallbackWrap.hidden=false;
+        statusEl.textContent="语音识别没有结果 · 点麦克风重试";
+        return;
+      }
       callUseNative=false;pushBtn.hidden=false;fallbackWrap.hidden=false;
-      statusEl.textContent="免提识别失败 · 点麦克风说话";
+      statusEl.textContent="免提识别失败："+String(error?.message||error).slice(0,55)+" · 点麦克风或输入文字";
     }
   }
 
@@ -319,10 +327,20 @@
 
   function hangup(){
     if(phase==="idle")return;
+    const wasConnected=phase==="connected";
     const duration=startedAt?fmtTime(Date.now()-startedAt):"00:00";
+    const recordChat=callChat,recordCharacter={...currentCallCharacter()},recordStartedAt=startedAt,recordEndedAt=Date.now();
+    const transcript=callLines.slice();
     callGeneration++;phase="idle";processing=false;callUseNative=false;clearTimeout(nativeAutoTimer);nativeAutoTimer=null;stopListening();if(callNativeRecognizing){try{window.AevrenVoice?.stopNativeRecognition?.()}catch{}callNativeRecognizing=false}if(callNativeRecording){try{window.AevrenVoice?.stopNativeCapture?.()}catch{}callNativeRecording=false}if(callRecorder?.state==="recording"){try{callRecorder.onstop=null;callRecorder.stop()}catch{}}callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];clearInterval(timerId);timerId=null;window.AevrenVoice?.stop?.();
+    if(wasConnected&&recordChat?.messages){
+      recordChat.messages.push({role:"system",kind:"call",text:"☎ 与"+String(recordCharacter.name||"角色")+"通话 · "+duration,
+        characterName:String(recordCharacter.name||"角色"),characterId:String(recordCharacter.id||""),
+        duration,startedAt:recordStartedAt,endedAt:recordEndedAt,transcript,createdAt:recordEndedAt});
+      try{save();renderChats();renderMessages()}catch(error){console.warn("call_history_save_failed",error)}
+    }
     statusEl.textContent="通话结束 · "+duration;overlay.classList.remove("ringing","connected");overlay.classList.add("ended");
-    setTimeout(()=>{overlay.hidden=true;overlay.classList.remove("show","ended");callCharacter=null},650);
+    const finishedGeneration=callGeneration;
+    setTimeout(()=>{if(phase==="idle"&&finishedGeneration===callGeneration){overlay.hidden=true;overlay.classList.remove("show","ended");callCharacter=null;callChat=null;callLines=[]}},650);
   }
 
   ensureUi();installEntry();
