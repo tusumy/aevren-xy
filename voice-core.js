@@ -24,7 +24,7 @@
     store.set("xy.voice",voiceSettings);
   }
   let recorder=null,recordStream=null,recordChunks=[],recordTimer=null,recordStarting=false,voiceBusy=false,nativeRecording=false,nativeRecognizing=false;
-  let nativeRecognitionResolve=null,nativeRecognitionReject=null,nativeRecognitionTimer=null,nativeRecognitionFallbackTried=false;
+  let nativeRecognitionResolve=null,nativeRecognitionReject=null,nativeRecognitionTimer=null,nativeRecognitionFallbackTried=false,nativeRecognitionAllowActivityFallback=true;
   let composerActionState="idle",voiceNoteStartedAt=0;
   let activeAudio=null,activeMessage=null;
   const busyMessages=new Set();
@@ -90,18 +90,19 @@
     if(code==="speech_error_1"||code==="speech_error_2"||code==="speech_error_4"||code==="speech_error_11")return "speech_service";
     return code;
   }
-  function recognizeNativeOnce(){
+  function recognizeNativeOnce(options={}){
     const bridge=nativeVoiceBridge();
     if(!bridge||typeof bridge.startRecognition!=="function")return Promise.reject(new Error("native_speech_unavailable"));
     if(nativeRecognizing)return Promise.reject(new Error("already_listening"));
     nativeRecognizing=true;nativeRecognitionFallbackTried=false;
+    nativeRecognitionAllowActivityFallback=options?.allowActivityFallback!==false;
     return new Promise((resolve,reject)=>{
       nativeRecognitionResolve=resolve;nativeRecognitionReject=reject;
       clearTimeout(nativeRecognitionTimer);
       nativeRecognitionTimer=setTimeout(()=>{
         if(!nativeRecognizing)return;
         try{bridge.stopRecognition?.()}catch{}
-        if(!nativeRecognitionFallbackTried&&canStartNativeRecognitionActivity()){
+        if(nativeRecognitionAllowActivityFallback&&!nativeRecognitionFallbackTried&&canStartNativeRecognitionActivity()){
           nativeRecognitionFallbackTried=true;
           const fallback=startNativeRecognitionActivity();
           if(fallback.ok){
@@ -120,7 +121,7 @@
       const result=parseNativeVoiceResult(bridge.startRecognition(voiceSettings.sttLanguage||"zh-CN"));
       if(!result.ok){
         clearTimeout(nativeRecognitionTimer);
-        if(canStartNativeRecognitionActivity()){
+        if(nativeRecognitionAllowActivityFallback&&canStartNativeRecognitionActivity()){
           nativeRecognitionFallbackTried=true;
           const fallback=startNativeRecognitionActivity();
           if(fallback.ok){
@@ -668,7 +669,7 @@
     startNativeCapture(){return startNativeCapture()},
     stopNativeCapture(){return stopNativeCapture()},
     hasNativeRecognition(){return hasNativeRecognition()},
-    recognizeNativeOnce(){return recognizeNativeOnce()},
+    recognizeNativeOnce(options){return recognizeNativeOnce(options)},
     stopNativeRecognition(){return stopNativeRecognition()},
     startNativeRecognitionActivity(){return startNativeRecognitionActivity()},
     stop(){
@@ -688,7 +689,7 @@
   };
   window.__xyNativeSttError=error=>{
     clearTimeout(nativeRecognitionTimer);nativeRecognitionTimer=null;
-    if(nativeRecognizing&&!nativeRecognitionFallbackTried&&canStartNativeRecognitionActivity()){
+    if(nativeRecognizing&&nativeRecognitionAllowActivityFallback&&!nativeRecognitionFallbackTried&&canStartNativeRecognitionActivity()){
       nativeRecognitionFallbackTried=true;
       const fallback=startNativeRecognitionActivity();
       if(fallback.ok){
