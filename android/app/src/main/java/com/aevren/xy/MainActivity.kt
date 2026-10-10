@@ -392,6 +392,22 @@ private class NativeVoiceBridge(
     private var recordingFile: File? = null
     private var speechRecognizer: SpeechRecognizer? = null
     @Volatile private var speechListening = false
+    private val offlineSpeech = OfflineSpeech(activity, webView)
+
+    @JavascriptInterface
+    fun offlineStatus(): String = offlineSpeech.status()
+
+    @JavascriptInterface
+    fun startOfflineRecognition(): String = offlineSpeech.startPhoneTurn()
+
+    @JavascriptInterface
+    fun stopOfflineRecognition(): String = offlineSpeech.stopPhoneTurn()
+
+    @JavascriptInterface
+    fun startOfflineNote(): String = offlineSpeech.startVoiceNote()
+
+    @JavascriptInterface
+    fun stopOfflineNote(): String = offlineSpeech.stopVoiceNote()
 
     init {
         initTts("")
@@ -750,6 +766,7 @@ private class NativeVoiceBridge(
     }
 
     fun shutdown() {
+        offlineSpeech.shutdown()
         synchronized(this) {
             runCatching { recorder?.stop() }
             runCatching { recorder?.release() }
