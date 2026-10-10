@@ -348,7 +348,14 @@
     if(!bridge?.showIncomingCall)return {ok:false,error:"native_call_unavailable"};
     const active=activeCharacter(),incoming=payload&&typeof payload==="object"?payload:{};
     const id=String(incoming.id||active.id||"xuan-yan");
-    const name=String(incoming.name||active.name||"玄砚");
+    // The current saved character name is authoritative, even if a scheduled
+    // incoming-call payload still contains the former display name.
+    let savedCharacter;
+    try{
+      const all=JSON.parse(localStorage.getItem("xy.characters")||"[]");
+      savedCharacter=Array.isArray(all)?all.find(ch=>String(ch?.id)===id):null;
+    }catch{}
+    const name=String(savedCharacter?.name||(id===String(active.id)?active.name:"")||incoming.name||"角色");
     try{
       const saved=JSON.parse(localStorage.getItem("xy.avatars")||"{}");
       bridge.setCharacterAvatar?.(id,String(saved?.characters?.[id]||""));
