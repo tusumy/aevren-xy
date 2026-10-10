@@ -75,13 +75,22 @@
     if(!transcript)throw new Error("识别没有返回文字，重新靠近麦克风说话");
     return transcript;
   }
+  const microphoneIcon='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="13" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5m-4 0h8"/></svg>';
+  const sendIcon="↑";
+  function hasComposerContent(){
+    const text=document.querySelector("#input")?.value.trim()||"";
+    const attachments=window.xyAttachments?.peek?.()||[];
+    return !!text||attachments.length>0;
+  }
   function updateButton(){
-    const el=document.querySelector("#xyVoiceRecorder");if(!el)return;
-    el.disabled=busy;
-    el.classList.toggle("recording",!!recorder);
-    el.textContent=recorder?"■":"🎙";
-    el.title=recorder?"停止录音并转成文字":busy?"识别中…":"录制语音条";
+    const el=document.querySelector("#sendBtn");if(!el)return;
+    const mode=recorder?"recording":busy?"busy":hasComposerContent()?"send":"mic";
+    el.dataset.mode=mode;
+    el.classList.toggle("recording",mode==="recording");
+    el.innerHTML=mode==="recording"?"■":mode==="busy"?"…":mode==="send"?sendIcon:microphoneIcon;
+    el.title=mode==="recording"?"结束录音并转写":mode==="busy"?"正在处理语音":mode==="send"?"发送":"开始录音";
     el.setAttribute("aria-label",el.title);
+    if(mode!=="busy")el.disabled=false;
   }
   function stopStream(){
     try{stream?.getTracks().forEach(track=>track.stop())}catch{}
@@ -139,9 +148,8 @@
   }
   const style=document.createElement("style");
   style.textContent=[
-    "#xyVoiceRecorder{border:0;background:transparent;color:#54685c;font-size:19px;min-width:35px;height:38px;border-radius:12px;cursor:pointer;flex-shrink:0}",
-    "#xyVoiceRecorder.recording{background:#a44242;color:#fff}",
-    "#xyVoiceRecorder:disabled{opacity:.4}",
+    "#sendBtn[data-mode=mic],#sendBtn[data-mode=recording]{display:grid;place-items:center}",
+    "#sendBtn[data-mode=recording]{background:#9a4545;color:#fff}",
     ".xy-groq-toast{position:fixed;z-index:200;left:50%;bottom:112px;transform:translateX(-50%);background:#345345;color:#fff;border-radius:14px;padding:12px 16px;font-size:12px;max-width:90vw;box-shadow:0 6px 28px #0002}",
     ".xy-groq-toast.error{background:#873e3f}",
     ".xy-voice-note{display:inline-flex;flex-direction:column;gap:7px;max-width:100%}",
@@ -156,10 +164,23 @@
   document.head.appendChild(style);
   const composer=document.querySelector(".composer");
   const sendBtn=composer?.querySelector("#sendBtn");
-  if(composer&&sendBtn&&!document.querySelector("#xyVoiceRecorder")){
-    const button=document.createElement("button");button.type="button";button.id="xyVoiceRecorder";
-    composer.insertBefore(button,sendBtn);
-    button.onclick=toggleRecording;updateButton();
+  const input=composer?.querySelector("#input");
+  if(composer&&sendBtn){
+    // One shared action: empty composer = microphone; typed message or attachment = send.
+    // Capture prevents previous send handlers from consuming the microphone click.
+    sendBtn.addEventListener("click",event=>{
+      if(recorder||(!hasComposerContent()&&!busy)){
+        event.preventDefault();event.stopImmediatePropagation();toggleRecording();
+      }else if(busy){
+        event.preventDefault();event.stopImmediatePropagation();
+      }
+    },true);
+    input?.addEventListener("input",updateButton);
+    document.querySelector("#xyAttachmentTray")?.addEventListener("DOMSubtreeModified",updateButton);
+    const tray=document.querySelector("#xyAttachmentTray");
+    if(tray&&window.MutationObserver)new MutationObserver(updateButton).observe(tray,{childList:true,subtree:true,attributes:true,attributeFilter:["hidden"]});
+    sendBtn.addEventListener("click",()=>requestAnimationFrame(updateButton));
+    updateButton();
   }
   const nav=document.querySelector(".sidebar-bottom");
   if(nav&&!nav.querySelector('[data-panel="voice"]')){
