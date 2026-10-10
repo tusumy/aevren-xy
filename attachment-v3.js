@@ -144,6 +144,13 @@
       chip.appendChild(remove);
       tray.appendChild(chip);
     });
+    if(pending.some(a=>a?.kind==="image")){
+      const backup=document.createElement("button");
+      backup.id="xyUseBackupVision";backup.type="button";
+      backup.textContent=window.xyNextVisualFallback?"✓ 使用备用视觉":"用备用视觉";
+      backup.style.cssText="flex:0 0 auto;align-self:center;padding:7px 9px;border:1px solid #9fb5a9;border-radius:10px;color:#476554;background:rgba(255,255,255,.7);font-size:11px";
+      tray.appendChild(backup);
+    }
   }
 
   let menu=document.querySelector("#xyAttachMenu");
@@ -222,7 +229,7 @@
   const stripPayload=a=>{
     if(!a||typeof a!=="object")return a;
     return {
-      kind:a.kind,name:a.name,type:a.type,size:a.size,width:a.width,height:a.height,mediaKey:a.mediaKey||"",
+      kind:a.kind,name:a.name,type:a.type,size:a.size,width:a.width,height:a.height,mediaKey:a.mediaKey||"",visionDescription:a.visionDescription||"",
       duration:Number(a.duration||0),format:a.format||"",
       localAudioKey:a.localAudioKey||"",transcript:a.transcript||"",transcriptError:a.transcriptError||"",
       truncated:!!a.truncated,previewDataUrl:a.previewDataUrl||""
