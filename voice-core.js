@@ -25,6 +25,10 @@
   }
   let recorder=null,recordStream=null,recordChunks=[],recordTimer=null,recordStarting=false,voiceBusy=false,nativeRecording=false,nativeRecognizing=false;
   let nativeRecognitionResolve=null,nativeRecognitionReject=null,nativeRecognitionTimer=null,nativeRecognitionFallbackTried=false,nativeRecognitionAllowActivityFallback=true;
+  let recognitionObserver=null;
+  function notifyRecognition(stage,detail=""){
+    try{recognitionObserver?.({stage,detail:String(detail||"").slice(0,200)})}catch{}
+  }
   let composerActionState="idle",voiceNoteStartedAt=0;
   let activeAudio=null,activeMessage=null;
   const busyMessages=new Set();
@@ -96,6 +100,7 @@
     if(nativeRecognizing)return Promise.reject(new Error("already_listening"));
     nativeRecognizing=true;nativeRecognitionFallbackTried=false;
     nativeRecognitionAllowActivityFallback=options?.allowActivityFallback!==false;
+    notifyRecognition("starting");
     return new Promise((resolve,reject)=>{
       nativeRecognitionResolve=resolve;nativeRecognitionReject=reject;
       clearTimeout(nativeRecognitionTimer);
@@ -704,6 +709,7 @@
     startNativeCapture(){return startNativeCapture()},
     stopNativeCapture(){return stopNativeCapture()},
     hasNativeRecognition(){return hasNativeRecognition()},
+    onRecognitionProgress(observer){recognitionObserver=typeof observer==="function"?observer:null},
     recognizeNativeOnce(options){return recognizeNativeOnce(options)},
     stopNativeRecognition(){return stopNativeRecognition()},
     startNativeRecognitionActivity(){return startNativeRecognitionActivity()},
@@ -716,6 +722,7 @@
   };
 
   window.__xyNativeSttResult=text=>{
+    notifyRecognition("result",text);
     clearTimeout(nativeRecognitionTimer);nativeRecognitionTimer=null;
     const resolve=nativeRecognitionResolve;
     nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
@@ -723,6 +730,7 @@
     refreshComposerAction();
   };
   window.__xyNativeSttError=error=>{
+    notifyRecognition("error",normalizeSpeechError(error));
     clearTimeout(nativeRecognitionTimer);nativeRecognitionTimer=null;
     if(nativeRecognizing&&nativeRecognitionAllowActivityFallback&&!nativeRecognitionFallbackTried&&canStartNativeRecognitionActivity()){
       nativeRecognitionFallbackTried=true;
@@ -745,10 +753,14 @@
     refreshComposerAction();
   };
   window.__xyNativeSttPartial=text=>{
-    if(nativeRecognizing){const button=document.querySelector("#sendBtn");if(button)button.title="你在说："+String(text||"").slice(0,18)}
+    if(nativeRecognizing){
+      notifyRecognition("partial",text);
+      const button=document.querySelector("#sendBtn");if(button)button.title="你在说："+String(text||"").slice(0,18)
+    }
   };
   window.__xyNativeSttState=state=>{
     if(!nativeRecognizing)return;
+    notifyRecognition("state",state);
     if(state==="processing")setMicState("transcribing");
   };
   window.__xyNativeTtsEngineReady=()=>{
