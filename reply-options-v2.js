@@ -286,7 +286,8 @@
         queued=false;
         renderLatestOptions();
       });
-    }).observe(box,{childList:true,subtree:true});
+    });
+    observer.observe(box,{childList:true,subtree:true});
   }
 
   function addSettingsToggle(type){
