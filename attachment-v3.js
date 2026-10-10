@@ -100,12 +100,11 @@
     tray.id="xyAttachmentTray";
     tray.className="xy-attachment-tray";
     tray.hidden=true;
+    wrap.insertBefore(tray,composer);
   }
-  if(tray.parentElement!==composer)composer.prepend(tray);
 
   function render(){
     tray.hidden=!pending.length&&!busy;
-    window.xyVoiceRefreshComposer?.();
     tray.innerHTML="";
     if(busy){
       const loading=document.createElement("div");
@@ -115,7 +114,7 @@
     }
     pending.forEach((a,i)=>{
       const chip=document.createElement("div");
-      chip.className="xy-attachment-chip "+(a.kind==="image"?"image":"file");
+      chip.className="xy-attachment-chip";
       if(a.kind==="image"){
         const img=document.createElement("img");
         img.src=a.previewDataUrl||a.dataUrl||"";
@@ -124,7 +123,7 @@
       }else{
         const icon=document.createElement("span");
         icon.className="xy-attachment-file-icon";
-        icon.textContent=a.kind==="audio"?"◖":"▤";
+        icon.textContent="▤";
         chip.appendChild(icon);
       }
       const name=document.createElement("span");
@@ -147,7 +146,7 @@
     menu.id="xyAttachMenu";
     menu.className="xy-attach-menu";
     menu.hidden=true;
-    menu.innerHTML='<button type="button" data-attach="image"><span>▧</span><b>图片</b><small>相册 / 多选</small></button><button type="button" data-attach="file"><span>▤</span><b>文件</b><small>文本 / Markdown / JSON / 代码</small></button><button type="button" data-attach="call"><span>☎</span><b>语音通话</b><small>和玄砚通话</small></button>';
+    menu.innerHTML='<button type="button" data-attach="image"><span>▧</span><b>图片</b><small>相册 / 多选</small></button><button type="button" data-attach="file"><span>▤</span><b>文件</b><small>文本 / Markdown / JSON / 代码</small></button>';
     document.body.appendChild(menu);
   }
 
@@ -169,20 +168,6 @@
     const type=e.target.closest?.("[data-attach]")?.dataset.attach;
     if(!type)return;
     menu.hidden=true;
-    if(type==="call"){
-      if(window.AevrenCall?.nativeIncomingCall){
-        const result=window.AevrenCall.nativeIncomingCall();
-        if(result?.ok){
-          if(result.fullScreenAllowed===false)toast("来电已发出；锁屏全屏来电权限还没开启");
-        }else if(result?.error==="notification_permission_requested"){
-          toast("先允许砚屿发送来电通知，再点一次语音通话");
-        }else if(window.AevrenCall?.ring){
-          window.AevrenCall.ring({source:"composer"});
-        }else toast("通话功能还没准备好",true);
-      }else if(window.AevrenCall?.ring)window.AevrenCall.ring({source:"composer"});
-      else toast("通话功能还没准备好",true);
-      return;
-    }
     (type==="image"?imageInput:fileInput).click();
   };
   document.addEventListener("click",e=>{if(!menu.hidden&&!menu.contains(e.target)&&e.target!==button)menu.hidden=true});
@@ -211,8 +196,6 @@
     if(!a||typeof a!=="object")return a;
     return {
       kind:a.kind,name:a.name,type:a.type,size:a.size,width:a.width,height:a.height,
-      duration:Number(a.duration||0),format:a.format||"",
-      localAudioKey:a.localAudioKey||"",transcript:a.transcript||"",transcriptError:a.transcriptError||"",
       truncated:!!a.truncated,previewDataUrl:a.previewDataUrl||""
     };
   };

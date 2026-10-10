@@ -34,34 +34,3 @@
 .xy-reply-now[hidden]{display:none!important}
 .xy-reply-now:active{transform:scale(.96)}
 html[data-theme-mode="dark"] .xy-reply-now{background:rgba(28,35,31,.76);border-color:rgba(255,255,255,.08);color:#e8f0eb}
-.xy-header-message-stats{position:relative;flex:0 0 auto;display:flex;align-items:center}.xy-header-count{border:0;height:32px;min-width:44px;padding:0 10px 0 7px;border-radius:999px;background:rgba(78,112,91,.10);color:var(--theme-accent,#466653);display:inline-flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(70,102,83,.06)}.xy-header-count svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.xy-header-count span{font-size:11px;font-weight:650;font-variant-numeric:tabular-nums}.xy-header-count:hover{background:rgba(78,112,91,.16)}.xy-header-stats-sheet{position:absolute;right:0;top:calc(100% + 9px);z-index:20;min-width:188px;padding:11px 12px;border:1px solid var(--line);border-radius:14px;background:rgba(249,247,243,.97);box-shadow:0 16px 36px rgba(35,42,37,.13);backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px)}.xy-header-stats-sheet[hidden]{display:none}.xy-header-stats-sheet>span{display:block;color:var(--muted);font-size:10px;margin-bottom:3px}.xy-header-stats-sheet>strong{display:block;font-size:14px;margin-bottom:8px}.xy-header-stats-sheet>div{display:flex;justify-content:space-between;gap:18px;padding:4px 0;color:var(--muted);font-size:11px}.xy-header-stats-sheet b{color:var(--ink);font-size:11px;font-weight:650}.xy-header-stats-sheet .is-highlight b{color:var(--theme-accent,#466653)}html[data-theme-mode="dark"] .xy-header-count{background:rgba(111,154,128,.13);box-shadow:inset 0 0 0 1px rgba(255,255,255,.05)}html[data-theme-mode="dark"] .xy-header-stats-sheet{background:rgba(25,31,28,.98);border-color:rgba(255,255,255,.08)}@media(max-width:760px){.xy-header-count{height:30px;min-width:40px;padding:0 8px 0 6px}.xy-header-count svg{width:13px;height:13px}.xy-header-stats-sheet{right:-40px}}
-
-/* Keep persistent message count with the conversation identity, not in the right action cluster. */
-.presence .xy-header-message-stats{margin-left:2px}
-.presence .xy-header-count{height:24px;min-width:32px;padding:0 8px;border-radius:999px;background:rgba(78,112,91,.08);gap:4px}
-.presence .xy-header-count svg{width:11px;height:11px}
-.presence .xy-header-count span{font-size:10px}
-.presence .xy-header-stats-sheet{left:0;right:auto;top:calc(100% + 10px)}
-@media(max-width:760px){
-  .presence{min-width:0}
-  .presence>div{min-width:0}
-  .presence .xy-header-message-stats{margin-left:0}
-  .presence .xy-header-count{height:22px;min-width:29px;padding:0 7px}
-  .presence .xy-header-count svg{display:none}
-  .presence .xy-header-stats-sheet{left:-44px;right:auto}
-}
-
-.xy-call-record{display:flex;justify-content:center;margin:14px 0 18px!important}
-.xy-call-history{width:min(86%,520px);color:var(--muted,#738078);font-size:12px}
-.xy-call-history>summary{list-style:none;display:flex;gap:8px;align-items:center;justify-content:center;cursor:pointer;padding:8px 12px;border-radius:14px;background:rgba(80,113,92,.07)}
-.xy-call-history>summary::-webkit-details-marker{display:none}
-.xy-call-history-icon{font-size:15px}
-.xy-call-history summary small{font-size:10px;opacity:.66;margin-left:5px}
-.xy-call-history-content{margin-top:7px;padding:12px;border-radius:14px;background:rgba(80,113,92,.055);max-height:260px;overflow:auto}
-.xy-call-history-turn{display:flex;gap:10px;padding:5px 0;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
-.xy-call-history-turn b{flex:0 0 45px;font-size:10px}
-.xy-call-history-turn span{flex:1}
-.xy-call-history-empty{text-align:center;opacity:.7}
-
-.xy-voice-note-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:5px;max-width:100%}
-.xy-voice-transcript{font-size:11px;line-height:1.5;color:var(--muted,#63766a);white-space:pre-wrap;overflow-wrap:anywhere}

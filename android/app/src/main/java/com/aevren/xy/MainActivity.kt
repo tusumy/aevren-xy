@@ -7,12 +7,6 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
-import android.media.MediaRecorder
-import android.speech.RecognitionListener
-import android.speech.RecognizerIntent
-import android.speech.SpeechRecognizer
-import android.speech.tts.TextToSpeech
-import android.speech.tts.UtteranceProgressListener
 import android.os.Build
 import android.os.Bundle
 import android.util.Base64
@@ -44,9 +38,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.File
 import java.io.IOException
-import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
@@ -54,10 +46,7 @@ class MainActivity : Activity() {
     companion object {
         private const val HOME = "https://tusumy.github.io/aevren-xy/"
         private const val FILE_CHOOSER = 7001
-        const val AUDIO_PERMISSION = 7002
-        const val VOICE_RECOGNIZER = 7003
-        const val CALL_NOTIFICATION_PERMISSION = 7004
-        const val ACTION_NATIVE_CALL_ANSWER = "com.aevren.xy.action.OPEN_NATIVE_CALL"
+        private const val AUDIO_PERMISSION = 7002
     }
 
     private lateinit var webView: WebView
@@ -65,9 +54,6 @@ class MainActivity : Activity() {
     private var pageRevealed = false
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var pendingAudioPermission: PermissionRequest? = null
-    private var nativeVoiceBridge: NativeVoiceBridge? = null
-    private var nativeCallBridge: NativeCallBridge? = null
-    private var pendingNativeCallPayload: String? = null
 
     private val http = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)
@@ -121,11 +107,6 @@ class MainActivity : Activity() {
         installImeInsetBridge()
 
         webView.addJavascriptInterface(NativeHttpBridge(webView, http), "AevrenNative")
-        nativeVoiceBridge = NativeVoiceBridge(this, webView)
-        webView.addJavascriptInterface(nativeVoiceBridge!!, "AevrenVoiceNative")
-        nativeCallBridge = NativeCallBridge(this)
-        webView.addJavascriptInterface(nativeCallBridge!!, "AevrenCallNative")
-        captureNativeCallIntent(intent)
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val uri = request.url
@@ -149,7 +130,6 @@ class MainActivity : Activity() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     view.requestApplyInsets()
                 }
-                deliverPendingNativeCall()
             }
         }
 
@@ -192,7 +172,7 @@ class MainActivity : Activity() {
         }
 
         if (savedInstanceState == null) {
-            webView.loadUrl("${HOME}?app=android&shell=10&t=${System.currentTimeMillis()}")
+            webView.loadUrl("${HOME}?app=android&shell=5&t=${System.currentTimeMillis()}")
         } else {
             webView.restoreState(savedInstanceState)
         }
@@ -303,49 +283,9 @@ class MainActivity : Activity() {
         if (hasFocus) applyImmersiveUi()
     }
 
-    override fun onDestroy() {
-        nativeVoiceBridge?.shutdown()
-        nativeVoiceBridge = null
-        nativeCallBridge = null
-        super.onDestroy()
-    }
-
     override fun onSaveInstanceState(outState: Bundle) {
         webView.saveState(outState)
         super.onSaveInstanceState(outState)
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        captureNativeCallIntent(intent)
-        deliverPendingNativeCall()
-    }
-
-    private fun captureNativeCallIntent(intent: Intent?) {
-        if (intent?.action != ACTION_NATIVE_CALL_ANSWER) return
-        val payload = JSONObject()
-            .put(
-                "id",
-                intent.getStringExtra(NativeCallManager.EXTRA_CHARACTER_ID).orEmpty()
-            )
-            .put(
-                "name",
-                intent.getStringExtra(NativeCallManager.EXTRA_CHARACTER_NAME).orEmpty()
-            )
-        pendingNativeCallPayload = payload.toString()
-    }
-
-    private fun deliverPendingNativeCall() {
-        if (!::webView.isInitialized) return
-        val payload = pendingNativeCallPayload ?: return
-        webView.post {
-            webView.evaluateJavascript(
-                "window.AevrenCall && window.AevrenCall.acceptNativeCall && window.AevrenCall.acceptNativeCall($payload);",
-                null
-            )
-            pendingNativeCallPayload = null
-        }
     }
 
     @Deprecated("Deprecated in Java")
@@ -356,10 +296,6 @@ class MainActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == VOICE_RECOGNIZER) {
-            nativeVoiceBridge?.handleRecognitionActivityResult(resultCode, data)
-            return
-        }
         if (requestCode != FILE_CHOOSER) return
         val result = if (resultCode == RESULT_OK) WebChromeClient.FileChooserParams.parseResult(resultCode, data) else null
         fileCallback?.onReceiveValue(result)
@@ -368,464 +304,12 @@ class MainActivity : Activity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == CALL_NOTIFICATION_PERMISSION) return
         if (requestCode != AUDIO_PERMISSION) return
         val request = pendingAudioPermission ?: return
         pendingAudioPermission = null
         if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
             request.grant(arrayOf(PermissionRequest.RESOURCE_AUDIO_CAPTURE))
         } else request.deny()
-    }
-}
-
-
-private class NativeVoiceBridge(
-    private val activity: Activity,
-    private val webView: WebView
-) {
-    @Volatile private var ttsReady = false
-    @Volatile private var currentTtsEngine = ""
-    private var tts: TextToSpeech? = null
-    private data class PendingSpeech(val text: String, val voiceName: String, val utteranceId: String)
-    private var pendingSpeech: PendingSpeech? = null
-    private var recorder: MediaRecorder? = null
-    private var recordingFile: File? = null
-    private var speechRecognizer: SpeechRecognizer? = null
-    @Volatile private var speechListening = false
-    private val offlineSpeech = OfflineSpeech(activity, webView)
-
-    @JavascriptInterface
-    fun offlineStatus(): String = offlineSpeech.status()
-
-    @JavascriptInterface
-    fun startOfflineRecognition(): String = offlineSpeech.startPhoneTurn()
-
-    @JavascriptInterface
-    fun stopOfflineRecognition(): String = offlineSpeech.stopPhoneTurn()
-
-    @JavascriptInterface
-    fun startOfflineNote(): String = offlineSpeech.startVoiceNote()
-
-    @JavascriptInterface
-    fun stopOfflineNote(): String = offlineSpeech.stopVoiceNote()
-
-    init {
-        initTts("")
-    }
-
-    private fun initTts(enginePackage: String) {
-        currentTtsEngine = enginePackage
-        ttsReady = false
-        activity.runOnUiThread {
-            runCatching { tts?.stop() }
-            runCatching { tts?.shutdown() }
-            tts = null
-            val listener = TextToSpeech.OnInitListener { status ->
-                ttsReady = status == TextToSpeech.SUCCESS
-                if (ttsReady) {
-                    tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                        override fun onStart(utteranceId: String?) = Unit
-                        override fun onDone(utteranceId: String?) { notifyTtsDone(utteranceId, null) }
-                        @Deprecated("Deprecated in Java")
-                        override fun onError(utteranceId: String?) { notifyTtsDone(utteranceId, "tts_error") }
-                        override fun onError(utteranceId: String?, errorCode: Int) { notifyTtsDone(utteranceId, "tts_error_" + errorCode) }
-                    })
-                    notifyTtsEngineReady()
-                    val queued = pendingSpeech
-                    pendingSpeech = null
-                    if (queued != null) speakNow(queued)
-                } else {
-                    val queued = pendingSpeech
-                    pendingSpeech = null
-                    if (queued != null) notifyTtsDone(queued.utteranceId, "tts_init_" + status)
-                    notifyTtsEngineError("tts_init_" + status)
-                }
-            }
-            tts = if (enginePackage.isBlank()) {
-                TextToSpeech(activity.applicationContext, listener)
-            } else {
-                TextToSpeech(activity.applicationContext, listener, enginePackage)
-            }
-        }
-    }
-
-    private fun speechLocale(text: String): Locale {
-        return when {
-            text.any { it in '\u3040'..'\u30ff' } -> Locale.forLanguageTag("ja-JP")
-            text.any { it in '\uac00'..'\ud7af' } -> Locale.forLanguageTag("ko-KR")
-            text.any { it in '\u4e00'..'\u9fff' } -> Locale.forLanguageTag("zh-CN")
-            else -> Locale.US
-        }
-    }
-
-    private fun speakNow(request: PendingSpeech) {
-        activity.runOnUiThread {
-            val engine = tts
-            if (engine == null || !ttsReady) {
-                pendingSpeech = request
-                return@runOnUiThread
-            }
-            val chosen = if (request.voiceName.isNotBlank()) {
-                engine.voices?.firstOrNull { it.name == request.voiceName }
-            } else null
-
-            if (chosen != null) {
-                engine.voice = chosen
-            } else {
-                val locale = speechLocale(request.text)
-                runCatching { engine.setLanguage(locale) }
-                if (currentTtsEngine.isBlank()) {
-                    val matching = engine.voices?.firstOrNull {
-                        it.locale?.language == locale.language && !it.isNetworkConnectionRequired
-                    } ?: engine.voices?.firstOrNull { it.locale?.language == locale.language }
-                    if (matching != null) engine.voice = matching
-                }
-            }
-
-            val result = engine.speak(request.text, TextToSpeech.QUEUE_FLUSH, null, request.utteranceId)
-            if (result != TextToSpeech.SUCCESS) {
-                notifyTtsDone(request.utteranceId, "tts_speak_" + result)
-            }
-        }
-    }
-
-    @JavascriptInterface
-    fun listEngines(): String = try {
-        val arr = JSONArray()
-        val engines = tts?.engines.orEmpty()
-        for (engine in engines) {
-            arr.put(
-                JSONObject()
-                    .put("packageName", engine.name)
-                    .put("label", engine.label ?: engine.name)
-                    .put("selected", engine.name == currentTtsEngine)
-            )
-        }
-        arr.toString()
-    } catch (_: Exception) { "[]" }
-
-    @JavascriptInterface
-    fun switchEngine(packageName: String): String {
-        val pkg = packageName.trim()
-        initTts(pkg)
-        return JSONObject().put("ok", true).put("packageName", pkg).toString()
-    }
-
-    @JavascriptInterface
-    fun currentEngine(): String = currentTtsEngine
-
-    @JavascriptInterface
-    fun listVoices(): String = try {
-        val arr = JSONArray()
-        val all = tts?.voices.orEmpty()
-        val chinese = all.filter { it.locale?.language == Locale.CHINESE.language }
-        val voices = (if (chinese.isNotEmpty()) chinese else all)
-            .sortedWith(compareBy({ it.isNetworkConnectionRequired }, { it.locale?.toLanguageTag().orEmpty() }, { it.name.orEmpty() }))
-        for (voice in voices) {
-            arr.put(
-                JSONObject()
-                    .put("id", voice.name)
-                    .put("name", voice.name)
-                    .put("lang", voice.locale?.toLanguageTag().orEmpty())
-                    .put("network", voice.isNetworkConnectionRequired)
-                    .put("quality", voice.quality)
-                    .put("latency", voice.latency)
-            )
-        }
-        arr.toString()
-    } catch (_: Exception) { "[]" }
-
-    @JavascriptInterface
-    fun speak(text: String, voiceName: String, utteranceId: String): String {
-        val value = text.trim()
-        if (value.isEmpty()) return JSONObject().put("ok", false).put("error", "empty_text").toString()
-        val request = PendingSpeech(value, voiceName.trim(), utteranceId)
-        if (!ttsReady || tts == null) {
-            pendingSpeech = request
-            initTts(currentTtsEngine)
-            return JSONObject().put("ok", true).put("queued", true).toString()
-        }
-        speakNow(request)
-        return JSONObject().put("ok", true).toString()
-    }
-
-    @JavascriptInterface
-    fun stopTts() { activity.runOnUiThread { tts?.stop() } }
-
-    @JavascriptInterface
-    fun isTtsSpeaking(): Boolean = tts?.isSpeaking == true
-
-    private fun normalizedRecognitionLanguage(value: String): String {
-        return when (value.trim().lowercase(Locale.ROOT)) {
-            "", "zh", "zh-cn", "cmn" -> "zh-CN"
-            "zh-hk", "yue", "yue-hk", "yue-hant-hk" -> "yue-Hant-HK"
-            "zh-tw" -> "zh-TW"
-            "en" -> "en-US"
-            "ja" -> "ja-JP"
-            "ko" -> "ko-KR"
-            else -> value.trim()
-        }
-    }
-
-    @JavascriptInterface
-    @Synchronized
-    fun startRecognition(languageTag: String): String {
-        if (activity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            activity.runOnUiThread {
-                activity.requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), MainActivity.AUDIO_PERMISSION)
-            }
-            return JSONObject().put("ok", false).put("error", "permission_requested").toString()
-        }
-        if (speechListening) {
-            return JSONObject().put("ok", false).put("error", "already_listening").toString()
-        }
-        speechListening = true
-        activity.runOnUiThread {
-            try {
-                if (speechRecognizer == null) {
-                    // A device may report on-device STT as available while its language pack is missing.
-                    // Prefer the default recognizer, which can use the installed system service.
-                    if (!SpeechRecognizer.isRecognitionAvailable(activity)) {
-                        throw IllegalStateException("speech_recognizer_unavailable")
-                    }
-                    speechRecognizer = SpeechRecognizer.createSpeechRecognizer(activity)
-                }
-                val recognizer = speechRecognizer ?: throw IllegalStateException("speech_recognizer_unavailable")
-                recognizer.setRecognitionListener(object : RecognitionListener {
-                    override fun onReadyForSpeech(params: Bundle?) { notifySttState("ready") }
-                    override fun onBeginningOfSpeech() { notifySttState("speech") }
-                    override fun onRmsChanged(rmsdB: Float) = Unit
-                    override fun onBufferReceived(buffer: ByteArray?) = Unit
-                    override fun onEndOfSpeech() { notifySttState("processing") }
-                    override fun onError(error: Int) {
-                        speechListening = false
-                        notifySttError(error)
-                    }
-                    override fun onResults(results: Bundle?) {
-                        speechListening = false
-                        val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).orEmpty()
-                        notifySttResult(matches.firstOrNull().orEmpty())
-                    }
-                    override fun onPartialResults(partialResults: Bundle?) {
-                        val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).orEmpty()
-                        notifySttPartial(matches.firstOrNull().orEmpty())
-                    }
-                    override fun onEvent(eventType: Int, params: Bundle?) = Unit
-                })
-                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, normalizedRecognitionLanguage(languageTag))
-                    putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, false)
-                    putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-                    putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
-                    putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1200L)
-                    putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 700L)
-                }
-                recognizer.startListening(intent)
-            } catch (error: Exception) {
-                speechListening = false
-                runCatching { speechRecognizer?.destroy() }
-                speechRecognizer = null
-                notifySttError(-1, error.message ?: error.javaClass.simpleName)
-            }
-        }
-        return JSONObject().put("ok", true).toString()
-    }
-
-    @JavascriptInterface
-    fun canStartRecognitionActivity(languageTag: String): Boolean {
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, normalizedRecognitionLanguage(languageTag))
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
-        }
-        return intent.resolveActivity(activity.packageManager) != null
-    }
-
-    @JavascriptInterface
-    @Synchronized
-    fun startRecognitionActivity(languageTag: String): String {
-        if (activity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            activity.runOnUiThread {
-                activity.requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), MainActivity.AUDIO_PERMISSION)
-            }
-            return JSONObject().put("ok", false).put("error", "permission_requested").toString()
-        }
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, normalizedRecognitionLanguage(languageTag))
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
-            putExtra(RecognizerIntent.EXTRA_PROMPT, "说话")
-        }
-        if (intent.resolveActivity(activity.packageManager) == null) {
-            return JSONObject().put("ok", false).put("error", "speech_activity_unavailable").toString()
-        }
-        return try {
-            speechListening = true
-            activity.runOnUiThread {
-                activity.startActivityForResult(intent, MainActivity.VOICE_RECOGNIZER)
-            }
-            JSONObject().put("ok", true).toString()
-        } catch (error: Exception) {
-            speechListening = false
-            JSONObject().put("ok", false).put("error", "speech_activity_unavailable").toString()
-        }
-    }
-
-    fun handleRecognitionActivityResult(resultCode: Int, data: Intent?) {
-        speechListening = false
-        if (resultCode != Activity.RESULT_OK) {
-            notifySttError(-3, "speech_activity_cancelled")
-            return
-        }
-        val matches = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS).orEmpty()
-        val text = matches.firstOrNull().orEmpty().trim()
-        if (text.isBlank()) notifySttError(SpeechRecognizer.ERROR_NO_MATCH)
-        else notifySttResult(text)
-    }
-
-    @JavascriptInterface
-    @Synchronized
-    fun stopRecognition(): String {
-        if (!speechListening) return JSONObject().put("ok", false).put("error", "not_listening").toString()
-        activity.runOnUiThread { runCatching { speechRecognizer?.stopListening() } }
-        return JSONObject().put("ok", true).toString()
-    }
-
-    @JavascriptInterface
-    @Synchronized
-    fun cancelRecognition() {
-        speechListening = false
-        activity.runOnUiThread { runCatching { speechRecognizer?.cancel() } }
-    }
-
-    @JavascriptInterface
-    @Synchronized
-    fun startRecording(): String {
-        if (activity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            activity.runOnUiThread {
-                activity.requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), MainActivity.AUDIO_PERMISSION)
-            }
-            return JSONObject().put("ok", false).put("error", "permission_requested").toString()
-        }
-        if (recorder != null) return JSONObject().put("ok", false).put("error", "already_recording").toString()
-        return try {
-            val file = File(activity.cacheDir, "aevren-voice-" + System.currentTimeMillis() + ".m4a")
-            val mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                MediaRecorder(activity)
-            } else {
-                @Suppress("DEPRECATION")
-                MediaRecorder()
-            }
-            mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC)
-            mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-            mediaRecorder.setAudioEncodingBitRate(64_000)
-            mediaRecorder.setAudioSamplingRate(44_100)
-            mediaRecorder.setOutputFile(file.absolutePath)
-            mediaRecorder.prepare()
-            mediaRecorder.start()
-            recorder = mediaRecorder
-            recordingFile = file
-            JSONObject().put("ok", true).put("mime", "audio/mp4").toString()
-        } catch (error: Exception) {
-            runCatching { recorder?.release() }
-            recorder = null
-            recordingFile?.delete()
-            recordingFile = null
-            JSONObject().put("ok", false).put("error", error.message ?: error.javaClass.simpleName).toString()
-        }
-    }
-
-    @JavascriptInterface
-    @Synchronized
-    fun stopRecording(): String {
-        val active = recorder ?: return JSONObject().put("ok", false).put("error", "not_recording").toString()
-        val file = recordingFile
-        recorder = null
-        recordingFile = null
-        return try {
-            active.stop()
-            active.release()
-            if (file == null || !file.exists()) {
-                JSONObject().put("ok", false).put("error", "missing_recording").toString()
-            } else {
-                val bytes = file.readBytes()
-                file.delete()
-                JSONObject()
-                    .put("ok", true)
-                    .put("mime", "audio/mp4")
-                    .put("base64", Base64.encodeToString(bytes, Base64.NO_WRAP))
-                    .toString()
-            }
-        } catch (error: Exception) {
-            runCatching { active.release() }
-            file?.delete()
-            JSONObject().put("ok", false).put("error", error.message ?: error.javaClass.simpleName).toString()
-        }
-    }
-
-    fun shutdown() {
-        offlineSpeech.shutdown()
-        synchronized(this) {
-            runCatching { recorder?.stop() }
-            runCatching { recorder?.release() }
-            recorder = null
-            recordingFile?.delete()
-            recordingFile = null
-        }
-        activity.runOnUiThread {
-            runCatching { speechRecognizer?.cancel() }
-            runCatching { speechRecognizer?.destroy() }
-            speechRecognizer = null
-            speechListening = false
-            pendingSpeech = null
-            tts?.stop()
-            tts?.shutdown()
-            tts = null
-            ttsReady = false
-        }
-    }
-
-    private fun notifySttResult(text: String) {
-        val js = "window.__xyNativeSttResult && window.__xyNativeSttResult(" + JSONObject.quote(text) + ");"
-        webView.post { webView.evaluateJavascript(js, null) }
-    }
-
-    private fun notifySttPartial(text: String) {
-        val js = "window.__xyNativeSttPartial && window.__xyNativeSttPartial(" + JSONObject.quote(text) + ");"
-        webView.post { webView.evaluateJavascript(js, null) }
-    }
-
-    private fun notifySttState(state: String) {
-        val js = "window.__xyNativeSttState && window.__xyNativeSttState(" + JSONObject.quote(state) + ");"
-        webView.post { webView.evaluateJavascript(js, null) }
-    }
-
-    private fun notifySttError(code: Int, detail: String? = null) {
-        val message = detail ?: "speech_error_" + code
-        val js = "window.__xyNativeSttError && window.__xyNativeSttError(" + JSONObject.quote(message) + ");"
-        webView.post { webView.evaluateJavascript(js, null) }
-    }
-
-    private fun notifyTtsEngineReady() {
-        val js = "window.__xyNativeTtsEngineReady && window.__xyNativeTtsEngineReady(" + JSONObject.quote(currentTtsEngine) + ");"
-        webView.post { webView.evaluateJavascript(js, null) }
-    }
-
-    private fun notifyTtsEngineError(error: String) {
-        val js = "window.__xyNativeTtsEngineError && window.__xyNativeTtsEngineError(" + JSONObject.quote(error) + ");"
-        webView.post { webView.evaluateJavascript(js, null) }
-    }
-
-    private fun notifyTtsDone(utteranceId: String?, error: String?) {
-        val id = utteranceId ?: return
-        val js = if (error == null) {
-            "window.__xyNativeTtsDone && window.__xyNativeTtsDone(" + JSONObject.quote(id) + ");"
-        } else {
-            "window.__xyNativeTtsError && window.__xyNativeTtsError(" + JSONObject.quote(id) + ", " + JSONObject.quote(error) + ");"
-        }
-        webView.post { webView.evaluateJavascript(js, null) }
     }
 }
 

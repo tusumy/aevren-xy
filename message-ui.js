@@ -55,25 +55,12 @@
     if(!list.length)return "";
     const inner=list.map(a=>{
       if(a.kind==="image"&&(a.previewDataUrl||a.dataUrl))return `<img class="xy-message-image" src="${esc(a.previewDataUrl||a.dataUrl)}" alt="${esc(a.name||"图片")}">`;
-      if(a.kind==="audio"){
-        const duration=Math.max(1,Math.round(Number(a.duration||1)));
-        const playable=Boolean(a.dataUrl||a.localAudioKey);
-        const source=a.dataUrl?`data-voice-note-src="${esc(a.dataUrl)}"`:a.localAudioKey?`data-voice-note-key="${esc(a.localAudioKey)}"`:"disabled";
-        const transcript=a.transcript?`<span class="xy-voice-transcript">${esc(a.transcript)}</span>`:a.transcriptError?`<span class="xy-voice-transcript" title="${esc(a.transcriptError)}">未转写 · AI暂时无法理解语音</span>`:"";
-        return `<span class="xy-voice-note-wrap"><button type="button" class="xy-message-voice-note" ${source} title="${playable?"播放语音":"旧语音没有保存原始音频"}"><span class="xy-message-voice-icon">▶</span><span class="xy-message-voice-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><b>${duration}"</b></button>${transcript}</span>`;
-      }
       return `<div class="xy-message-file"><span>▤</span><b>${esc(a.name||"附件")}</b></div>`;
     }).join("");
     return `<div class="xy-message-attachments">${inner}</div>`;
   }
 
   function messageHtml(m,index){
-    if(m?.kind==="call"){
-      const when=timeText(m.createdAt),name=String(m.characterName||"角色");
-      const rows=Array.isArray(m.transcript)?m.transcript.slice(0,160):[];
-      const content=rows.length?rows.map(item=>`<div class="xy-call-history-turn"><b>${esc(item.role==="user"?"你":name)}</b><span>${esc(String(item.text||""))}</span></div>`).join(""):'<div class="xy-call-history-empty">本次没有识别到对话</div>';
-      return `<div class="message xy-call-record"><details class="xy-call-history"><summary><span class="xy-call-history-icon">☎</span><span>与${esc(name)}通话 · ${esc(m.duration||"00:00")}</span><small>${esc(when)}</small></summary><div class="xy-call-history-content">${content}</div></details></div>`;
-    }
     const isAssistant=m.role==="assistant";
     const rawParts=isAssistant?splitReply(m.text):[String(m.text??"")];
     const parts=isAssistant?rawParts.map(trimPlainEnding):rawParts;
@@ -100,39 +87,15 @@
     if(button)button.hidden=!pendingUserQueue.length||queueDraining||sending;
   }
 
-  function ensureHeaderMessageStats(){
-    const header=document.querySelector(".main > header");if(!header)return null;
-    let wrap=header.querySelector("#xyHeaderMessageStats");
-    if(wrap)return wrap;
-    wrap=document.createElement("div");wrap.id="xyHeaderMessageStats";wrap.className="xy-header-message-stats";
-    wrap.innerHTML='<button type="button" class="xy-header-count" aria-label="查看消息统计" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg><span>0</span></button><div class="xy-header-stats-sheet" hidden></div>';
-    const presence=header.querySelector(".presence");if(presence)presence.appendChild(wrap);else{const settings=header.querySelector("#memoryBtn");header.insertBefore(wrap,settings||null)}
-    const button=wrap.querySelector(".xy-header-count"),sheet=wrap.querySelector(".xy-header-stats-sheet");
-    button.addEventListener("click",e=>{
-      e.preventDefault();e.stopPropagation();
-      sheet.hidden=!sheet.hidden;button.setAttribute("aria-expanded",String(!sheet.hidden));
-    });
-    document.addEventListener("click",e=>{
-      if(!wrap.contains(e.target)&&!sheet.hidden){sheet.hidden=true;button.setAttribute("aria-expanded","false")}
-    });
-    return wrap;
-  }
-
   function updateMessageCount(){
     const c=chat(),day=document.querySelector("#messages .day");
-    if(!c)return;
+    if(!c||!day)return;
     const saved=(c.messages||[]).filter(m=>m?.role==="user"||m?.role==="assistant");
     const total=saved.length+pendingUserQueue.length;
     const users=saved.filter(m=>m.role==="user").length+pendingUserQueue.length;
     const assistants=saved.filter(m=>m.role==="assistant").length;
-    if(day){day.textContent="AEVREN · XY";day.title="你 "+users+" · "+currentCharacterName()+" "+assistants}
-    const wrap=ensureHeaderMessageStats();if(!wrap)return;
-    const count=wrap.querySelector(".xy-header-count span"),sheet=wrap.querySelector(".xy-header-stats-sheet");
-    if(count)count.textContent=String(total);
-    const limit=String(localStorage.getItem("xy.contextMessageLimit")||"40");
-    const contextLabel=limit==="0"?"全部消息":("最近 "+limit+" 条");
-    if(sheet)sheet.innerHTML='<span>当前对话</span><strong>'+total+' 条消息</strong><div><span>你</span><b>'+users+'</b></div><div><span>'+esc(currentCharacterName())+'</span><b>'+assistants+'</b></div><div class="is-highlight"><span>发送给模型</span><b>'+contextLabel+'</b></div>';
-    wrap.querySelector(".xy-header-count")?.setAttribute("aria-label","当前对话 "+total+" 条消息");
+    day.textContent="AEVREN · XY · "+total+" 条消息";
+    day.title="你 "+users+" · "+currentCharacterName()+" "+assistants;
   }
 
   function renderPendingQueue(){
@@ -243,12 +206,6 @@
 
   send=async function(){
     if(!await queueCurrentInput())return;
-    const latest=pendingUserQueue.at(-1);
-    if(latest?.attachments?.length){
-      if(flushTimer){clearTimeout(flushTimer);flushTimer=null}
-      await drainQueue();
-      return;
-    }
     scheduleFlush();
   };
   window.xySendQueued=send;

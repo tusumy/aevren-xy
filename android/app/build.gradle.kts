@@ -29,7 +29,4 @@ android {
 
 dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
-    // Android AARs include native libvosk and JNA for arm64/armv7.
-    implementation("com.alphacephei:vosk-android:0.3.75@aar")
-    implementation("net.java.dev.jna:jna:5.18.1@aar")
 }
