@@ -33,36 +33,67 @@
   }
 
   async function regenerate(index){
-    const c=currentChat(),m=c?.messages?.[index];if(!c||!m||m.role!=='assistant'||sending)return;
-    let userIndex=index-1;while(userIndex>=0&&c.messages[userIndex]?.role!=='user')userIndex--;
-    if(userIndex<0)return showNotice('这条回复前面没有可重试的用户消息',true);
+    const c=currentChat(),target=c?.messages?.[index];
+    if(!c||!target||target.role!=='assistant'||sending)return;
+    if(typeof window.AevrenApiCompat?.send!=='function'){
+      showNotice('重新生成模块未准备好，请重新打开砚屿',true);return;
+    }
+    let userIndex=index-1;
+    while(userIndex>=0&&c.messages[userIndex]?.role!=='user')userIndex--;
+    if(userIndex<0)return showNotice('这条回复前没有对应的用户消息',true);
     syncAll();
-    const originalMessages=c.messages,originalTitle=c.title,originalInput=document.querySelector('#input')?.value||'';
-    const visibleTail=originalMessages.slice(index+1),promptText=String(originalMessages[userIndex].text??'').trim();
+    const originalMessages=c.messages,originalTitle=c.title;
+    const selected=c.messages[index];
+    const prompt=c.messages[userIndex];
+    const promptText=String(prompt.text??'');
+    const promptAttachments=clone(prompt.attachments||[]);
+    if(!promptText.trim()&&!promptAttachments.length){
+      showNotice('找不到这条回复对应的用户内容',true);return;
+    }
+    // A direct API send is essential here: the normal send() is a delayed
+    // batching queue and can drain after the temporary chat is restored.
     const tempPrefix=clone(originalMessages.slice(0,userIndex));
-    if(!promptText)return;
-    const oldSave=save,oldRenderMessages=renderMessages,oldRenderChats=renderChats,oldShowTyping=showTyping,oldHideTyping=hideTyping;
-    let generated='';
+    const input=document.querySelector('#input'),originalInput=input?.value||'';
+    const originalAttachments=window.xyActiveSendAttachments;
+    const oldSave=save,oldRenderMessages=renderMessages,oldRenderChats=renderChats;
+    const oldShowTyping=showTyping,oldHideTyping=hideTyping;
+    let generated='',error=null;
     try{
       c.messages=tempPrefix;
       save=()=>{};renderMessages=()=>{};renderChats=()=>{};showTyping=()=>{};hideTyping=()=>{};
-      const input=document.querySelector('#input');if(input)input.value=promptText;
-      await send();
-      const last=[...c.messages].reverse().find(x=>x?.role==='assistant');
-      generated=String(last?.text??'').trim();
-    }finally{
-      save=oldSave;renderMessages=oldRenderMessages;renderChats=oldRenderChats;showTyping=oldShowTyping;hideTyping=oldHideTyping;
+      if(input)input.value=promptText;
+      window.xyActiveSendAttachments=promptAttachments;
+      await window.AevrenApiCompat.send();
+      const last=c.messages.at(-1);
+      if(last?.role==='assistant')generated=String(last.text??'').trim();
+    }catch(err){error=String(err?.message||err)}
+    finally{
+      save=oldSave;renderMessages=oldRenderMessages;renderChats=oldRenderChats;
+      showTyping=oldShowTyping;hideTyping=oldHideTyping;
+      window.xyActiveSendAttachments=originalAttachments;
       c.messages=originalMessages;c.title=originalTitle;
-      const input=document.querySelector('#input');if(input)input.value=originalInput;
+      if(input)input.value=originalInput;
       try{resize()}catch{}
+      const sendButton=document.querySelector('#sendBtn');
+      if(sendButton)sendButton.disabled=false;
     }
+    if(error)return showNotice('重新生成失败：'+error,true);
     if(!generated)return showNotice('这次没有生成新的回复',true);
     if(/^请求失败[:：]/.test(generated))return showNotice(generated,true);
-    const target=c.messages[index];if(!target)return;
-    ensureVariants(target,visibleTail);saveCurrentTail(c,index);
-    target.variants.push({text:generated,createdAt:Date.now(),editedAt:null,tail:[]});
-    target.activeVariant=target.variants.length-1;syncMessage(target);
-    c.messages.splice(index+1);save();renderMessages();
+    // Update the exact selected assistant message; never append at a different
+    // index, replace an earlier assistant reply, or delete later conversation.
+    if(currentChat()!==c||c.messages[index]!==selected){
+      showNotice('聊天内容已变化，未覆盖原消息',true);return;
+    }
+    ensureVariants(selected,clone(c.messages.slice(index+1)));
+    saveCurrentTail(c,index);
+    selected.variants.push({
+      text:generated,createdAt:Date.now(),editedAt:null,
+      tail:clone(c.messages.slice(index+1))
+    });
+    selected.activeVariant=selected.variants.length-1;
+    syncMessage(selected);
+    save();renderMessages();
   }
 
   function closeLayers(){
