@@ -259,26 +259,38 @@
   async function handleUserText(text){
     if(!text||phase!=="connected"||processing)return;
     processing=true;stopListening();addLine("user",text);statusEl.textContent=currentCallName()+"在听…";
-    const c=currentChat(),before=c?.messages?.length||0,input=document.querySelector("#input");
-    if(!c||!input){statusEl.textContent="当前对话不可用";processing=false;return}
-    input.value=text;input.dispatchEvent(new Event("input",{bubbles:true}));
+    const c=currentChat(),before=c?.messages?.length||0;
+    if(!c){statusEl.textContent="当前对话不可用";processing=false;return}
     const generation=callGeneration;
+    let voiceProblem=false;
     try{
-      // Skip the regular chat composer's 10-second message batching in a call.
-      await (window.AevrenApiCompat?.send?window.AevrenApiCompat.send():send());
+      // Call turns go straight to the chat model without touching a typed draft or the 10s chat queue.
+      if(!window.AevrenApiCompat?.send)throw new Error("聊天接口未就绪");
+      await window.AevrenApiCompat.send({__xyCall:true,text});
       if(phase!=="connected"||generation!==callGeneration)return;
       const idx=c.messages.findLastIndex((m,i)=>i>=before&&m.role==="assistant");
       if(idx>=0){
-        const reply=String(c.messages[idx].text||"").trim();addLine("assistant",reply);
+        const reply=String(c.messages[idx].text||"").trim();
         if(reply&&!/^请求失败[:：]/.test(reply)){
-          if(!window.AevrenVoice?.isSpeaking?.())await window.AevrenVoice?.speakMessage?.(idx,c);
-          await waitForVoice();
+          addLine("assistant",reply);
+          statusEl.textContent=currentCallName()+"正在说…";
+          if(!window.AevrenVoice?.isSpeaking?.())await window.AevrenVoice?.speakMessage?.(idx,c,()=>phase==="connected"&&generation===callGeneration);
+          if(phase!=="connected"||generation!==callGeneration)return;
+          voiceProblem=!window.AevrenVoice?.isSpeaking?.();
+          if(!voiceProblem)await waitForVoice();
+        }else if(reply){addLine("assistant",reply)}
+      }
+    }catch(error){if(phase==="connected"&&generation===callGeneration)addLine("assistant","通话发送失败："+(error?.message||error))}
+    finally{
+      if(generation===callGeneration){
+        processing=false;
+        if(phase==="connected"){
+          statusEl.textContent=voiceProblem?"回复已收到 · 声音播放失败，请检查语音设置":"正在听…";
+          if(callUseNative)scheduleNativeListening();
+          else if(SpeechRecognition)startListening();
+          else{pushBtn.hidden=false;fallbackWrap.hidden=false}
         }
       }
-    }catch(error){addLine("assistant","通话发送失败："+(error?.message||error))}
-    finally{
-      processing=false;
-      if(phase==="connected"){if(callUseNative){statusEl.textContent="正在听…";scheduleNativeListening()}else if(SpeechRecognition){statusEl.textContent="正在听…";startListening()}else{statusEl.textContent="点麦克风说话";pushBtn.hidden=false;fallbackWrap.hidden=false}}
     }
   }
 
