@@ -156,9 +156,18 @@
     return (plain.split(/[。！？!?；;…]/)[0]||plain||"语音").trim().slice(0,28);
   }
 
-  function speechText(value){
+  function speechText(value,forCall=false){
     const text=String(value||"").trim();
-    return /^\[[^\]\n]{1,32}\]/.test(text)?text:`[softly] ${text}`;
+    if(!forCall)return /^\[[^\]\n]{1,32}\]/.test(text)?text:`[softly] ${text}`;
+    const match=text.match(/^\[([^\]\n]{1,160})\]\s*([\s\S]+)$/);
+    if(!match)return /^\[[^\]\n]{1,32}\]/.test(text)?text:`[softly] ${text}`;
+    const line=match[2],chars=[...line.replace(/[\s，。！？、；;,.!?]/g,"")].length;
+    const limit=chars<=8?2:chars<=18?4:chars<=40?7:12;
+    const sections=match[1].split(/[,，]/).map(x=>x.trim()).filter(Boolean);
+    const words=parts=>parts.join(" ").split(/\s+/).filter(Boolean).length;
+    while(sections.length>1&&words(sections)>limit)sections.pop();
+    if(words(sections)>limit)sections[0]=sections[0].split(/\s+/).slice(0,limit).join(" ");
+    return `[${sections.join(", ")}] ${line}`;
   }
 
   function plainSpeechText(value){
@@ -226,7 +235,7 @@
     if(busyMessages.has(key))return;
     busyMessages.add(key);decorateMessages();
     try{
-      const args={text:speechText(text),title:titleFromText(text)};
+      const args={text:speechText(text,Boolean(playbackAllowed)),title:titleFromText(text)};
       if(voiceSettings.voiceId.trim())args.voice_id=voiceSettings.voiceId.trim();
       if(voiceSettings.voiceModel.trim())args.model_id=voiceSettings.voiceModel.trim();
       const result=await callMcpTool(server,"text_to_speech",args);
