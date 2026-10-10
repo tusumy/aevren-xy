@@ -5,6 +5,7 @@
   let overlay,statusEl,timeEl,transcriptEl,acceptBtn,hangupBtn,fallbackWrap,fallbackInput,pushBtn;
   let callCharacter=null,callUseNative=false,nativeAutoTimer=null,callGeneration=0,callChat=null,callLines=[],missedSpeech=0;
   let forceRecordedStt=false;
+  let ambience=null,ambienceEvents=[];
 
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const currentChat=()=>{try{return chat()}catch{return null}};
@@ -77,7 +78,7 @@
       name:String(incoming.name||active.name||"玄砚")
     };
     syncCallCharacter();
-    callChat=currentChat();callLines=[];missedSpeech=0;forceRecordedStt=false;startedAt=0;
+    callChat=currentChat();callLines=[];ambienceEvents=[];missedSpeech=0;forceRecordedStt=false;startedAt=0;
     callGeneration++;phase="ringing";processing=false;overlay.hidden=false;overlay.classList.add("show","ringing");overlay.classList.remove("connected");
     transcriptEl.innerHTML="";statusEl.textContent="语音来电";timeEl.textContent="00:00";acceptBtn.hidden=false;hangupBtn.hidden=false;
     fallbackWrap.hidden=true;pushBtn.hidden=true;
@@ -182,6 +183,7 @@
     }
     try{
       callStream=await window.AevrenVoice.openMicStream();
+      ambience=window.xyAcousticEvents?.start?.(callStream)||null;
       callChunks=[];
       const mime=window.AevrenVoice.getRecorderMime?.()||"";
       callRecorder=new MediaRecorder(callStream,mime?{mimeType:mime}:undefined);
@@ -231,6 +233,7 @@
   async function finishFallbackRecording(){
     const type=callRecorder?.mimeType||callChunks[0]?.type||"audio/webm";
     const blob=new Blob(callChunks,{type});
+    if(ambience){ambienceEvents=ambience.stop()||[];ambience=null}
     callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];
     pushBtn.classList.remove("recording");pushBtn.querySelector("span").textContent="说话";
     await processCallBlob(blob);
@@ -285,6 +288,8 @@
   async function handleUserText(text){
     if(!text||phase!=="connected"||processing)return;
     processing=true;stopListening();addLine("user",text);statusEl.textContent="已识别文字 · 正在发给"+currentCallName();
+    const detected=ambienceEvents.splice(0,3);
+    const reported=detected.length?text+"\n[麦克风声学提示（仅机器推测，未确认来源）："+detected.join("；")+"。请勿据此猜测用户身体状态。]":text;
     const c=currentChat(),before=c?.messages?.length||0;
     if(!c){statusEl.textContent="当前对话不可用";processing=false;return}
     const generation=callGeneration;
@@ -292,7 +297,7 @@
     try{
       // Call turns go straight to the chat model without touching a typed draft or the 10s chat queue.
       if(!window.AevrenApiCompat?.send)throw new Error("聊天接口未就绪");
-      await window.AevrenApiCompat.send({__xyCall:true,text});
+      await window.AevrenApiCompat.send({__xyCall:true,text:reported});
       if(phase!=="connected"||generation!==callGeneration)return;
       statusEl.textContent="已发给角色 · 正在等待回复";
       const idx=c.messages.findLastIndex((m,i)=>i>=before&&m.role==="assistant");
@@ -355,6 +360,7 @@
     const recordChat=callChat,recordCharacter={...currentCallCharacter()},recordStartedAt=startedAt,recordEndedAt=Date.now();
     const transcript=callLines.slice();
     callGeneration++;phase="idle";processing=false;callUseNative=false;forceRecordedStt=false;
+    if(ambience){ambience.stop();ambience=null}ambienceEvents=[];
     window.AevrenVoice?.onRecognitionProgress?.(null);clearTimeout(nativeAutoTimer);nativeAutoTimer=null;stopListening();if(callNativeRecognizing){try{window.AevrenVoice?.stopNativeRecognition?.()}catch{}callNativeRecognizing=false}if(callNativeRecording){try{window.AevrenVoice?.stopNativeCapture?.()}catch{}callNativeRecording=false}if(callRecorder?.state==="recording"){try{callRecorder.onstop=null;callRecorder.stop()}catch{}}callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];clearInterval(timerId);timerId=null;window.AevrenVoice?.stop?.();
     if(wasConnected&&recordChat?.messages){
       recordChat.messages.push({role:"system",kind:"call",text:"☎ 与"+String(recordCharacter.name||"角色")+"通话 · "+duration,
