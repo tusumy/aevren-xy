@@ -206,7 +206,10 @@
     if(ep.key)headers.Authorization='Bearer '+ep.key;
     const memoryContext=memories.length?'长期记忆：\n'+memories.map(m=>'- ['+m.tag+'] '+m.text).join('\n'):'';
     const phoneStyle=fromCall?'正在进行语音电话。自然接话、用口语说给对方听；每轮通常一两句，不重复刚听到的话，不写 Markdown、列表或旁白，保留你原有的人设和说话习惯。':'';
-    const system=[ep.system,memoryContext,phoneStyle].filter(Boolean).join('\n\n');
+    const now=new Date();
+    const timeContext="当前设备当地时间："+now.toLocaleString("zh-CN",{year:"numeric",month:"long",day:"numeric",weekday:"long",hour:"2-digit",minute:"2-digit",hour12:false})+"；时区："+Intl.DateTimeFormat().resolvedOptions().timeZone+"。这是消息发送时的时间，不要当作每个历史事件的发生时间。";
+    const memorySummary=window.xyMemorySummaryFor?.(c.characterId||window.xyCurrentCharacter?.()?.id)||"";
+    const system=[ep.system,timeContext,memorySummary?"角色的长期记忆摘要：\n"+memorySummary:"",memoryContext,phoneStyle].filter(Boolean).join('\n\n');
     const history=normalizedHistory(c.messages);
     const messages=[...(system?[{role:'system',content:system}]:[]),...history];
     try{await window.xyEnsureMcpTools?.()}catch{}
