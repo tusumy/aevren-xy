@@ -53,6 +53,7 @@
     body.querySelector("#xyAiJournal")?.addEventListener("click",async e=>{const btn=e.currentTarget;btn.disabled=true;try{const v=await generate(status);editor.hidden=false;editor.dataset.edit="";text.value=v;text.focus();status.textContent="写好了，你可以改几句再保存"}catch(err){status.textContent="写日记失败："+(err?.message||err)}finally{btn.disabled=false}});
     body.querySelectorAll("[data-journal-edit]").forEach(b=>b.addEventListener("click",()=>panel(b.dataset.journalEdit)));
     body.querySelectorAll("[data-journal-delete]").forEach(b=>b.addEventListener("click",()=>{write(read().filter(x=>x.id!==b.dataset.journalDelete));panel("")}));
+    window.xyJournalBookshelfDecorate?.(editId?"edit":"shelf");
   }
   const previousOpenPanel=openPanel;
   openPanel=function(type){if(type==="journal"){panel("");return}return previousOpenPanel(type)};
