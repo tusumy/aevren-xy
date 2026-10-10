@@ -197,8 +197,11 @@
     render();
     try{
       for(const file of list){
-        try{pending.push(kind==="image"?await packImage(file):await packText(file))}
-        catch(error){toast(error?.message||"附件处理失败",true)}
+        try{
+          const item=kind==="image"?await packImage(file):await packText(file);
+          if(item.kind==="image")await window.xyImagePayload?.archive?.([item]);
+          pending.push(item);
+        }catch(error){toast(error?.message||"附件处理失败",true)}
       }
     }finally{
       busy=Math.max(0,busy-1);
@@ -213,7 +216,7 @@
   const stripPayload=a=>{
     if(!a||typeof a!=="object")return a;
     return {
-      kind:a.kind,name:a.name,type:a.type,size:a.size,width:a.width,height:a.height,
+      kind:a.kind,name:a.name,type:a.type,size:a.size,width:a.width,height:a.height,mediaKey:a.mediaKey||"",
       duration:Number(a.duration||0),format:a.format||"",
       localAudioKey:a.localAudioKey||"",transcript:a.transcript||"",transcriptError:a.transcriptError||"",
       truncated:!!a.truncated,previewDataUrl:a.previewDataUrl||""
