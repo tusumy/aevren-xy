@@ -364,7 +364,8 @@
 
   async function transcribe(blob){
     const ep=activeEndpoint(),customBase=voiceSettings.sttBase.trim();
-    const base=(customBase||ep.base||"").trim().replace(/\/$/,"");
+    const rawBase=(customBase||ep.base||"").trim().replace(/\/$/,"");
+    const base=rawBase.replace(/\/(?:chat\/completions|responses|audio\/transcriptions)$/i,"");
     const key=voiceSettings.sttKey||(!customBase?ep.key:"")||"";
     if(!base)throw new Error("先在语音设置里填写转写 Base URL");
     const ext=blob.type.includes("mp4")?"m4a":"webm",form=new FormData();
@@ -446,10 +447,16 @@
       let localAudioKey="";
       try{localAudioKey=await window.xyAudioArchive?.put?.(blob)||""}
       catch(error){toast("本地录音保存失败："+(error?.message||error),true)}
-      let transcript="";
-      if(voiceSettings.sttBase.trim()){
+      let transcript="",transcriptError="";
+      if(voiceSettings.sttBase.trim()||activeEndpoint()?.base){
         try{transcript=String(await transcribe(blob)).trim()}
-        catch(error){toast("语音转写失败："+(error?.message||error),true)}
+        catch(error){
+          transcriptError=String(error?.message||error).slice(0,160);
+          toast("语音已录下，但AI暂时听不懂：语音转写失败",true);
+        }
+      }else{
+        transcriptError="尚未设置支持语音转写的接口";
+        toast("语音已录下，但需要配置支持语音转写的接口",true);
       }
       const attachment={
         kind:"audio",
@@ -460,6 +467,7 @@
         format,
         localAudioKey,
         transcript,
+        transcriptError,
         dataUrl
       };
       const api=window.xyAttachments;

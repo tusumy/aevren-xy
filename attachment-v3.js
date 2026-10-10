@@ -212,7 +212,7 @@
     return {
       kind:a.kind,name:a.name,type:a.type,size:a.size,width:a.width,height:a.height,
       duration:Number(a.duration||0),format:a.format||"",
-      localAudioKey:a.localAudioKey||"",transcript:a.transcript||"",
+      localAudioKey:a.localAudioKey||"",transcript:a.transcript||"",transcriptError:a.transcriptError||"",
       truncated:!!a.truncated,previewDataUrl:a.previewDataUrl||""
     };
   };

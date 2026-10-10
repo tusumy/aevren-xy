@@ -59,7 +59,7 @@
         const duration=Math.max(1,Math.round(Number(a.duration||1)));
         const playable=Boolean(a.dataUrl||a.localAudioKey);
         const source=a.dataUrl?`data-voice-note-src="${esc(a.dataUrl)}"`:a.localAudioKey?`data-voice-note-key="${esc(a.localAudioKey)}"`:"disabled";
-        const transcript=a.transcript?`<span class="xy-voice-transcript">${esc(a.transcript)}</span>`:"";
+        const transcript=a.transcript?`<span class="xy-voice-transcript">${esc(a.transcript)}</span>`:a.transcriptError?`<span class="xy-voice-transcript" title="${esc(a.transcriptError)}">未转写 · AI暂时无法理解语音</span>`:"";
         return `<span class="xy-voice-note-wrap"><button type="button" class="xy-message-voice-note" ${source} title="${playable?"播放语音":"旧语音没有保存原始音频"}"><span class="xy-message-voice-icon">▶</span><span class="xy-message-voice-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><b>${duration}"</b></button>${transcript}</span>`;
       }
       return `<div class="xy-message-file"><span>▤</span><b>${esc(a.name||"附件")}</b></div>`;

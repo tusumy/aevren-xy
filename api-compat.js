@@ -63,12 +63,12 @@
         if(match&&['wav','mp3'].includes(format)){
           parts.push({type:'input_audio',input_audio:{data:match[1],format}});
         }else{
-          parts.push({type:'text',text:'[语音附件 '+Math.max(1,Math.round(Number(a.duration||1)))+' 秒；需要设置语音转写服务才能识别内容]'});
+          parts.push({type:'text',text:'[用户发送了语音附件，当前接口未能识别音频内容。请明确告诉用户未能听懂，切勿猜测或冒充听见。]'});
         }
       }else if(a?.kind==='text'&&typeof a.text==='string'){
         parts.push({type:'text',text:'[附件：'+String(a.name||'文本文件')+(a.truncated?'；内容已截断':'')+']\n'+a.text});
       }else if(a?.kind==='audio'){
-        parts.push({type:'text',text:'[此前有一段未转写的语音附件，无法仅凭时长得知内容]'});
+        parts.push({type:'text',text:'[此前有一段未转写的语音附件，无法仅凭时长得知内容。请勿声称听过内容。]'});
       }else if(a?.name){
         parts.push({type:'text',text:'[附件：'+String(a.name)+'；内容当前不可用]'});
       }
