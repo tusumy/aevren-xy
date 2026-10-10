@@ -87,6 +87,7 @@
   function voiceStage({stage,detail}={}){
     if(phase!=="connected"||!callUseNative||processing)return;
     if(stage==="starting")statusEl.textContent="正在启动语音识别…";
+    if(stage==="state"&&detail==="loading_model")statusEl.textContent="首次启动 · 正在加载中文离线模型…";
     if(stage==="state"&&detail==="ready")statusEl.textContent="麦克风已就绪 · 请说话";
     if(stage==="state"&&detail==="speech")statusEl.textContent="已检测到你说话 · 正在听";
     if(stage==="state"&&detail==="processing")statusEl.textContent="已收到声音 · 正在转成文字";
