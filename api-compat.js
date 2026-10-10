@@ -188,6 +188,11 @@
     if(!text&&!attachments.length)return;
     if(sending){if(fromCall)throw new Error('上一条消息还在发送');return}
     const ep=endpoints.find(x=>x.active)||endpoints[0];
+    if(!fromCall&&attachments.some(a=>a?.kind==="image")&&ep?.vision!==true){
+      window.xyAttachments?.restore?.(attachments);
+      window.xyAttachments?.toast?.("当前模型未开启视觉，请先在接口设置中启用视觉",true);
+      return;
+    }
     if(fromCall&&(!ep?.base||!ep?.model))throw new Error('请先配置可用的聊天模型接口');
     sending=true;
     $('#sendBtn').disabled=true;
@@ -213,6 +218,9 @@
     // Rehydrate the original image bytes before constructing multimodal history.
     await window.xyImagePayload?.hydrate?.(c.messages);
     const history=normalizedHistory(c.messages);
+    if(ep.vision!==true){
+      for(const m of history)if(Array.isArray(m.content))m.content=m.content.map(part=>part?.type==="image_url"?{type:"text",text:"[历史图片，当前仅文本模式无法查看]"}:part);
+    }
     const messages=[...(system?[{role:'system',content:system}]:[]),...history];
     try{await window.xyEnsureMcpTools?.()}catch{}
     const mt=mcpTools();
