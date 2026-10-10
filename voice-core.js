@@ -156,9 +156,18 @@
     return (plain.split(/[。！？!?；;…]/)[0]||plain||"语音").trim().slice(0,28);
   }
 
-  function speechText(value){
+  function speechText(value,forCall=false){
     const text=String(value||"").trim();
-    return /^\[[^\]\n]{1,32}\]/.test(text)?text:`[softly] ${text}`;
+    if(!forCall)return /^\[[^\]\n]{1,32}\]/.test(text)?text:`[softly] ${text}`;
+    const match=text.match(/^\[([^\]\n]{1,160})\]\s*([\s\S]+)$/);
+    if(!match)return /^\[[^\]\n]{1,32}\]/.test(text)?text:`[softly] ${text}`;
+    const line=match[2],chars=[...line.replace(/[\s，。！？、；;,.!?]/g,"")].length;
+    const limit=chars<=8?2:chars<=18?4:chars<=40?7:12;
+    const sections=match[1].split(/[,，]/).map(x=>x.trim()).filter(Boolean);
+    const words=parts=>parts.join(" ").split(/\s+/).filter(Boolean).length;
+    while(sections.length>1&&words(sections)>limit)sections.pop();
+    if(words(sections)>limit)sections[0]=sections[0].split(/\s+/).slice(0,limit).join(" ");
+    return `[${sections.join(", ")}] ${line}`;
   }
 
   function plainSpeechText(value){
@@ -206,18 +215,19 @@
     return {url,title:structured.title||titleFromText(structured.text)};
   }
 
-  async function synthesizeMessage(index,autoplay=true,targetChat=currentChat()){
+  async function synthesizeMessage(index,autoplay=true,targetChat=currentChat(),playbackAllowed=null){
+    const mayPlay=()=>typeof playbackAllowed!=="function"||playbackAllowed();
     const c=targetChat,message=c?.messages?.[index];
     if(!message||message.role!=="assistant")return;
     const text=currentText(message);
     if(!text)return;
     const key=messageKey(c,index);
     if(voiceSettings.voiceMode==="system"){
-      if(autoplay)speakWithSystem(text,key);
+      if(autoplay&&mayPlay())speakWithSystem(text,key);
       return;
     }
     if(message.voiceUrl&&message.voiceText===text){
-      if(autoplay)playAudio(message.voiceUrl,key,message);
+      if(autoplay&&mayPlay())playAudio(message.voiceUrl,key,message);
       return;
     }
     const server=resolveVoiceServer();
@@ -225,14 +235,14 @@
     if(busyMessages.has(key))return;
     busyMessages.add(key);decorateMessages();
     try{
-      const args={text:speechText(text),title:titleFromText(text)};
+      const args={text:speechText(text,Boolean(playbackAllowed)),title:titleFromText(text)};
       if(voiceSettings.voiceId.trim())args.voice_id=voiceSettings.voiceId.trim();
       if(voiceSettings.voiceModel.trim())args.model_id=voiceSettings.voiceModel.trim();
       const result=await callMcpTool(server,"text_to_speech",args);
       const audio=parseVoiceResult(result);
       message.voiceUrl=audio.url;message.voiceTitle=audio.title||args.title;message.voiceText=text;
       save();decorateMessages();
-      if(autoplay)playAudio(message.voiceUrl,key,message);
+      if(autoplay&&mayPlay())playAudio(message.voiceUrl,key,message);
     }catch(error){toast("语音生成失败："+error.message,true)}
     finally{busyMessages.delete(key);decorateMessages()}
   }
@@ -648,8 +658,8 @@
   },true);
 
   window.AevrenVoice={
-    speakMessage(index,targetChat=currentChat()){
-      return synthesizeMessage(Number(index),true,targetChat);
+    speakMessage(index,targetChat=currentChat(),playbackAllowed=null){
+      return synthesizeMessage(Number(index),true,targetChat,playbackAllowed);
     },
     speakLatest(targetChat=currentChat()){
       const index=targetChat?.messages?.findLastIndex?.(m=>m.role==="assistant")??-1;

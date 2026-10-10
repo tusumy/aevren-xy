@@ -178,18 +178,21 @@
     return {data,raw};
   }
 
-  async function compatSend(){
-    const el=$('#input'),text=el.value.trim();
-    const attachments=Array.isArray(window.xyActiveSendAttachments)?window.xyActiveSendAttachments:[];
-    if((!text&&!attachments.length)||sending)return;
+  async function compatSend(options){
+    const fromCall=options?.__xyCall===true&&typeof options.text==='string';
+    const el=$('#input'),text=fromCall?options.text.trim():el.value.trim();
+    const attachments=fromCall?[]:(Array.isArray(window.xyActiveSendAttachments)?window.xyActiveSendAttachments:[]);
+    if(!text&&!attachments.length)return;
+    if(sending){if(fromCall)throw new Error('上一条消息还在发送');return}
+    const ep=endpoints.find(x=>x.active)||endpoints[0];
+    if(fromCall&&(!ep?.base||!ep?.model))throw new Error('请先配置可用的聊天模型接口');
     sending=true;
     $('#sendBtn').disabled=true;
     const c=chat();
     c.messages.push({role:'user',text,attachments});
     if(c.messages.filter(x=>x.role==='user').length===1)c.title=(text||attachments[0]?.name||'新对话').slice(0,22);
-    el.value='';resize();save();renderChats();renderMessages();showTyping();
-
-    const ep=endpoints.find(x=>x.active)||endpoints[0];
+    if(!fromCall){el.value='';resize()}
+    save();renderChats();renderMessages();showTyping();
     if(!ep?.base||!ep?.model){
       hideTyping();
       c.messages.push({role:'assistant',text:'嗯，我在。你刚才说的已经留在这里了。',localOnly:true});
@@ -199,7 +202,8 @@
     const headers={'Content-Type':'application/json',Accept:'application/json'};
     if(ep.key)headers.Authorization='Bearer '+ep.key;
     const memoryContext=memories.length?'长期记忆：\n'+memories.map(m=>'- ['+m.tag+'] '+m.text).join('\n'):'';
-    const system=[ep.system,memoryContext].filter(Boolean).join('\n\n');
+    const phoneStyle=fromCall?'正在进行语音电话。自然接话、用口语说给对方听；每轮通常一两句，不重复刚听到的话，不写 Markdown、列表或旁白，保留你原有的人设和说话习惯。':'';
+    const system=[ep.system,memoryContext,phoneStyle].filter(Boolean).join('\n\n');
     const history=normalizedHistory(c.messages);
     const messages=[...(system?[{role:'system',content:system}]:[]),...history];
     try{await window.xyEnsureMcpTools?.()}catch{}
