@@ -66,6 +66,12 @@
   }
 
   function messageHtml(m,index){
+    if(m?.kind==="call"){
+      const when=timeText(m.createdAt),name=String(m.characterName||"角色");
+      const rows=Array.isArray(m.transcript)?m.transcript.slice(0,160):[];
+      const content=rows.length?rows.map(item=>`<div class="xy-call-history-turn"><b>${esc(item.role==="user"?"你":name)}</b><span>${esc(String(item.text||""))}</span></div>`).join(""):'<div class="xy-call-history-empty">本次没有识别到对话</div>';
+      return `<div class="message xy-call-record"><details class="xy-call-history"><summary><span class="xy-call-history-icon">☎</span><span>与${esc(name)}通话 · ${esc(m.duration||"00:00")}</span><small>${esc(when)}</small></summary><div class="xy-call-history-content">${content}</div></details></div>`;
+    }
     const isAssistant=m.role==="assistant";
     const rawParts=isAssistant?splitReply(m.text):[String(m.text??"")];
     const parts=isAssistant?rawParts.map(trimPlainEnding):rawParts;
