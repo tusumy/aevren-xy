@@ -75,6 +75,13 @@
     if(!list.length)return "";
     const inner=list.map(a=>{
       if(a.kind==="image"&&(a.previewDataUrl||a.dataUrl))return `<img class="xy-message-image" src="${esc(a.previewDataUrl||a.dataUrl)}" alt="${esc(a.name||"图片")}">`;
+      if(a.kind==="audio"){
+        const duration=Math.max(1,Math.round(Number(a.duration||1)));
+        const key=String(a.audioKey||"").replace(/[^a-zA-Z0-9_-]/g,"");
+        const play=key?`<button type="button" class="xy-voice-note-play" data-audio-key="${esc(key)}" aria-label="播放语音">▶ ${duration}″</button>`:`<span class="xy-voice-note-play disabled">${duration}″ · 音频未存储</span>`;
+        const caption=a.transcript?`<span class="xy-voice-note-transcript">${esc(a.transcript)}</span>`:`<span class="xy-voice-note-transcript">语音未转写，AI 无法听懂</span>`;
+        return `<span class="xy-voice-note">${play}${caption}</span>`;
+      }
       return `<div class="xy-message-file"><span>▤</span><b>${esc(a.name||"附件")}</b></div>`;
     }).join("");
     return `<div class="xy-message-attachments">${inner}</div>`;
