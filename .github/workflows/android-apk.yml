@@ -40,6 +40,22 @@ jobs:
           path: .android
           key: aevren-xy-android-user-home-v1
 
+      - name: Bundle free offline Chinese speech model
+        shell: bash
+        run: |
+          set -euo pipefail
+          MODEL_DIR=android/app/src/main/assets/vosk-cn
+          mkdir -p "$MODEL_DIR"
+          curl --fail --location --retry 3 --retry-delay 3 \
+            'https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip' \
+            --output /tmp/vosk-cn.zip
+          unzip -q /tmp/vosk-cn.zip -d /tmp/vosk-assets
+          cp -a /tmp/vosk-assets/vosk-model-small-cn-0.22/. "$MODEL_DIR/"
+          printf '%s\n' 'vosk-model-small-cn-0.22-aevren-xy-v1' > "$MODEL_DIR/uuid"
+          test -f "$MODEL_DIR/am/final.mdl"
+          test -f "$MODEL_DIR/conf/model.conf"
+          du -sh "$MODEL_DIR"
+
       - name: Build debug APK
         run: gradle -p android :app:assembleDebug --no-daemon
 
