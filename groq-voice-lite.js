@@ -120,6 +120,7 @@
   }
   async function startRecording(){
     if(busy||recorder)return;
+    if(!options().apiKey.trim()){toast("请先在语音设置填写 Groq API Key",true);openPanel("voice");return}
     if(!window.MediaRecorder||!navigator.mediaDevices?.getUserMedia){toast("当前浏览器没有可用的录音能力",true);return}
     busy=true;updateButton();
     try{

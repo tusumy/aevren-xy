@@ -1,7 +1,7 @@
 (()=>{
   "use strict";
   const FORMAT="AevrenXYBackup", VERSION=1, DB_NAME="xy-data-safety-v1", BUCKET="snapshots";
-  const PRIVATE_KEYS=new Set(["xy.endpoints","xy.mcps","xy.settings","xy.supabase.config","xy.supabase.session"]);
+  const PRIVATE_KEYS=new Set(["xy.endpoints","xy.mcps","xy.settings","xy.supabase.config","xy.supabase.session","xy.groqVoice.v1"]);
   const AUTO_MS=60*60*1000, KEEP=8;
   let pendingImport=null, timer=0, snapshotBusy=false, dbPromise=null;
   const $=s=>document.querySelector(s);
