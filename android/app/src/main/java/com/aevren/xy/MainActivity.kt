@@ -392,6 +392,16 @@ private class NativeVoiceBridge(
     private var recordingFile: File? = null
     private var speechRecognizer: SpeechRecognizer? = null
     @Volatile private var speechListening = false
+    private val localAsr = LocalAsr(activity,
+        { state, detail -> notifySttState(state) },
+        { text, error ->
+            speechListening = false
+            when {
+                !error.isNullOrBlank() -> notifySttError(-1, error)
+                text.isNullOrBlank() -> notifySttError(SpeechRecognizer.ERROR_NO_MATCH)
+                else -> notifySttResult(text)
+            }
+        })
 
     init {
         initTts("")
@@ -552,6 +562,23 @@ private class NativeVoiceBridge(
     }
 
     @JavascriptInterface
+    fun hasOfflineRecognition(): Boolean = localAsr.isBundled()
+
+    @JavascriptInterface
+    fun transcribeOfflineRecording(requestId: String, base64Audio: String): String {
+        if (!localAsr.isBundled()) return JSONObject().put("ok", false).put("error", "offline_model_not_bundled").toString()
+        if (requestId.isBlank()) return JSONObject().put("ok", false).put("error", "missing_request_id").toString()
+        localAsr.transcribeBase64(base64Audio) { text, error ->
+            val js = "window.__xyOfflineTranscriptReady && window.__xyOfflineTranscriptReady(" +
+                JSONObject.quote(requestId) + "," +
+                JSONObject.quote(text ?: "") + "," +
+                JSONObject.quote(error ?: "") + ");"
+            webView.post { webView.evaluateJavascript(js, null) }
+        }
+        return JSONObject().put("ok", true).put("queued", true).toString()
+    }
+
+    @JavascriptInterface
     @Synchronized
     fun startRecognition(languageTag: String): String {
         if (activity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
@@ -562,6 +589,15 @@ private class NativeVoiceBridge(
         }
         if (speechListening) {
             return JSONObject().put("ok", false).put("error", "already_listening").toString()
+        }
+        if (localAsr.isBundled()) {
+            speechListening = true
+            return if (localAsr.startMic()) {
+                JSONObject().put("ok", true).put("engine", "vosk_offline").toString()
+            } else {
+                speechListening = false
+                JSONObject().put("ok", false).put("error", "offline_microphone_busy").toString()
+            }
         }
         speechListening = true
         activity.runOnUiThread {
@@ -672,6 +708,11 @@ private class NativeVoiceBridge(
     @Synchronized
     fun stopRecognition(): String {
         if (!speechListening) return JSONObject().put("ok", false).put("error", "not_listening").toString()
+        if (localAsr.isBundled()) {
+            localAsr.stopMic()
+            speechListening = false
+            return JSONObject().put("ok", true).toString()
+        }
         activity.runOnUiThread { runCatching { speechRecognizer?.stopListening() } }
         return JSONObject().put("ok", true).toString()
     }
@@ -680,6 +721,7 @@ private class NativeVoiceBridge(
     @Synchronized
     fun cancelRecognition() {
         speechListening = false
+        localAsr.stopMic()
         activity.runOnUiThread { runCatching { speechRecognizer?.cancel() } }
     }
 
@@ -750,6 +792,7 @@ private class NativeVoiceBridge(
     }
 
     fun shutdown() {
+        localAsr.shutdown()
         synchronized(this) {
             runCatching { recorder?.stop() }
             runCatching { recorder?.release() }
