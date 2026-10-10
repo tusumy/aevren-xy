@@ -67,6 +67,7 @@
    const ai=body.querySelector("#xyAiJournal");
    if(ai)ai.addEventListener("click",()=>{shell.hidden=true});
  }
+ window.xyJournalBookshelfDecorate=decorate;
  const oldOpen=window.xyJournal?.open;
  if(typeof oldOpen!=="function")return;
  window.xyJournal.open=function(id){oldOpen(id||"");decorate(id?"edit":"shelf")};
