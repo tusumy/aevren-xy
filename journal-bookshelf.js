@@ -65,7 +65,7 @@
    const oldManual=body.querySelector("#xyManualJournal");
    if(oldManual)oldManual.addEventListener("click",()=>{shell.hidden=true;originalEditor?.querySelector("textarea")?.focus()});
    const ai=body.querySelector("#xyAiJournal");
-   if(ai)ai.addEventListener("click",()=>{shell.hidden=true});
+   if(originalEditor){new MutationObserver(()=>{if(!originalEditor.hidden)shell.hidden=true}).observe(originalEditor,{attributes:true,attributeFilter:["hidden"]})}
  }
  window.xyJournalBookshelfDecorate=decorate;
  const oldOpen=window.xyJournal?.open;
