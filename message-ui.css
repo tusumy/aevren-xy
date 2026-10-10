@@ -62,3 +62,6 @@ html[data-theme-mode="dark"] .xy-reply-now{background:rgba(28,35,31,.76);border-
 .xy-call-history-turn b{flex:0 0 45px;font-size:10px}
 .xy-call-history-turn span{flex:1}
 .xy-call-history-empty{text-align:center;opacity:.7}
+
+.xy-voice-note-wrap{display:flex;flex-direction:column;align-items:flex-start;gap:5px;max-width:100%}
+.xy-voice-transcript{font-size:11px;line-height:1.5;color:var(--muted,#63766a);white-space:pre-wrap;overflow-wrap:anywhere}
