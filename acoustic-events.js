@@ -52,5 +52,38 @@
       return null;
     }
   }
-  window.xyAcousticEvents={start};
+  async function analyzeBlob(blob){
+    const Ctx=window.AudioContext||window.webkitAudioContext;
+    if(!Ctx||!blob||blob.size>18*1024*1024)return [];
+    let ctx=null;
+    try{
+      ctx=new Ctx();
+      const buffer=await ctx.decodeAudioData(await blob.arrayBuffer());
+      const data=buffer.getChannelData(0),rate=buffer.sampleRate;
+      if(!data.length||!rate)return [];
+      const frame=Math.max(256,Math.floor(rate*.08)),step=Math.max(frame,Math.floor(rate*.12));
+      let pulses=0,active=0,zeroCrossTotal=0,frames=0,high=0;
+      for(let off=0;off<data.length&&off<rate*45;off+=step){
+        let rms=0,z=0,peak=0;
+        const end=Math.min(data.length,off+frame),n=end-off;
+        for(let j=off;j<end;j++){
+          const v=data[j];rms+=v*v;peak=Math.max(peak,Math.abs(v));
+          if(j>off&&((v>=0)!==(data[j-1]>=0)))z++;
+        }
+        const power=Math.sqrt(rms/Math.max(1,n));
+        if(power>.028){active++;zeroCrossTotal+=z/Math.max(1,n)}
+        if(power>.06&&peak>.4)pulses++;
+        if(power>.022&&z/Math.max(1,n)>.18)high++;
+        frames++;
+      }
+      const events=[];
+      if(frames>=8&&pulses>=3&&pulses<frames*.35)events.push("录音中有多次短促的声音");
+      if(frames>=8&&active>=frames*.20&&high>=active*.45)events.push("录音中存在持续的高频噪声或气流声");
+      return events.slice(0,2);
+    }catch{
+      // Incompatible codec/device: no claim about the sound.
+      return [];
+    }finally{try{await ctx?.close()}catch{}}
+  }
+  window.xyAcousticEvents={start,analyzeBlob};
 })();
