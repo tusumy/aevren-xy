@@ -9,6 +9,7 @@ import android.view.Gravity
 import android.view.WindowManager
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import kotlin.math.roundToInt
@@ -86,12 +87,21 @@ class IncomingCallActivity : Activity() {
             setPadding(dp(28), dp(72), dp(28), dp(32))
         }
 
-        val avatar = TextView(this).apply {
-            text = characterName.take(1)
-            textSize = 38f
-            gravity = Gravity.CENTER
-            setTextColor(Color.WHITE)
-            setBackgroundColor(Color.rgb(53, 93, 74))
+        val image = NativeCallManager.loadAvatar(this, characterId)
+        val avatar = if (image != null) {
+            ImageView(this).apply {
+                setImageBitmap(image)
+                scaleType = ImageView.ScaleType.CENTER_CROP
+                contentDescription = characterName + "的头像"
+            }
+        } else {
+            TextView(this).apply {
+                text = characterName.take(1)
+                textSize = 38f
+                gravity = Gravity.CENTER
+                setTextColor(Color.WHITE)
+                setBackgroundColor(Color.rgb(53, 93, 74))
+            }
         }
         body.addView(
             avatar,
