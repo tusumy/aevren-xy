@@ -220,6 +220,26 @@
     return {url,title:structured.title||titleFromText(structured.text)};
   }
 
+  async function archiveMcpVoice(message,url,title,text){
+    const existing=(message.attachments||[]).find(x=>x.kind==="audio"&&x.generatedBy==="mcp");
+    if(existing&&existing.speechText===text)return existing;
+    const note={kind:"audio",name:title||"AI语音",generatedBy:"mcp",speechText:text,duration:0,transcript:plainSpeechText(text),voiceUrl:url};
+    try{
+      // MCP links may be short-lived. Keep the actual audio locally when CORS allows.
+      const response=await fetch(url);
+      if(response.ok){
+        const blob=await response.blob();
+        if(blob.size>0&&blob.size<=16*1024*1024&&blob.type.startsWith("audio/")){
+          note.localAudioKey=await window.xyAudioArchive?.put?.(blob)||"";
+          note.type=blob.type;note.size=blob.size;
+        }
+      }
+    }catch{}
+    message.attachments=(message.attachments||[]).filter(x=>!(x.kind==="audio"&&x.generatedBy==="mcp"));
+    message.attachments.push(note);
+    save();renderMessages();
+    return note;
+  }
   async function synthesizeMessage(index,autoplay=true,targetChat=currentChat(),playbackAllowed=null){
     const mayPlay=()=>typeof playbackAllowed!=="function"||playbackAllowed();
     const c=targetChat,message=c?.messages?.[index];
@@ -232,6 +252,9 @@
       return;
     }
     if(message.voiceUrl&&message.voiceText===text){
+      if(!(message.attachments||[]).some(x=>x.kind==="audio"&&x.generatedBy==="mcp")){
+        await archiveMcpVoice(message,message.voiceUrl,message.voiceTitle,text);
+      }
       if(autoplay&&mayPlay())playAudio(message.voiceUrl,key,message);
       return;
     }
@@ -246,6 +269,7 @@
       const result=await callMcpTool(server,"text_to_speech",args);
       const audio=parseVoiceResult(result);
       message.voiceUrl=audio.url;message.voiceTitle=audio.title||args.title;message.voiceText=text;
+      await archiveMcpVoice(message,audio.url,message.voiceTitle,text);
       save();decorateMessages();
       if(autoplay&&mayPlay())playAudio(message.voiceUrl,key,message);
     }catch(error){toast("语音生成失败："+error.message,true)}
