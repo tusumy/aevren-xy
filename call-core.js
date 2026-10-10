@@ -131,7 +131,12 @@
     }catch(error){
       callNativeRecognizing=false;
       if(phase!=="connected"||!callUseNative||generation!==callGeneration)return;
-      if(["speech_no_match","speech_timeout"].includes(String(error?.message||error))){
+      const err=String(error?.message||error);
+      if(err==="offline_model_preparing"){
+        statusEl.textContent="首次安装 · 正在准备离线中文语音模型…";
+        return scheduleNativeListening(1200);
+      }
+      if(["speech_no_match","speech_timeout"].includes(err)){
         missedSpeech++;
         if(missedSpeech<5)return scheduleNativeListening(500);
         fallbackToManual("连续没有识别到说话");
@@ -143,7 +148,7 @@
 
   async function startFallbackRecording(){
     if(phase!=="connected"||processing||callNativeRecognizing||callNativeRecording||callRecorder?.state==="recording")return;
-    if(!forceRecordedStt&&window.AevrenVoice?.hasNativeRecognition?.()){
+    if((!forceRecordedStt||window.AevrenVoice?.offlineStatus?.()?.state==="ready")&&window.AevrenVoice?.hasNativeRecognition?.()){
       callNativeRecognizing=true;
       pushBtn.classList.add("recording");pushBtn.querySelector("span").textContent="结束";
       statusEl.textContent="正在听你说…";
