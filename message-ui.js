@@ -129,8 +129,8 @@
     const wrap=ensureHeaderMessageStats();if(!wrap)return;
     const count=wrap.querySelector(".xy-header-count span"),sheet=wrap.querySelector(".xy-header-stats-sheet");
     if(count)count.textContent=String(total);
-    const limit=String(localStorage.getItem("xy.contextMessageLimit")||"40");
-    const contextLabel=limit==="0"?"全部消息":("最近 "+limit+" 条");
+    const limit=window.xyContextWindow?.readLimit?.()??40;
+    const contextLabel=limit===0?"全部消息":("最近 "+limit+" 条");
     if(sheet)sheet.innerHTML='<span>当前对话</span><strong>'+total+' 条消息</strong><div><span>你</span><b>'+users+'</b></div><div><span>'+esc(currentCharacterName())+'</span><b>'+assistants+'</b></div><div class="is-highlight"><span>发送给模型</span><b>'+contextLabel+'</b></div>';
     wrap.querySelector(".xy-header-count")?.setAttribute("aria-label","当前对话 "+total+" 条消息");
   }
