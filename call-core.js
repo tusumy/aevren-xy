@@ -131,7 +131,12 @@
     }catch(error){
       callNativeRecognizing=false;
       if(phase!=="connected"||!callUseNative||generation!==callGeneration)return;
-      if(["speech_no_match","speech_timeout"].includes(String(error?.message||error))){
+      const err=String(error?.message||error);
+      if(err==="offline_model_preparing"){
+        statusEl.textContent="首次安装 · 正在准备离线中文语音模型…";
+        return scheduleNativeListening(1200);
+      }
+      if(["speech_no_match","speech_timeout"].includes(err)){
         missedSpeech++;
         if(missedSpeech<5)return scheduleNativeListening(500);
         fallbackToManual("连续没有识别到说话");
@@ -143,7 +148,7 @@
 
   async function startFallbackRecording(){
     if(phase!=="connected"||processing||callNativeRecognizing||callNativeRecording||callRecorder?.state==="recording")return;
-    if(!forceRecordedStt&&window.AevrenVoice?.hasNativeRecognition?.()){
+    if((!forceRecordedStt||window.AevrenVoice?.offlineStatus?.()?.state==="ready")&&window.AevrenVoice?.hasNativeRecognition?.()){
       callNativeRecognizing=true;
       pushBtn.classList.add("recording");pushBtn.querySelector("span").textContent="结束";
       statusEl.textContent="正在听你说…";
@@ -204,7 +209,7 @@
       try{
         const result=window.AevrenVoice.stopNativeCapture();
         if(!result?.ok||!result.blob)throw new Error(result?.error||"native_record_stop_failed");
-        await processCallBlob(result.blob);
+        await processCallBlob(result.blob,result.transcript||"");
       }catch{
         statusEl.textContent="录音失败 · 再说一次";
       }
@@ -213,11 +218,11 @@
     if(callRecorder?.state==="recording")callRecorder.stop();
   }
 
-  async function processCallBlob(blob){
+  async function processCallBlob(blob,localTranscript=""){
     if(blob.size<700){statusEl.textContent="这段太短了 · 再说一次";return}
     try{
       processing=true;statusEl.textContent="正在听懂…";
-      const text=await window.AevrenVoice.transcribeBlob(blob);
+      const text=String(localTranscript||"").trim()||await window.AevrenVoice.transcribeBlob(blob);
       processing=false;
       if(phase!=="connected")return;
       if(text){statusEl.textContent="录音已转写 · 正在发给角色";await handleUserText(text)}

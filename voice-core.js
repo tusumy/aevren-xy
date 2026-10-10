@@ -31,6 +31,7 @@
   }
   let composerActionState="idle",voiceNoteStartedAt=0;
   let activeAudio=null,activeMessage=null;
+  let nativeCaptureMode="system",nativeRecognitionMode="system";
   const busyMessages=new Set();
 
   const persist=()=>store.set("xy.voice",voiceSettings);
@@ -61,13 +62,26 @@
     for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
     return new Blob([bytes],{type:mime||"audio/mp4"});
   }
+  function offlineStatus(){
+    const bridge=nativeVoiceBridge();
+    if(!bridge?.offlineStatus)return {ok:false,state:"unavailable"};
+    return parseNativeVoiceResult(bridge.offlineStatus());
+  }
   function startNativeCapture(){
     const bridge=nativeVoiceBridge();if(!bridge)return {ok:false,error:"native_voice_unavailable"};
+    const state=offlineStatus();
+    if(state.state==="ready"&&typeof bridge.startOfflineNote==="function"){
+      const result=parseNativeVoiceResult(bridge.startOfflineNote());
+      if(result.ok){nativeCaptureMode="offline";return result}
+      if(result.error==="permission_requested")return result;
+    }
+    nativeCaptureMode="system";
     return parseNativeVoiceResult(bridge.startRecording());
   }
   function stopNativeCapture(){
     const bridge=nativeVoiceBridge();if(!bridge)return {ok:false,error:"native_voice_unavailable"};
-    const result=parseNativeVoiceResult(bridge.stopRecording());
+    const mode=nativeCaptureMode;nativeCaptureMode="system";
+    const result=parseNativeVoiceResult(mode==="offline"?bridge.stopOfflineNote():bridge.stopRecording());
     if(result.ok&&result.base64)result.blob=base64ToBlob(result.base64,result.mime||"audio/mp4");
     return result;
   }
@@ -106,7 +120,7 @@
       clearTimeout(nativeRecognitionTimer);
       nativeRecognitionTimer=setTimeout(()=>{
         if(!nativeRecognizing)return;
-        try{bridge.stopRecognition?.()}catch{}
+        try{if(nativeRecognitionMode==="offline")bridge.stopOfflineRecognition?.();else bridge.stopRecognition?.()}catch{}
         if(nativeRecognitionAllowActivityFallback&&!nativeRecognitionFallbackTried&&canStartNativeRecognitionActivity()){
           nativeRecognitionFallbackTried=true;
           const fallback=startNativeRecognitionActivity();
@@ -123,10 +137,13 @@
         nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
         reject(new Error("speech_timeout"));
       },12000);
-      const result=parseNativeVoiceResult(bridge.startRecognition(voiceSettings.sttLanguage||"zh-CN"));
+      const preferOffline=typeof bridge.startOfflineRecognition==="function";
+      nativeRecognitionMode=preferOffline?"offline":"system";
+      const result=parseNativeVoiceResult(preferOffline?
+        bridge.startOfflineRecognition():bridge.startRecognition(voiceSettings.sttLanguage||"zh-CN"));
       if(!result.ok){
         clearTimeout(nativeRecognitionTimer);
-        if(nativeRecognitionAllowActivityFallback&&canStartNativeRecognitionActivity()){
+        if(nativeRecognitionMode!=="offline"&&nativeRecognitionAllowActivityFallback&&canStartNativeRecognitionActivity()){
           nativeRecognitionFallbackTried=true;
           const fallback=startNativeRecognitionActivity();
           if(fallback.ok){
@@ -144,7 +161,14 @@
     });
   }
   function stopNativeRecognition(){
-    try{return parseNativeVoiceResult(nativeVoiceBridge()?.stopRecognition?.())}catch{return {ok:false,error:"native_speech_stop_failed"}}
+    const bridge=nativeVoiceBridge();
+    clearTimeout(nativeRecognitionTimer);nativeRecognitionTimer=null;
+    const reject=nativeRecognitionReject;
+    nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
+    if(reject)reject(new Error("speech_cancelled"));
+    try{return parseNativeVoiceResult(nativeRecognitionMode==="offline"?
+      bridge?.stopOfflineRecognition?.():bridge?.stopRecognition?.())}
+    catch{return {ok:false,error:"native_speech_stop_failed"}}
   }
   const currentText=m=>String(m?.text||"").trim();
   const messageKey=(c,index)=>`${c?.id||"chat"}:${index}`;
@@ -439,7 +463,7 @@
     return "audio";
   }
 
-  async function sendVoiceNoteBlob(blob){
+  async function sendVoiceNoteBlob(blob,localTranscript=""){
     const elapsed=Math.max(1,Math.round((Date.now()-(voiceNoteStartedAt||Date.now()))/1000));
     if(!blob||blob.size<700){
       toast("这段太短了，没录下来",true);
@@ -452,14 +476,14 @@
       let localAudioKey="";
       try{localAudioKey=await window.xyAudioArchive?.put?.(blob)||""}
       catch(error){toast("本地录音保存失败："+(error?.message||error),true)}
-      let transcript="",transcriptError="";
-      if(voiceSettings.sttBase.trim()||activeEndpoint()?.base){
+      let transcript=String(localTranscript||"").trim(),transcriptError="";
+      if(!transcript&&(voiceSettings.sttBase.trim()||activeEndpoint()?.base)){
         try{transcript=String(await transcribe(blob)).trim()}
         catch(error){
           transcriptError=String(error?.message||error).slice(0,160);
           toast("语音已录下，但AI暂时听不懂：语音转写失败",true);
         }
-      }else{
+      }else if(!transcript){
         transcriptError="尚未设置支持语音转写的接口";
         toast("语音已录下，但需要配置支持语音转写的接口",true);
       }
@@ -546,7 +570,7 @@
       try{
         const result=stopNativeCapture();
         if(!result.ok||!result.blob)throw new Error(result.error||"native_record_stop_failed");
-        await sendVoiceNoteBlob(result.blob);
+        await sendVoiceNoteBlob(result.blob,result.transcript||"");
       }catch(error){
         voiceBusy=false;voiceNoteStartedAt=0;setMicState("idle");
         toast("录音失败："+(error?.message||error),true);
@@ -709,6 +733,7 @@
     startNativeCapture(){return startNativeCapture()},
     stopNativeCapture(){return stopNativeCapture()},
     hasNativeRecognition(){return hasNativeRecognition()},
+    offlineStatus(){return offlineStatus()},
     onRecognitionProgress(observer){recognitionObserver=typeof observer==="function"?observer:null},
     recognizeNativeOnce(options){return recognizeNativeOnce(options)},
     stopNativeRecognition(){return stopNativeRecognition()},
