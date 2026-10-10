@@ -219,6 +219,8 @@
     if(blob.size<700){statusEl.textContent="这段太短了 · 再说一次";return}
     try{
       processing=true;statusEl.textContent="正在听懂…";
+      const detected=await window.xyAcousticEvents?.analyzeBlob?.(blob).catch(()=>[])||[];
+      ambienceEvents=[...new Set([...ambienceEvents,...detected])].slice(0,3);
       const text=await window.AevrenVoice.transcribeBlob(blob);
       processing=false;
       if(phase!=="connected")return;
