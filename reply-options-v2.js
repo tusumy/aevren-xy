@@ -2,7 +2,7 @@
   const OPTS_RE=/\n?⟦opts(\{[^⟧]*?\})⟧\s*$/;
   const OPTS_TAIL_RE=/\n?⟦opts[^⟧]*⟧\s*$/;
   const KEY="xy.replyOptions";
-  const DEFAULTS={enabled:true,mode:"intimate"};
+  const DEFAULTS={enabled:false,mode:"intimate"};
   const readSettings=()=>{try{return {...DEFAULTS,...(JSON.parse(localStorage.getItem(KEY))||{})}}catch{return {...DEFAULTS}}};
   const writeSettings=value=>localStorage.setItem(KEY,JSON.stringify({...DEFAULTS,...value}));
   const clip=(value,max=30)=>Array.from(String(value||"").trim()).slice(0,max).join("");
