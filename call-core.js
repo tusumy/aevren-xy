@@ -6,6 +6,13 @@
   let callCharacter=null,callUseNative=false,nativeAutoTimer=null,callGeneration=0,callChat=null,callLines=[],missedSpeech=0;
   let forceRecordedStt=false;
   let ambience=null,ambienceEvents=[];
+  const nativeAcousticLimit=3;
+  window.__xyNativeAcousticEvent=label=>{
+    if(phase!=="connected"||!callUseNative)return;
+    const cue=String(label||"").slice(0,160);
+    if(!cue||ambienceEvents.includes(cue)||ambienceEvents.length>=nativeAcousticLimit)return;
+    ambienceEvents.push(cue);
+  };
 
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const currentChat=()=>{try{return chat()}catch{return null}};

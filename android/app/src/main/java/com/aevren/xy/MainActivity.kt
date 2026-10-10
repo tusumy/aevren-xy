@@ -392,6 +392,7 @@ private class NativeVoiceBridge(
     private var recordingFile: File? = null
     private var speechRecognizer: SpeechRecognizer? = null
     @Volatile private var speechListening = false
+    private val acousticProbe = NativeAcousticProbe { label -> notifyAcousticEvent(label) }
 
     init {
         initTts("")
@@ -564,6 +565,7 @@ private class NativeVoiceBridge(
             return JSONObject().put("ok", false).put("error", "already_listening").toString()
         }
         speechListening = true
+        acousticProbe.reset()
         activity.runOnUiThread {
             try {
                 if (speechRecognizer == null) {
@@ -578,8 +580,8 @@ private class NativeVoiceBridge(
                 recognizer.setRecognitionListener(object : RecognitionListener {
                     override fun onReadyForSpeech(params: Bundle?) { notifySttState("ready") }
                     override fun onBeginningOfSpeech() { notifySttState("speech") }
-                    override fun onRmsChanged(rmsdB: Float) = Unit
-                    override fun onBufferReceived(buffer: ByteArray?) = Unit
+                    override fun onRmsChanged(rmsdB: Float) { acousticProbe.onRms(rmsdB) }
+                    override fun onBufferReceived(buffer: ByteArray?) { acousticProbe.onBuffer(buffer) }
                     override fun onEndOfSpeech() { notifySttState("processing") }
                     override fun onError(error: Int) {
                         speechListening = false
@@ -768,6 +770,11 @@ private class NativeVoiceBridge(
             tts = null
             ttsReady = false
         }
+    }
+
+    private fun notifyAcousticEvent(label: String) {
+        val js = "window.__xyNativeAcousticEvent && window.__xyNativeAcousticEvent(" + JSONObject.quote(label) + ");"
+        webView.post { webView.evaluateJavascript(js, null) }
     }
 
     private fun notifySttResult(text: String) {
