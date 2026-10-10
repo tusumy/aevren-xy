@@ -2,14 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <uses-permission android:name="android.permission.VIBRATE" />
-
-    <queries>
-        <intent><action android:name="android.speech.RecognitionService" /></intent>
-        <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
-    </queries>
 
     <application
         android:allowBackup="true"
@@ -19,14 +11,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Theme.Yanyu"
         android:usesCleartextTraffic="true">
-        <activity
-            android:name=".IncomingCallActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:launchMode="singleTop"
-            android:showWhenLocked="true"
-            android:turnScreenOn="true"
-            android:theme="@style/Theme.Yanyu" />
         <activity
             android:name=".MainActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|smallestScreenSize|uiMode"

@@ -52,23 +52,10 @@
     const parts=[];
     if(text)parts.push({type:'text',text});
     else if(attachments.some(a=>a?.kind==='image'&&a.dataUrl))parts.push({type:'text',text:'请查看我发送的图片。'});
-    else if(attachments.some(a=>a?.kind==='audio'&&a.transcript))parts.push({type:'text',text:'以下是语音消息转写内容。'});
     for(const a of attachments){
       if(a?.kind==='image'&&a.dataUrl)parts.push({type:'image_url',image_url:{url:String(a.dataUrl)}});
-      else if(a?.kind==='audio'&&a.transcript){
-        parts.push({type:'text',text:'[语音转写] '+String(a.transcript)});
-      }else if(a?.kind==='audio'&&a.dataUrl){
-        const match=String(a.dataUrl).match(/^data:audio\/[^;,]+;base64,(.+)$/s);
-        const format=String(a.format||'').toLowerCase();
-        if(match&&['wav','mp3'].includes(format)){
-          parts.push({type:'input_audio',input_audio:{data:match[1],format}});
-        }else{
-          parts.push({type:'text',text:'[用户发送了语音附件，当前接口未能识别音频内容。请明确告诉用户未能听懂，切勿猜测或冒充听见。]'});
-        }
-      }else if(a?.kind==='text'&&typeof a.text==='string'){
+      else if(a?.kind==='text'&&typeof a.text==='string'){
         parts.push({type:'text',text:'[附件：'+String(a.name||'文本文件')+(a.truncated?'；内容已截断':'')+']\n'+a.text});
-      }else if(a?.kind==='audio'){
-        parts.push({type:'text',text:'[此前有一段未转写的语音附件，无法仅凭时长得知内容。请勿声称听过内容。]'});
       }else if(a?.name){
         parts.push({type:'text',text:'[附件：'+String(a.name)+'；内容当前不可用]'});
       }
@@ -181,21 +168,18 @@
     return {data,raw};
   }
 
-  async function compatSend(options){
-    const fromCall=options?.__xyCall===true&&typeof options.text==='string';
-    const el=$('#input'),text=fromCall?options.text.trim():el.value.trim();
-    const attachments=fromCall?[]:(Array.isArray(window.xyActiveSendAttachments)?window.xyActiveSendAttachments:[]);
-    if(!text&&!attachments.length)return;
-    if(sending){if(fromCall)throw new Error('上一条消息还在发送');return}
-    const ep=endpoints.find(x=>x.active)||endpoints[0];
-    if(fromCall&&(!ep?.base||!ep?.model))throw new Error('请先配置可用的聊天模型接口');
+  async function compatSend(){
+    const el=$('#input'),text=el.value.trim();
+    const attachments=Array.isArray(window.xyActiveSendAttachments)?window.xyActiveSendAttachments:[];
+    if((!text&&!attachments.length)||sending)return;
     sending=true;
     $('#sendBtn').disabled=true;
     const c=chat();
     c.messages.push({role:'user',text,attachments});
     if(c.messages.filter(x=>x.role==='user').length===1)c.title=(text||attachments[0]?.name||'新对话').slice(0,22);
-    if(!fromCall){el.value='';resize()}
-    save();renderChats();renderMessages();showTyping();
+    el.value='';resize();save();renderChats();renderMessages();showTyping();
+
+    const ep=endpoints.find(x=>x.active)||endpoints[0];
     if(!ep?.base||!ep?.model){
       hideTyping();
       c.messages.push({role:'assistant',text:'嗯，我在。你刚才说的已经留在这里了。',localOnly:true});
@@ -205,8 +189,7 @@
     const headers={'Content-Type':'application/json',Accept:'application/json'};
     if(ep.key)headers.Authorization='Bearer '+ep.key;
     const memoryContext=memories.length?'长期记忆：\n'+memories.map(m=>'- ['+m.tag+'] '+m.text).join('\n'):'';
-    const phoneStyle=fromCall?'正在进行语音电话。自然接话、用口语说给对方听；每轮通常一两句，不重复刚听到的话，不写 Markdown、列表或旁白，保留你原有的人设和说话习惯。':'';
-    const system=[ep.system,memoryContext,phoneStyle].filter(Boolean).join('\n\n');
+    const system=[ep.system,memoryContext].filter(Boolean).join('\n\n');
     const history=normalizedHistory(c.messages);
     const messages=[...(system?[{role:'system',content:system}]:[]),...history];
     try{await window.xyEnsureMcpTools?.()}catch{}
