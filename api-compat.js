@@ -188,9 +188,9 @@
     if(!text&&!attachments.length)return;
     if(sending){if(fromCall)throw new Error('上一条消息还在发送');return}
     const ep=endpoints.find(x=>x.active)||endpoints[0];
-    if(!fromCall&&attachments.some(a=>a?.kind==="image")&&ep?.vision!==true){
+    if(!fromCall&&attachments.some(a=>a?.kind==="image")&&ep?.vision!==true&&!window.xyVisionFallback?.forSend?.()){
       window.xyAttachments?.restore?.(attachments);
-      window.xyAttachments?.toast?.("当前模型未开启视觉，请先在接口设置中启用视觉",true);
+      window.xyAttachments?.toast?.("当前模型不支持看图，请启用视觉或设置备用视觉模型",true);
       return;
     }
     if(fromCall&&(!ep?.base||!ep?.model))throw new Error('请先配置可用的聊天模型接口');
@@ -217,10 +217,36 @@
     const system=[ep.system,timeContext,memorySummary?"角色的长期记忆摘要：\n"+memorySummary:"",memoryContext,phoneStyle].filter(Boolean).join('\n\n');
     // Rehydrate the original image bytes before constructing multimodal history.
     await window.xyImagePayload?.hydrate?.(c.messages);
-    const history=normalizedHistory(c.messages);
-    if(ep.vision!==true){
-      for(const m of history)if(Array.isArray(m.content))m.content=m.content.map(part=>part?.type==="image_url"?{type:"text",text:"[历史图片，当前仅文本模式无法查看]"}:part);
+    const hasNewImages=attachments.some(a=>a?.kind==="image");
+    const useBackup=hasNewImages&&(window.xyNextVisualFallback===true||(ep.vision!==true&&window.xyVisionFallback?.wantsFallback?.()));
+    let backupDescription="";
+    if(useBackup){
+      try{
+        backupDescription=await window.xyVisionFallback.describe(attachments);
+        save();
+      }catch(error){
+        hideTyping();
+        c.messages.push({role:"assistant",text:"备用视觉分析失败："+String(error?.message||error),localOnly:true});
+        save();renderMessages();sending=false;$('#sendBtn').disabled=false;window.xyNextVisualFallback=false;
+        return;
+      }
     }
+    const history=normalizedHistory(c.messages);
+    // A text-only primary model only receives independently generated image descriptions.
+    if(ep.vision!==true||useBackup){
+      for(const m of history)if(Array.isArray(m.content)){
+        m.content=m.content.map(part=>part?.type==="image_url"?{type:"text",text:"[图像：请参考后续备用视觉分析结果；未分析的旧图不可见]"}:part);
+      }
+    }
+    if(backupDescription){
+      const last=history.at(-1);
+      if(last?.role==="user"){
+        const prompt="[备用视觉模型对用户本轮图片的观察，仅作参考，不是用户亲自说的话。你仍是当前聊天角色。]\n"+backupDescription;
+        if(typeof last.content==="string")last.content+="\n\n"+prompt;
+        else last.content.push({type:"text",text:prompt});
+      }
+    }
+    window.xyNextVisualFallback=false;
     const messages=[...(system?[{role:'system',content:system}]:[]),...history];
     try{await window.xyEnsureMcpTools?.()}catch{}
     const mt=mcpTools();
