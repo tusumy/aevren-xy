@@ -196,7 +196,9 @@
     if(!a||typeof a!=="object")return a;
     return {
       kind:a.kind,name:a.name,type:a.type,size:a.size,width:a.width,height:a.height,
-      truncated:!!a.truncated,previewDataUrl:a.previewDataUrl||""
+      truncated:!!a.truncated,previewDataUrl:a.previewDataUrl||"",
+      audioKey:a.audioKey||"",transcript:a.transcript||"",duration:a.duration||0,
+      transcriptionError:a.transcriptionError||""
     };
   };
   const previousSave=typeof save==="function"?save:null;
