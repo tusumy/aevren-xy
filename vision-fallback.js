@@ -33,7 +33,7 @@
    if(!res.ok)throw new Error("备用视觉 HTTP "+res.status+"："+String(data?.error?.message||data?.message||"请求失败").slice(0,140));
    const text=toText(data);if(!text)throw new Error("备用视觉模型未返回可用的图片描述");
    const summary=text.slice(0,7000);
-   images.forEach(a=>{a.visionDescription=summary});
+   images.forEach((a,i)=>{a.visionDescription=i===0?summary:""});
    return summary;
  }
  function wantsFallback(){return available()&&get().auto}
