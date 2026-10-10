@@ -46,10 +46,15 @@
     const m=chat()?.messages?.[index];
     const a=m?.attachments?.find(x=>x.kind==="image"&&(x.previewDataUrl===image.getAttribute("src")||x.dataUrl===image.getAttribute("src")))||m?.attachments?.find(x=>x.kind==="image");
     if(a){await window.xyImagePayload?.hydrate?.([{attachments:[a]}]);src=a.dataUrl||src}
+    window.xyOpenImagePreview(src);
+  });
+  window.xyOpenImagePreview=function(src){
+    if(!src)return;
+    document.querySelector(".xy-image-fullscreen")?.remove();
     const cover=document.createElement("div");cover.className="xy-image-fullscreen";cover.style.cssText="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:16px";
     cover.innerHTML='<button type="button" aria-label="关闭预览" style="position:absolute;top:20px;right:20px;color:#fff;background:none;border:0;font-size:32px">×</button>';
     const full=document.createElement("img");full.src=src;full.alt="图片预览";full.style.cssText="max-width:100%;max-height:88vh;object-fit:contain";cover.appendChild(full);
     cover.addEventListener("click",()=>cover.remove());document.body.appendChild(cover);
-  });
+  };
   const style=document.createElement("style");style.textContent=".xy-message-image{cursor:zoom-in}";document.head.appendChild(style);
 })();

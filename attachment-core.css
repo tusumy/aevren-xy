@@ -66,3 +66,7 @@ html[data-theme-mode="dark"] .xy-attach-menu button,html[data-theme-mode="dark"]
   .composer .xy-attachment-chip.image{width:60px;max-width:60px;height:60px}
   .composer .xy-attachment-chip.image img{width:58px;height:58px}
 }
+
+/* Selected photos stay visible above the composer and can be tapped. */
+.composer .xy-attachment-tray{position:relative;z-index:2;min-height:0}
+.composer .xy-attachment-chip.image img{display:block;cursor:zoom-in;background:rgba(255,255,255,.24)}

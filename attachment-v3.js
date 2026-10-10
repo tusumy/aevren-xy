@@ -119,7 +119,12 @@
       if(a.kind==="image"){
         const img=document.createElement("img");
         img.src=a.previewDataUrl||a.dataUrl||"";
-        img.alt="";
+        img.alt=a.name||"待发送图片";
+        img.title="点击放大预览";
+        img.onclick=async()=>{
+          try{await window.xyImagePayload?.hydrate?.([{attachments:[a]}])}catch{}
+          window.xyOpenImagePreview?.(a.dataUrl||img.src);
+        };
         chip.appendChild(img);
       }else{
         const icon=document.createElement("span");
@@ -152,9 +157,9 @@
   }
 
   const imageInput=document.createElement("input");
-  imageInput.type="file";imageInput.accept="image/*";imageInput.multiple=true;imageInput.hidden=true;
+  imageInput.type="file";imageInput.accept="image/*";imageInput.multiple=true;imageInput.style.cssText="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none";
   const fileInput=document.createElement("input");
-  fileInput.type="file";fileInput.accept="text/*,.txt,.md,.markdown,.json,.jsonl,.csv,.tsv,.xml,.html,.htm,.css,.js,.mjs,.cjs,.ts,.tsx,.jsx,.py,.java,.kt,.kts,.c,.h,.cpp,.hpp,.cs,.go,.rs,.rb,.php,.sh,.sql,.yaml,.yml,.toml,.ini,.conf,.log";fileInput.multiple=true;fileInput.hidden=true;
+  fileInput.type="file";fileInput.accept="text/*,.txt,.md,.markdown,.json,.jsonl,.csv,.tsv,.xml,.html,.htm,.css,.js,.mjs,.cjs,.ts,.tsx,.jsx,.py,.java,.kt,.kts,.c,.h,.cpp,.hpp,.cs,.go,.rs,.rb,.php,.sh,.sql,.yaml,.yml,.toml,.ini,.conf,.log";fileInput.multiple=true;fileInput.style.cssText="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none";
   document.body.append(imageInput,fileInput);
 
   const positionMenu=()=>{
@@ -186,7 +191,8 @@
       else toast("通话功能还没准备好",true);
       return;
     }
-    (type==="image"?imageInput:fileInput).click();
+    const picker=type==="image"?imageInput:fileInput;
+    try{picker.click()}catch(error){toast("无法打开系统文件选择器："+String(error?.message||error),true)}
   };
   document.addEventListener("click",e=>{if(!menu.hidden&&!menu.contains(e.target)&&e.target!==button)menu.hidden=true});
 
@@ -210,7 +216,7 @@
       imageInput.value="";fileInput.value="";
     }
   }
-  imageInput.onchange=()=>add(imageInput.files,"image");
+  imageInput.onchange=()=>{if(imageInput.files?.length)add(imageInput.files,"image")};
   fileInput.onchange=()=>add(fileInput.files,"text");
 
   const stripPayload=a=>{
