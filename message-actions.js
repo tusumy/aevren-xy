@@ -12,13 +12,14 @@
     if(m?.role!=='assistant'||!Array.isArray(m.variants)||!m.variants.length)return;
     const i=activeVariant(m),v=m.variants[i];
     m.activeVariant=i;m.text=String(v?.text??'');
+    m.heartShort=String(v?.heartShort??'');m.heartFull=String(v?.heartFull??'');
     if(v?.createdAt)m.createdAt=v.createdAt;
     if(v?.editedAt)m.editedAt=v.editedAt;else delete m.editedAt;
   }
   function syncAll(){currentChat()?.messages?.forEach(syncMessage)}
   function ensureVariants(m,tail){
     if(Array.isArray(m.variants)&&m.variants.length){syncMessage(m);return}
-    m.variants=[{text:String(m.text??''),createdAt:m.createdAt||Date.now(),editedAt:m.editedAt||null,tail:clone(tail||[])}];m.activeVariant=0;
+    m.variants=[{text:String(m.text??''),heartShort:m.heartShort||'',heartFull:m.heartFull||'',createdAt:m.createdAt||Date.now(),editedAt:m.editedAt||null,tail:clone(tail||[])}];m.activeVariant=0;
   }
   function saveCurrentTail(c,index){
     const m=c.messages[index];if(!m||!Array.isArray(m.variants)||!m.variants.length)return;
@@ -57,7 +58,7 @@
     const originalAttachments=window.xyActiveSendAttachments;
     const oldSave=save,oldRenderMessages=renderMessages,oldRenderChats=renderChats;
     const oldShowTyping=showTyping,oldHideTyping=hideTyping;
-    let generated='',error=null;
+    let generated='',generatedHeart={short:'',full:''},error=null;
     try{
       c.messages=tempPrefix;
       save=()=>{};renderMessages=()=>{};renderChats=()=>{};showTyping=()=>{};hideTyping=()=>{};
@@ -65,7 +66,10 @@
       window.xyActiveSendAttachments=promptAttachments;
       await window.AevrenApiCompat.send();
       const last=c.messages.at(-1);
-      if(last?.role==='assistant')generated=String(last.text??'').trim();
+      if(last?.role==='assistant'){
+        generated=String(last.text??'').trim();
+        generatedHeart={short:String(last.heartShort||''),full:String(last.heartFull||'')};
+      }
     }catch(err){error=String(err?.message||err)}
     finally{
       save=oldSave;renderMessages=oldRenderMessages;renderChats=oldRenderChats;
@@ -88,7 +92,7 @@
     ensureVariants(selected,clone(c.messages.slice(index+1)));
     saveCurrentTail(c,index);
     selected.variants.push({
-      text:generated,createdAt:Date.now(),editedAt:null,
+      text:generated,heartShort:generatedHeart.short,heartFull:generatedHeart.full,createdAt:Date.now(),editedAt:null,
       tail:clone(c.messages.slice(index+1))
     });
     selected.activeVariant=selected.variants.length-1;
