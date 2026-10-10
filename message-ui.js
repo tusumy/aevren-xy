@@ -57,8 +57,10 @@
       if(a.kind==="image"&&(a.previewDataUrl||a.dataUrl))return `<img class="xy-message-image" src="${esc(a.previewDataUrl||a.dataUrl)}" alt="${esc(a.name||"图片")}">`;
       if(a.kind==="audio"){
         const duration=Math.max(1,Math.round(Number(a.duration||1)));
-        const playable=Boolean(a.dataUrl);
-        return `<button type="button" class="xy-message-voice-note" ${playable?`data-voice-note-src="${esc(a.dataUrl)}"`:"disabled"} title="${playable?"播放语音":"本地语音缓存已失效"}"><span class="xy-message-voice-icon">▶</span><span class="xy-message-voice-wave"><i></i><i></i><i></i><i></i><i></i><i></i></span><b>${duration}"</b></button>`;
+        const playable=Boolean(a.dataUrl||a.localAudioKey);
+        const source=a.dataUrl?`data-voice-note-src="${esc(a.dataUrl)}"`:a.localAudioKey?`data-voice-note-key="${esc(a.localAudioKey)}"`:"disabled";
+        const transcript=a.transcript?`<span class="xy-voice-transcript">${esc(a.transcript)}</span>`:"";
+        return `<span class="xy-voice-note-wrap"><button type="button" class="xy-message-voice-note" ${source} title="${playable?"播放语音":"旧语音没有保存原始音频"}"><span class="xy-message-voice-icon">▶</span><span class="xy-message-voice-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><b>${duration}"</b></button>${transcript}</span>`;
       }
       return `<div class="xy-message-file"><span>▤</span><b>${esc(a.name||"附件")}</b></div>`;
     }).join("");
@@ -66,6 +68,12 @@
   }
 
   function messageHtml(m,index){
+    if(m?.kind==="call"){
+      const when=timeText(m.createdAt),name=String(m.characterName||"角色");
+      const rows=Array.isArray(m.transcript)?m.transcript.slice(0,160):[];
+      const content=rows.length?rows.map(item=>`<div class="xy-call-history-turn"><b>${esc(item.role==="user"?"你":name)}</b><span>${esc(String(item.text||""))}</span></div>`).join(""):'<div class="xy-call-history-empty">本次没有识别到对话</div>';
+      return `<div class="message xy-call-record"><details class="xy-call-history"><summary><span class="xy-call-history-icon">☎</span><span>与${esc(name)}通话 · ${esc(m.duration||"00:00")}</span><small>${esc(when)}</small></summary><div class="xy-call-history-content">${content}</div></details></div>`;
+    }
     const isAssistant=m.role==="assistant";
     const rawParts=isAssistant?splitReply(m.text):[String(m.text??"")];
     const parts=isAssistant?rawParts.map(trimPlainEnding):rawParts;

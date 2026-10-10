@@ -443,6 +443,14 @@
     try{
       const dataUrl=await blobDataUrl(blob);
       const format=voiceNoteFormat(blob.type);
+      let localAudioKey="";
+      try{localAudioKey=await window.xyAudioArchive?.put?.(blob)||""}
+      catch(error){toast("本地录音保存失败："+(error?.message||error),true)}
+      let transcript="";
+      if(voiceSettings.sttBase.trim()){
+        try{transcript=String(await transcribe(blob)).trim()}
+        catch(error){toast("语音转写失败："+(error?.message||error),true)}
+      }
       const attachment={
         kind:"audio",
         name:"语音 "+elapsed+"秒",
@@ -450,6 +458,8 @@
         size:blob.size,
         duration:elapsed,
         format,
+        localAudioKey,
+        transcript,
         dataUrl
       };
       const api=window.xyAttachments;
@@ -586,12 +596,19 @@
     e.preventDefault();e.stopPropagation();synthesizeMessage(Number(button.dataset.voiceMessage),true);
   });
 
-  document.querySelector("#messages")?.addEventListener("click",e=>{
-    const button=e.target.closest?.(".xy-message-voice-note[data-voice-note-src]");
+  document.querySelector("#messages")?.addEventListener("click",async e=>{
+    const button=e.target.closest?.(".xy-message-voice-note");
     if(!button)return;
     e.preventDefault();e.stopPropagation();
-    const src=button.dataset.voiceNoteSrc||"";
-    if(!src)return;
+    let src=button.dataset.voiceNoteSrc||"";
+    let localObjectUrl="";
+    if(!src&&button.dataset.voiceNoteKey){
+      try{
+        const blob=await window.xyAudioArchive?.get?.(button.dataset.voiceNoteKey);
+        if(blob){localObjectUrl=URL.createObjectURL(blob);src=localObjectUrl}
+      }catch(error){toast("语音读取失败："+(error?.message||error),true)}
+    }
+    if(!src){toast("这条语音没有可播放的录音",true);return}
     const icon=button.querySelector(".xy-message-voice-icon");
     if(activeAudio&&button.classList.contains("playing")){
       activeAudio.pause();activeAudio=null;button.classList.remove("playing");
@@ -605,7 +622,7 @@
     });
     const audio=new Audio(src);activeAudio=audio;activeMessage=null;
     button.classList.add("playing");if(icon)icon.textContent="Ⅱ";
-    const finish=()=>{if(activeAudio===audio)activeAudio=null;button.classList.remove("playing");if(icon)icon.textContent="▶"};
+    const finish=()=>{if(activeAudio===audio)activeAudio=null;button.classList.remove("playing");if(icon)icon.textContent="▶";if(localObjectUrl)URL.revokeObjectURL(localObjectUrl)};
     audio.onended=finish;audio.onerror=()=>{finish();toast("这条语音现在播不了",true)};
     audio.play().catch(error=>{finish();toast("播放失败："+error.message,true)});
   });
