@@ -176,7 +176,6 @@
       }
     },true);
     input?.addEventListener("input",updateButton);
-    document.querySelector("#xyAttachmentTray")?.addEventListener("DOMSubtreeModified",updateButton);
     const tray=document.querySelector("#xyAttachmentTray");
     if(tray&&window.MutationObserver)new MutationObserver(updateButton).observe(tray,{childList:true,subtree:true,attributes:true,attributeFilter:["hidden"]});
     sendBtn.addEventListener("click",()=>requestAnimationFrame(updateButton));
