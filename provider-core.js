@@ -46,11 +46,12 @@
     return null;
   }
   function activeConfig(url){
-    const ep=(Array.isArray(endpoints)?endpoints:[]).find(x=>x.active)||endpoints?.[0];
-    if(!ep)return null;
-    const base=clean(ep.base),protocol=protocolOf(ep);
-    if(base&&(url===base||url.startsWith(base+'/')))return {base,protocol};
-    return null;
+    // Non-active endpoints may be invoked independently as a backup vision model.
+    // Match by configured URL rather than the currently selected chat endpoint.
+    const list=(Array.isArray(endpoints)?endpoints:[]).filter(x=>x?.base)
+      .sort((a,b)=>clean(b.base).length-clean(a.base).length);
+    const ep=list.find(x=>{const base=clean(x.base);return url===base||url.startsWith(base+'/')});
+    return ep?{base:clean(ep.base),protocol:protocolOf(ep)}:null;
   }
 
   const pushRole=(arr,role,blocks)=>{

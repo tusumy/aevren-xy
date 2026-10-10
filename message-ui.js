@@ -195,7 +195,7 @@
       api.toast?.("图片还在处理，处理完会继续发送");
       try{await api.wait()}catch{}
     }
-    if(api?.peek?.().some(a=>a?.kind==="image")&&!window.xyVision?.enabled?.()){
+    if(api?.peek?.().some(a=>a?.kind==="image")&&!window.xyVision?.enabled?.()&&!window.xyVisionFallback?.forSend?.()){
       api.toast?.("当前接口是仅文本模式，请到接口设置开启视觉，或移除图片",true);
       return false;
     }
