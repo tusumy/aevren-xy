@@ -54,7 +54,8 @@
     else if(attachments.some(a=>a?.kind==='image'&&a.dataUrl))parts.push({type:'text',text:'请查看我发送的图片。'});
     else if(attachments.some(a=>a?.kind==='audio'&&a.transcript))parts.push({type:'text',text:'以下是语音消息转写内容。'});
     for(const a of attachments){
-      if(a?.kind==='image'&&a.dataUrl)parts.push({type:'image_url',image_url:{url:String(a.dataUrl)}});
+      if(a?.kind==='image'&&a.visionDescription)parts.push({type:'text',text:'[备用视觉对图片的分析，仅作参考] '+String(a.visionDescription)});
+      else if(a?.kind==='image'&&a.dataUrl)parts.push({type:'image_url',image_url:{url:String(a.dataUrl)}});
       else if(a?.kind==='audio'&&a.transcript){
         parts.push({type:'text',text:'[语音转写] '+String(a.transcript)});
       }else if(a?.kind==='audio'&&a.dataUrl){
@@ -236,14 +237,6 @@
     if(ep.vision!==true||useBackup){
       for(const m of history)if(Array.isArray(m.content)){
         m.content=m.content.map(part=>part?.type==="image_url"?{type:"text",text:"[图像：请参考后续备用视觉分析结果；未分析的旧图不可见]"}:part);
-      }
-    }
-    if(backupDescription){
-      const last=history.at(-1);
-      if(last?.role==="user"){
-        const prompt="[备用视觉模型对用户本轮图片的观察，仅作参考，不是用户亲自说的话。你仍是当前聊天角色。]\n"+backupDescription;
-        if(typeof last.content==="string")last.content+="\n\n"+prompt;
-        else last.content.push({type:"text",text:prompt});
       }
     }
     window.xyNextVisualFallback=false;
