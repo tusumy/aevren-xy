@@ -209,7 +209,7 @@
       try{
         const result=window.AevrenVoice.stopNativeCapture();
         if(!result?.ok||!result.blob)throw new Error(result?.error||"native_record_stop_failed");
-        await processCallBlob(result.blob);
+        await processCallBlob(result.blob,result.transcript||"");
       }catch{
         statusEl.textContent="录音失败 · 再说一次";
       }
@@ -218,11 +218,11 @@
     if(callRecorder?.state==="recording")callRecorder.stop();
   }
 
-  async function processCallBlob(blob){
+  async function processCallBlob(blob,localTranscript=""){
     if(blob.size<700){statusEl.textContent="这段太短了 · 再说一次";return}
     try{
       processing=true;statusEl.textContent="正在听懂…";
-      const text=await window.AevrenVoice.transcribeBlob(blob);
+      const text=String(localTranscript||"").trim()||await window.AevrenVoice.transcribeBlob(blob);
       processing=false;
       if(phase!=="connected")return;
       if(text){statusEl.textContent="录音已转写 · 正在发给角色";await handleUserText(text)}
