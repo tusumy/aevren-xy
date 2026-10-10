@@ -3,7 +3,7 @@
   let phase="idle",recognition=null,startedAt=0,timerId=null,processing=false,restartTimer=null;
   let callRecorder=null,callStream=null,callChunks=[],callNativeRecording=false,callNativeRecognizing=false;
   let overlay,statusEl,timeEl,transcriptEl,acceptBtn,hangupBtn,fallbackWrap,fallbackInput,pushBtn;
-  let callCharacter=null;
+  let callCharacter=null,callUseNative=false,nativeAutoTimer=null;
 
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const currentChat=()=>{try{return chat()}catch{return null}};
@@ -85,8 +85,36 @@
     if(phase!=="ringing")return;
     phase="connected";startedAt=Date.now();overlay.classList.remove("ringing");overlay.classList.add("connected");acceptBtn.hidden=true;statusEl.textContent=SpeechRecognition?"正在接通…":"已接通";
     timerId=setInterval(()=>{if(phase==="connected")timeEl.textContent=fmtTime(Date.now()-startedAt)},500);
+    if(window.AevrenVoice?.hasNativeRecognition?.()){
+      callUseNative=true;statusEl.textContent="已接通 · 正在听…";startNativeListening();return;
+    }
     if(!SpeechRecognition){fallbackWrap.hidden=false;pushBtn.hidden=false;statusEl.textContent="已接通 · 点麦克风说话";return}
     await startListening();
+  }
+
+  function scheduleNativeListening(delay=350){
+    clearTimeout(nativeAutoTimer);nativeAutoTimer=null;
+    if(phase!=="connected"||!callUseNative||processing)return;
+    nativeAutoTimer=setTimeout(startNativeListening,delay);
+  }
+
+  async function startNativeListening(){
+    if(phase!=="connected"||!callUseNative||processing||callNativeRecognizing)return;
+    if(window.AevrenVoice?.isSpeaking?.())return scheduleNativeListening(350);
+    callNativeRecognizing=true;statusEl.textContent="正在听…";
+    try{
+      const text=String(await window.AevrenVoice.recognizeNativeOnce()).trim();
+      callNativeRecognizing=false;
+      if(phase!=="connected"||!callUseNative)return;
+      if(text)await handleUserText(text);
+      else scheduleNativeListening(500);
+    }catch(error){
+      callNativeRecognizing=false;
+      if(phase!=="connected"||!callUseNative)return;
+      if(String(error?.message||error)==="speech_no_match")return scheduleNativeListening(500);
+      callUseNative=false;pushBtn.hidden=false;fallbackWrap.hidden=false;
+      statusEl.textContent="免提识别失败 · 点麦克风说话";
+    }
   }
 
   async function startFallbackRecording(){
@@ -234,7 +262,8 @@
     if(!c||!input){statusEl.textContent="当前对话不可用";processing=false;return}
     input.value=text;input.dispatchEvent(new Event("input",{bubbles:true}));
     try{
-      await send();
+      // Skip the regular chat composer's 10-second message batching in a call.
+      await (window.AevrenApiCompat?.send?window.AevrenApiCompat.send():send());
       const idx=c.messages.findLastIndex((m,i)=>i>=before&&m.role==="assistant");
       if(idx>=0){
         const reply=String(c.messages[idx].text||"").trim();addLine("assistant",reply);
@@ -246,7 +275,7 @@
     }catch(error){addLine("assistant","通话发送失败："+(error?.message||error))}
     finally{
       processing=false;
-      if(phase==="connected"){if(SpeechRecognition){statusEl.textContent="正在听…";startListening()}else{statusEl.textContent="点麦克风说话";pushBtn.hidden=false;fallbackWrap.hidden=false}}
+      if(phase==="connected"){if(callUseNative){statusEl.textContent="正在听…";scheduleNativeListening()}else if(SpeechRecognition){statusEl.textContent="正在听…";startListening()}else{statusEl.textContent="点麦克风说话";pushBtn.hidden=false;fallbackWrap.hidden=false}}
     }
   }
 
@@ -276,7 +305,7 @@
   function hangup(){
     if(phase==="idle")return;
     const duration=startedAt?fmtTime(Date.now()-startedAt):"00:00";
-    phase="idle";processing=false;stopListening();if(callNativeRecognizing){try{window.AevrenVoice?.stopNativeRecognition?.()}catch{}callNativeRecognizing=false}if(callNativeRecording){try{window.AevrenVoice?.stopNativeCapture?.()}catch{}callNativeRecording=false}if(callRecorder?.state==="recording"){try{callRecorder.onstop=null;callRecorder.stop()}catch{}}callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];clearInterval(timerId);timerId=null;window.AevrenVoice?.stop?.();
+    phase="idle";processing=false;callUseNative=false;clearTimeout(nativeAutoTimer);nativeAutoTimer=null;stopListening();if(callNativeRecognizing){try{window.AevrenVoice?.stopNativeRecognition?.()}catch{}callNativeRecognizing=false}if(callNativeRecording){try{window.AevrenVoice?.stopNativeCapture?.()}catch{}callNativeRecording=false}if(callRecorder?.state==="recording"){try{callRecorder.onstop=null;callRecorder.stop()}catch{}}callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];clearInterval(timerId);timerId=null;window.AevrenVoice?.stop?.();
     statusEl.textContent="通话结束 · "+duration;overlay.classList.remove("ringing","connected");overlay.classList.add("ended");
     setTimeout(()=>{overlay.hidden=true;overlay.classList.remove("show","ended");callCharacter=null},650);
   }
