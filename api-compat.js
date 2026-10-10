@@ -215,7 +215,8 @@
     const now=new Date();
     const timeContext="当前设备当地时间："+now.toLocaleString("zh-CN",{year:"numeric",month:"long",day:"numeric",weekday:"long",hour:"2-digit",minute:"2-digit",hour12:false})+"；时区："+Intl.DateTimeFormat().resolvedOptions().timeZone+"。这是消息发送时的时间，不要当作每个历史事件的发生时间。";
     const memorySummary=window.xyMemorySummaryFor?.(c.characterId||window.xyCurrentCharacter?.()?.id)||"";
-    const system=[ep.system,timeContext,memorySummary?"角色的长期记忆摘要：\n"+memorySummary:"",memoryContext,phoneStyle].filter(Boolean).join('\n\n');
+    const heartInstruction=!fromCall?window.xyHeartNotes?.instruction?.()||'':'';
+    const system=[ep.system,timeContext,memorySummary?"角色的长期记忆摘要：\n"+memorySummary:"",memoryContext,phoneStyle,heartInstruction].filter(Boolean).join('\n\n');
     // Rehydrate the original image bytes before constructing multimodal history.
     await window.xyImagePayload?.hydrate?.(c.messages);
     const hasNewImages=attachments.some(a=>a?.kind==="image");
@@ -265,7 +266,8 @@
           const reply=contentText(msg.content)||msg.content;
           if(!reply)throw new Error('模型没有返回文本：'+diagnostic(data,raw));
           hideTyping();
-          c.messages.push({role:'assistant',text:String(reply)});
+          const heart=window.xyHeartNotes?.parse?.(reply)||{text:String(reply)};
+          c.messages.push({role:'assistant',text:heart.text,heartShort:heart.heartShort||'',heartFull:heart.heartFull||''});
           save();renderMessages();return;
         }
 
