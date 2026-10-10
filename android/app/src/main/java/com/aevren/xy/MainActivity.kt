@@ -161,12 +161,20 @@ class MainActivity : Activity() {
             ): Boolean {
                 fileCallback?.onReceiveValue(null)
                 fileCallback = filePathCallback
-                val intent = fileChooserParams?.createIntent() ?: Intent(Intent.ACTION_GET_CONTENT).apply {
-                    type = "*/*"
+                // Use Android's photo/document picker instead of delegating to
+                // WebView's generic chooser, whose MIME handling varies by vendor.
+                val types = fileChooserParams?.acceptTypes.orEmpty().filter { it.isNotBlank() }
+                val onlyImages = types.isNotEmpty() && types.all { it.startsWith("image/") || it == "image/*" }
+                val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
+                    type = if (onlyImages) "image/*" else "*/*"
+                    if (fileChooserParams?.mode == FileChooserParams.MODE_OPEN_MULTIPLE) {
+                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                    }
+                    if (types.isNotEmpty() && !onlyImages) putExtra(Intent.EXTRA_MIME_TYPES, types.toTypedArray())
                 }
                 return try {
-                    startActivityForResult(intent, FILE_CHOOSER)
+                    startActivityForResult(Intent.createChooser(intent, if (onlyImages) "选择图片" else "选择文件"), FILE_CHOOSER)
                     true
                 } catch (_: Exception) {
                     fileCallback?.onReceiveValue(null)
@@ -361,7 +369,17 @@ class MainActivity : Activity() {
             return
         }
         if (requestCode != FILE_CHOOSER) return
-        val result = if (resultCode == RESULT_OK) WebChromeClient.FileChooserParams.parseResult(resultCode, data) else null
+        val result = if (resultCode == RESULT_OK) {
+            val selected = mutableListOf<Uri>()
+            data?.data?.let { selected.add(it) }
+            data?.clipData?.let { clip ->
+                for (i in 0 until clip.itemCount) {
+                    clip.getItemAt(i)?.uri?.let { if (!selected.contains(it)) selected.add(it) }
+                }
+            }
+            if (selected.isNotEmpty()) selected.toTypedArray()
+            else WebChromeClient.FileChooserParams.parseResult(resultCode, data)
+        } else null
         fileCallback?.onReceiveValue(result)
         fileCallback = null
     }
