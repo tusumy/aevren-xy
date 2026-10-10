@@ -210,6 +210,8 @@
     const timeContext="当前设备当地时间："+now.toLocaleString("zh-CN",{year:"numeric",month:"long",day:"numeric",weekday:"long",hour:"2-digit",minute:"2-digit",hour12:false})+"；时区："+Intl.DateTimeFormat().resolvedOptions().timeZone+"。这是消息发送时的时间，不要当作每个历史事件的发生时间。";
     const memorySummary=window.xyMemorySummaryFor?.(c.characterId||window.xyCurrentCharacter?.()?.id)||"";
     const system=[ep.system,timeContext,memorySummary?"角色的长期记忆摘要：\n"+memorySummary:"",memoryContext,phoneStyle].filter(Boolean).join('\n\n');
+    // Rehydrate the original image bytes before constructing multimodal history.
+    await window.xyImagePayload?.hydrate?.(c.messages);
     const history=normalizedHistory(c.messages);
     const messages=[...(system?[{role:'system',content:system}]:[]),...history];
     try{await window.xyEnsureMcpTools?.()}catch{}
