@@ -52,20 +52,23 @@
     const parts=[];
     if(text)parts.push({type:'text',text});
     else if(attachments.some(a=>a?.kind==='image'&&a.dataUrl))parts.push({type:'text',text:'请查看我发送的图片。'});
-    else if(attachments.some(a=>a?.kind==='audio'&&a.dataUrl))parts.push({type:'text',text:'请听我发送的语音消息并直接回应内容。'});
+    else if(attachments.some(a=>a?.kind==='audio'&&a.transcript))parts.push({type:'text',text:'以下是语音消息转写内容。'});
     for(const a of attachments){
       if(a?.kind==='image'&&a.dataUrl)parts.push({type:'image_url',image_url:{url:String(a.dataUrl)}});
-      else if(a?.kind==='audio'&&a.dataUrl){
+      else if(a?.kind==='audio'&&a.transcript){
+        parts.push({type:'text',text:'[语音转写] '+String(a.transcript)});
+      }else if(a?.kind==='audio'&&a.dataUrl){
         const match=String(a.dataUrl).match(/^data:audio\/[^;,]+;base64,(.+)$/s);
-        if(match){
-          parts.push({type:'input_audio',input_audio:{data:match[1],format:String(a.format||'m4a')}});
+        const format=String(a.format||'').toLowerCase();
+        if(match&&['wav','mp3'].includes(format)){
+          parts.push({type:'input_audio',input_audio:{data:match[1],format}});
         }else{
-          parts.push({type:'text',text:'[语音消息 '+Math.max(1,Math.round(Number(a.duration||1)))+' 秒]'});
+          parts.push({type:'text',text:'[语音附件 '+Math.max(1,Math.round(Number(a.duration||1)))+' 秒；需要设置语音转写服务才能识别内容]'});
         }
       }else if(a?.kind==='text'&&typeof a.text==='string'){
         parts.push({type:'text',text:'[附件：'+String(a.name||'文本文件')+(a.truncated?'；内容已截断':'')+']\n'+a.text});
       }else if(a?.kind==='audio'){
-        parts.push({type:'text',text:'[语音消息 '+Math.max(1,Math.round(Number(a.duration||1)))+' 秒；音频缓存当前不可用]'});
+        parts.push({type:'text',text:'[此前有一段未转写的语音附件，无法仅凭时长得知内容]'});
       }else if(a?.name){
         parts.push({type:'text',text:'[附件：'+String(a.name)+'；内容当前不可用]'});
       }
