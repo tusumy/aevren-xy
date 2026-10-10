@@ -26,6 +26,8 @@
   let recorder=null,recordStream=null,recordChunks=[],recordTimer=null,recordStarting=false,voiceBusy=false,nativeRecording=false,nativeRecognizing=false;
   let nativeRecognitionResolve=null,nativeRecognitionReject=null,nativeRecognitionTimer=null,nativeRecognitionFallbackTried=false,nativeRecognitionAllowActivityFallback=true;
   let recognitionObserver=null;
+  const offlinePending=new Map();
+  let offlineSeq=0;
   function notifyRecognition(stage,detail=""){
     try{recognitionObserver?.({stage,detail:String(detail||"").slice(0,200)})}catch{}
   }
@@ -122,7 +124,7 @@
         }
         nativeRecognizing=false;nativeRecognitionResolve=null;nativeRecognitionReject=null;
         reject(new Error("speech_timeout"));
-      },12000);
+      },bridge.hasOfflineRecognition?.()?45000:12000);
       const result=parseNativeVoiceResult(bridge.startRecognition(voiceSettings.sttLanguage||"zh-CN"));
       if(!result.ok){
         clearTimeout(nativeRecognitionTimer);
@@ -335,7 +337,8 @@
     document.querySelector("#panelTitle").textContent="语音";
     const body=document.querySelector("#panelBody"),servers=voiceServers();
     const selected=resolveVoiceServer()?.id||"";
-    body.innerHTML=`<p class="setting-note">默认使用设备自带系统语音，不需要额外服务；也可以切换到任意提供 text_to_speech 的 MCP。录音转写与语音合成互相独立。</p>
+    const offlineReady=Boolean(nativeVoiceBridge()?.hasOfflineRecognition?.());
+    body.innerHTML=`<p class="setting-note">${offlineReady?"安卓离线中文识别已内置：通话和语音条优先在手机上转文字，无需语音 API Key。":"本机未检测到离线中文识别模型；可以另填语音转写接口。"} 朗读可用系统语音，也可选 MCP 语音服务。</p>
       <div class="voice-setting-grid">
         <div class="voice-setting-card"><label>语音方式</label><select id="voiceMode"><option value="system" ${voiceSettings.voiceMode==="system"?"selected":""}>系统语音（无需 MCP）</option><option value="mcp" ${voiceSettings.voiceMode==="mcp"?"selected":""}>MCP 语音服务</option></select><label>系统 TTS 引擎</label><select id="systemEngine">${systemEngineOptions()}</select><label>系统音色</label><select id="systemVoice">${systemVoiceOptions()}</select><label>text_to_speech 服务</label><select id="voiceMcp"><option value="">请选择服务</option>${servers.map(x=>`<option value="${esc(x.id)}" ${x.id===selected?"selected":""}>${esc(x.name)}</option>`).join("")}</select><label>Voice ID（可选）</label><input id="voiceId" value="${esc(voiceSettings.voiceId)}" placeholder="由语音服务提供"><label>Model（可选）</label><input id="voiceModel" value="${esc(voiceSettings.voiceModel)}" placeholder="由语音服务提供"><label class="voice-check"><input id="voiceAutoSpeak" type="checkbox" ${voiceSettings.autoSpeak?"checked":""}>每次新回复自动念出来</label></div>
         <div class="voice-setting-card"><label>语音转写 Base URL（留空跟随当前聊天接口）</label><input id="voiceSttBase" value="${esc(voiceSettings.sttBase)}" placeholder="https://api.example.com/v1"><label>转写 Key（Base 留空时才跟随当前接口）</label><input id="voiceSttKey" type="password" value="${esc(voiceSettings.sttKey)}" placeholder="仅保存在本机"><label>转写模型</label><input id="voiceSttModel" value="${esc(voiceSettings.sttModel)}" placeholder="whisper-1"><label>语言</label><input id="voiceSttLanguage" value="${esc(voiceSettings.sttLanguage)}" placeholder="zh / en"><label class="voice-check"><input id="voiceAutoSend" type="checkbox" ${voiceSettings.sendAfterTranscript?"checked":""}>转写完成后直接发送</label></div>
@@ -367,19 +370,53 @@
     return choices.find(x=>window.MediaRecorder?.isTypeSupported?.(x))||"";
   }
 
+  async function transcribeOffline(blob){
+    const bridge=nativeVoiceBridge();
+    if(!bridge?.hasOfflineRecognition?.()||typeof bridge.transcribeOfflineRecording!=="function")throw new Error("offline_asr_unavailable");
+    const encoded=await blobDataUrl(blob);
+    const match=encoded.match(/^data:[^,]*;base64,(.+)$/s);
+    if(!match)throw new Error("recording_base64_unavailable");
+    const id="offline_"+Date.now()+"_"+(++offlineSeq);
+    return new Promise((resolve,reject)=>{
+      const timeout=setTimeout(()=>{
+        offlinePending.delete(id);
+        reject(new Error("本地语音识别超时"));
+      },90000);
+      offlinePending.set(id,{resolve,reject,timeout});
+      try{
+        const result=parseNativeVoiceResult(bridge.transcribeOfflineRecording(id,match[1]));
+        if(!result.ok){
+          clearTimeout(timeout);offlinePending.delete(id);
+          reject(new Error(result.error||"offline_transcription_failed"));
+        }
+      }catch(error){
+        clearTimeout(timeout);offlinePending.delete(id);reject(error);
+      }
+    });
+  }
+
   async function transcribe(blob){
+    let offlineError="";
+    const bridge=nativeVoiceBridge();
+    if(bridge?.hasOfflineRecognition?.()){
+      try{
+        const result=String(await transcribeOffline(blob)).trim();
+        if(result)return result;
+        offlineError="离线识别没有听清内容";
+      }catch(error){offlineError=String(error?.message||error)}
+    }
     const ep=activeEndpoint(),customBase=voiceSettings.sttBase.trim();
     const rawBase=(customBase||ep.base||"").trim().replace(/\/$/,"");
     const base=rawBase.replace(/\/(?:chat\/completions|responses|audio\/transcriptions)$/i,"");
     const key=voiceSettings.sttKey||(!customBase?ep.key:"")||"";
-    if(!base)throw new Error("先在语音设置里填写转写 Base URL");
+    if(!base)throw new Error(offlineError||"请配置语音转写接口");
     const ext=blob.type.includes("mp4")?"m4a":"webm",form=new FormData();
     form.append("file",blob,"amao-"+Date.now()+"."+ext);form.append("model",voiceSettings.sttModel||"whisper-1");
     if(voiceSettings.sttLanguage)form.append("language",voiceSettings.sttLanguage);
     const headers={Accept:"application/json"};if(key)headers.Authorization="Bearer "+key;
     const response=await fetch(base+"/audio/transcriptions",{method:"POST",headers,body:form});
     const raw=await response.text().catch(()=>"");
-    if(!response.ok)throw new Error("HTTP "+response.status+(raw?" · "+raw.slice(0,120):""));
+    if(!response.ok)throw new Error((offlineError?"本机转写失败："+offlineError+"；":"")+"云端转写 HTTP "+response.status+(raw?" · "+raw.slice(0,120):""));
     let data;
     try{data=JSON.parse(raw)}
     catch{
@@ -453,7 +490,7 @@
       try{localAudioKey=await window.xyAudioArchive?.put?.(blob)||""}
       catch(error){toast("本地录音保存失败："+(error?.message||error),true)}
       let transcript="",transcriptError="";
-      if(voiceSettings.sttBase.trim()||activeEndpoint()?.base){
+      if(nativeVoiceBridge()?.hasOfflineRecognition?.()||voiceSettings.sttBase.trim()||activeEndpoint()?.base){
         try{transcript=String(await transcribe(blob)).trim()}
         catch(error){
           transcriptError=String(error?.message||error).slice(0,160);
@@ -719,6 +756,15 @@
       window.speechSynthesis?.cancel?.();
       activeMessage=null;decorateMessages();
     }
+  };
+
+  window.__xyOfflineTranscriptReady=(id,text,error)=>{
+    const job=offlinePending.get(String(id));
+    if(!job)return;
+    clearTimeout(job.timeout);offlinePending.delete(String(id));
+    if(error)job.reject(new Error(String(error)));
+    else if(!String(text||"").trim())job.reject(new Error("离线识别未返回文字"));
+    else job.resolve(String(text).trim());
   };
 
   window.__xyNativeSttResult=text=>{
