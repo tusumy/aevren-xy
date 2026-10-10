@@ -1,0 +1,8 @@
+.xy-context-limit-setting{margin:12px 0 16px;padding:14px;border-radius:14px;border:1px solid rgba(119,142,128,.23);background:rgba(249,252,250,.5)}
+.xy-context-limit-title{font-size:14px;font-weight:650;margin-bottom:8px;color:var(--ink)}
+.xy-context-limit-hint{font-size:11px;line-height:1.7;color:var(--muted);margin:0 0 12px}
+.xy-context-limit-row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.xy-context-limit-row label{font-size:12px;white-space:nowrap;color:var(--ink)}
+.xy-context-limit-row input{width:85px;min-width:65px;padding:8px 10px;border:1px solid rgba(119,142,128,.36);border-radius:9px;background:rgba(255,255,255,.7);color:var(--ink);font:inherit}
+.xy-context-limit-row button{border:1px solid rgba(119,142,128,.35);border-radius:9px;background:rgba(255,255,255,.7);padding:8px 15px;color:var(--ink);font:inherit;cursor:pointer}
+.xy-context-limit-status{min-height:18px;margin-top:8px;color:var(--muted);font-size:11px}

@@ -217,8 +217,13 @@
     const memorySummary=window.xyMemorySummaryFor?.(c.characterId||window.xyCurrentCharacter?.()?.id)||"";
     const heartInstruction=!fromCall?window.xyHeartNotes?.instruction?.()||'':'';
     const system=[ep.system,timeContext,memorySummary?"角色的长期记忆摘要：\n"+memorySummary:"",memoryContext,phoneStyle,heartInstruction].filter(Boolean).join('\n\n');
-    // Rehydrate the original image bytes before constructing multimodal history.
-    await window.xyImagePayload?.hydrate?.(c.messages);
+    // Keep only the requested number of recent chat turns in model context.
+    // The 0 setting means unlimited history, not no history. System prompts
+    // and explicit character/memory context are independent of this window.
+    const limit=window.xyContextWindow?.readLimit?.()??40;
+    const historySource=limit===0?c.messages:c.messages.filter(m=>m?.role==="user"||m?.role==="assistant").slice(-limit);
+    // Rehydrate only attachments that the model will actually receive.
+    await window.xyImagePayload?.hydrate?.(historySource);
     const hasNewImages=attachments.some(a=>a?.kind==="image");
     const useBackup=hasNewImages&&(window.xyNextVisualFallback===true||(ep.vision!==true&&window.xyVisionFallback?.wantsFallback?.()));
     let backupDescription="";
@@ -233,7 +238,7 @@
         return;
       }
     }
-    const history=normalizedHistory(c.messages);
+    const history=normalizedHistory(historySource);
     // A text-only primary model only receives independently generated image descriptions.
     if(ep.vision!==true||useBackup){
       for(const m of history)if(Array.isArray(m.content)){
