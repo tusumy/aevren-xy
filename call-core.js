@@ -107,7 +107,7 @@
       window.AevrenVoice.onRecognitionProgress?.(voiceStage);
       statusEl.textContent="已接通 · 正在启动麦克风…";startNativeListening();return;
     }
-    if(!SpeechRecognition){fallbackWrap.hidden=false;pushBtn.hidden=false;statusEl.textContent="已接通 · 点麦克风说话";return}
+    if(!SpeechRecognition){fallbackWrap.hidden=false;pushBtn.hidden=false;forceRecordedStt=true;statusEl.textContent="没有系统语音识别 · 点麦克风录音转写";return}
     await startListening();
   }
 
@@ -294,6 +294,7 @@
       if(!window.AevrenApiCompat?.send)throw new Error("聊天接口未就绪");
       await window.AevrenApiCompat.send({__xyCall:true,text});
       if(phase!=="connected"||generation!==callGeneration)return;
+      statusEl.textContent="已发给角色 · 正在等待回复";
       const idx=c.messages.findLastIndex((m,i)=>i>=before&&m.role==="assistant");
       if(idx>=0){
         const reply=String(c.messages[idx].text||"").trim();
