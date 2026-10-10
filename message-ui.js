@@ -23,37 +23,17 @@
     if(Number.isNaN(d.getTime()))return "";
     return d.toLocaleString("zh-CN",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false});
   };
-  // Older messages may genuinely have no timestamp. Never manufacture a date for them.
-  function migrateLegacyTimestamps(){return}
-  function dayKey(ts){
-    const d=new Date(ts);return Number.isNaN(d.getTime())?"":d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
-  }
-  function dateLabel(ts){
-    const d=new Date(ts);if(Number.isNaN(d.getTime()))return "时间未知";
-    const today=new Date(),yesterday=new Date(today.getFullYear(),today.getMonth(),today.getDate()-1);
-    const key=dayKey(ts);
-    if(key===dayKey(today.getTime()))return "今天";
-    if(key===dayKey(yesterday.getTime()))return "昨天";
-    return d.toLocaleDateString("zh-CN",{year:d.getFullYear()===today.getFullYear()?undefined:"numeric",month:"long",day:"numeric"});
-  }
-  function messageHistoryHtml(messages){
-    let lastDay="";
-    return messages.map((m,index)=>{
-      const key=dayKey(m.createdAt)||"unknown";
-      const header=key!==lastDay?`<div class="xy-date-divider"><span>${esc(key==="unknown"?"历史消息 · 时间未知":dateLabel(m.createdAt))}</span></div>`:"";
-      lastDay=key;
-      return header+messageHtml(m,index);
-    }).join("");
-  }
-  function updateConversationDate(c){
-    const presence=document.querySelector(".presence");
-    if(!presence)return;
-    let meta=document.querySelector("#xyChatDate");
-    if(!meta){meta=document.createElement("span");meta.id="xyChatDate";meta.className="xy-chat-date";presence.insertAdjacentElement("afterend",meta)}
-    const dated=(c?.messages||[]).filter(m=>dayKey(m.createdAt));
-    const latest=dated.at(-1);
-    meta.textContent=latest?`${dateLabel(latest.createdAt)} · ${timeText(latest.createdAt)}`:"历史对话";
-    meta.title=latest?timeTitle(latest.createdAt):"此对话的原始时间没有记录";
+  function migrateLegacyTimestamps(){
+    let changed=false;
+    const now=Date.now();
+    chats.forEach((c,ci)=>{
+      const missing=c.messages.filter(m=>!m.createdAt).length;
+      if(!missing)return;
+      let n=0;
+      const base=now-(missing-1)*1000-ci*100;
+      c.messages.forEach(m=>{if(!m.createdAt){m.createdAt=base+n*1000;n++;changed=true}});
+    });
+    if(changed)save();
   }
 
   function trimPlainEnding(text){
@@ -77,10 +57,10 @@
       if(a.kind==="image"&&(a.previewDataUrl||a.dataUrl))return `<img class="xy-message-image" src="${esc(a.previewDataUrl||a.dataUrl)}" alt="${esc(a.name||"图片")}">`;
       if(a.kind==="audio"){
         const duration=Math.max(1,Math.round(Number(a.duration||1)));
-        const key=String(a.audioKey||"").replace(/[^a-zA-Z0-9_-]/g,"");
-        const play=key?`<button type="button" class="xy-voice-note-play" data-audio-key="${esc(key)}" aria-label="播放语音">▶ ${duration}″</button>`:`<span class="xy-voice-note-play disabled">${duration}″ · 音频未存储</span>`;
-        const caption=a.transcript?`<span class="xy-voice-note-transcript">${esc(a.transcript)}</span>`:`<span class="xy-voice-note-transcript">语音未转写，AI 无法听懂</span>`;
-        return `<span class="xy-voice-note">${play}${caption}</span>`;
+        const playable=Boolean(a.dataUrl||a.localAudioKey);
+        const source=a.dataUrl?`data-voice-note-src="${esc(a.dataUrl)}"`:a.localAudioKey?`data-voice-note-key="${esc(a.localAudioKey)}"`:"disabled";
+        const transcript=a.transcript?`<span class="xy-voice-transcript">${esc(a.transcript)}</span>`:a.transcriptError?`<span class="xy-voice-transcript" title="${esc(a.transcriptError)}">未转写 · AI暂时无法理解语音</span>`:"";
+        return `<span class="xy-voice-note-wrap"><button type="button" class="xy-message-voice-note" ${source} title="${playable?"播放语音":"旧语音没有保存原始音频"}"><span class="xy-message-voice-icon">▶</span><span class="xy-message-voice-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><b>${duration}"</b></button>${transcript}</span>`;
       }
       return `<div class="xy-message-file"><span>▤</span><b>${esc(a.name||"附件")}</b></div>`;
     }).join("");
@@ -88,6 +68,12 @@
   }
 
   function messageHtml(m,index){
+    if(m?.kind==="call"){
+      const when=timeText(m.createdAt),name=String(m.characterName||"角色");
+      const rows=Array.isArray(m.transcript)?m.transcript.slice(0,160):[];
+      const content=rows.length?rows.map(item=>`<div class="xy-call-history-turn"><b>${esc(item.role==="user"?"你":name)}</b><span>${esc(String(item.text||""))}</span></div>`).join(""):'<div class="xy-call-history-empty">本次没有识别到对话</div>';
+      return `<div class="message xy-call-record"><details class="xy-call-history"><summary><span class="xy-call-history-icon">☎</span><span>与${esc(name)}通话 · ${esc(m.duration||"00:00")}</span><small>${esc(when)}</small></summary><div class="xy-call-history-content">${content}</div></details></div>`;
+    }
     const isAssistant=m.role==="assistant";
     const rawParts=isAssistant?splitReply(m.text):[String(m.text??"")];
     const parts=isAssistant?rawParts.map(trimPlainEnding):rawParts;
@@ -114,15 +100,39 @@
     if(button)button.hidden=!pendingUserQueue.length||queueDraining||sending;
   }
 
+  function ensureHeaderMessageStats(){
+    const header=document.querySelector(".main > header");if(!header)return null;
+    let wrap=header.querySelector("#xyHeaderMessageStats");
+    if(wrap)return wrap;
+    wrap=document.createElement("div");wrap.id="xyHeaderMessageStats";wrap.className="xy-header-message-stats";
+    wrap.innerHTML='<button type="button" class="xy-header-count" aria-label="查看消息统计" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg><span>0</span></button><div class="xy-header-stats-sheet" hidden></div>';
+    const presence=header.querySelector(".presence");if(presence)presence.appendChild(wrap);else{const settings=header.querySelector("#memoryBtn");header.insertBefore(wrap,settings||null)}
+    const button=wrap.querySelector(".xy-header-count"),sheet=wrap.querySelector(".xy-header-stats-sheet");
+    button.addEventListener("click",e=>{
+      e.preventDefault();e.stopPropagation();
+      sheet.hidden=!sheet.hidden;button.setAttribute("aria-expanded",String(!sheet.hidden));
+    });
+    document.addEventListener("click",e=>{
+      if(!wrap.contains(e.target)&&!sheet.hidden){sheet.hidden=true;button.setAttribute("aria-expanded","false")}
+    });
+    return wrap;
+  }
+
   function updateMessageCount(){
     const c=chat(),day=document.querySelector("#messages .day");
-    if(!c||!day)return;
+    if(!c)return;
     const saved=(c.messages||[]).filter(m=>m?.role==="user"||m?.role==="assistant");
     const total=saved.length+pendingUserQueue.length;
     const users=saved.filter(m=>m.role==="user").length+pendingUserQueue.length;
     const assistants=saved.filter(m=>m.role==="assistant").length;
-    day.textContent="AEVREN · XY · "+total+" 条消息";
-    day.title="你 "+users+" · "+currentCharacterName()+" "+assistants;
+    if(day){day.textContent="AEVREN · XY";day.title="你 "+users+" · "+currentCharacterName()+" "+assistants}
+    const wrap=ensureHeaderMessageStats();if(!wrap)return;
+    const count=wrap.querySelector(".xy-header-count span"),sheet=wrap.querySelector(".xy-header-stats-sheet");
+    if(count)count.textContent=String(total);
+    const limit=String(localStorage.getItem("xy.contextMessageLimit")||"40");
+    const contextLabel=limit==="0"?"全部消息":("最近 "+limit+" 条");
+    if(sheet)sheet.innerHTML='<span>当前对话</span><strong>'+total+' 条消息</strong><div><span>你</span><b>'+users+'</b></div><div><span>'+esc(currentCharacterName())+'</span><b>'+assistants+'</b></div><div class="is-highlight"><span>发送给模型</span><b>'+contextLabel+'</b></div>';
+    wrap.querySelector(".xy-header-count")?.setAttribute("aria-label","当前对话 "+total+" 条消息");
   }
 
   function renderPendingQueue(){
@@ -140,8 +150,7 @@
   renderMessages=function(){
     const c=chat(),box=document.querySelector("#messages");
     if(!box||!c)return;
-    box.innerHTML='<div class="day">AEVREN · XY</div>'+messageHistoryHtml(c.messages);
-    updateConversationDate(c);
+    box.innerHTML='<div class="day">AEVREN · XY</div>'+c.messages.map(messageHtml).join("");
     renderPendingQueue();
     box.scrollTop=box.scrollHeight;
     const name=document.querySelector(".presence strong");if(name)name.textContent=currentCharacterName();
@@ -234,6 +243,12 @@
 
   send=async function(){
     if(!await queueCurrentInput())return;
+    const latest=pendingUserQueue.at(-1);
+    if(latest?.attachments?.length){
+      if(flushTimer){clearTimeout(flushTimer);flushTimer=null}
+      await drainQueue();
+      return;
+    }
     scheduleFlush();
   };
   window.xySendQueued=send;
