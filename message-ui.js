@@ -23,17 +23,37 @@
     if(Number.isNaN(d.getTime()))return "";
     return d.toLocaleString("zh-CN",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false});
   };
-  function migrateLegacyTimestamps(){
-    let changed=false;
-    const now=Date.now();
-    chats.forEach((c,ci)=>{
-      const missing=c.messages.filter(m=>!m.createdAt).length;
-      if(!missing)return;
-      let n=0;
-      const base=now-(missing-1)*1000-ci*100;
-      c.messages.forEach(m=>{if(!m.createdAt){m.createdAt=base+n*1000;n++;changed=true}});
-    });
-    if(changed)save();
+  // Older messages may genuinely have no timestamp. Never manufacture a date for them.
+  function migrateLegacyTimestamps(){return}
+  function dayKey(ts){
+    const d=new Date(ts);return Number.isNaN(d.getTime())?"":d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+  }
+  function dateLabel(ts){
+    const d=new Date(ts);if(Number.isNaN(d.getTime()))return "时间未知";
+    const today=new Date(),yesterday=new Date(today.getFullYear(),today.getMonth(),today.getDate()-1);
+    const key=dayKey(ts);
+    if(key===dayKey(today.getTime()))return "今天";
+    if(key===dayKey(yesterday.getTime()))return "昨天";
+    return d.toLocaleDateString("zh-CN",{year:d.getFullYear()===today.getFullYear()?undefined:"numeric",month:"long",day:"numeric"});
+  }
+  function messageHistoryHtml(messages){
+    let lastDay="";
+    return messages.map((m,index)=>{
+      const key=dayKey(m.createdAt)||"unknown";
+      const header=key!==lastDay?`<div class="xy-date-divider"><span>${esc(key==="unknown"?"历史消息 · 时间未知":dateLabel(m.createdAt))}</span></div>`:"";
+      lastDay=key;
+      return header+messageHtml(m,index);
+    }).join("");
+  }
+  function updateConversationDate(c){
+    const presence=document.querySelector(".presence");
+    if(!presence)return;
+    let meta=document.querySelector("#xyChatDate");
+    if(!meta){meta=document.createElement("span");meta.id="xyChatDate";meta.className="xy-chat-date";presence.insertAdjacentElement("afterend",meta)}
+    const dated=(c?.messages||[]).filter(m=>dayKey(m.createdAt));
+    const latest=dated.at(-1);
+    meta.textContent=latest?`${dateLabel(latest.createdAt)} · ${timeText(latest.createdAt)}`:"历史对话";
+    meta.title=latest?timeTitle(latest.createdAt):"此对话的原始时间没有记录";
   }
 
   function trimPlainEnding(text){
@@ -113,7 +133,8 @@
   renderMessages=function(){
     const c=chat(),box=document.querySelector("#messages");
     if(!box||!c)return;
-    box.innerHTML='<div class="day">AEVREN · XY</div>'+c.messages.map(messageHtml).join("");
+    box.innerHTML='<div class="day">AEVREN · XY</div>'+messageHistoryHtml(c.messages);
+    updateConversationDate(c);
     renderPendingQueue();
     box.scrollTop=box.scrollHeight;
     const name=document.querySelector(".presence strong");if(name)name.textContent=currentCharacterName();
