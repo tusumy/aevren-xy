@@ -25,3 +25,11 @@
 .xy-sticker-inline{display:inline-block;vertical-align:middle;max-width:min(38vw,170px);max-height:180px;min-width:24px;min-height:24px;object-fit:contain;background:transparent;border:0}
 .message .bubble-text:has(> .xy-sticker-inline){white-space:pre-wrap}
 @media(max-width:550px){.xy-sticker-backdrop{padding:0}.xy-sticker-panel{width:100%;height:min(68dvh,590px);border-radius:20px 20px 0 0}.xy-sticker-grid{gap:7px;padding:9px 10px calc(16px + env(safe-area-inset-bottom))}.xy-sticker-pick img{height:78px}.xy-sticker-actions button{padding:4px}.xy-sticker-filter small{font-size:9px}}
+
+/* 直接图床链接入口 */
+.xy-sticker-urlbar[hidden]{display:none!important}
+.xy-sticker-urlbar{display:flex;gap:8px;padding:0 16px 10px}
+.xy-sticker-urlbar input{flex:1;min-width:0;padding:10px 11px;background:white;border:1px solid #dbe0d9;border-radius:12px;font-size:13px;color:#333a34;outline:0}
+.xy-sticker-urlbar button{flex:0 0 auto;border:0;border-radius:12px;background:#385d4b;color:white;padding:8px 14px;font-size:12px}
+.xy-sticker-urlbar button:disabled{opacity:.55;cursor:wait}
+@media(max-width:550px){.xy-sticker-toolbar{gap:6px;padding:0 10px 9px}.xy-sticker-toolbar button{padding:8px 9px;font-size:11px}.xy-sticker-urlbar{padding:0 10px 9px}}
