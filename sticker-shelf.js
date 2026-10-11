@@ -265,13 +265,49 @@ async function sendSticker(id){
   }
   edit(id,{lastUsed:Date.now()});
 }
+let editingId="", editingDelete=false;
+function editorNodes(){
+  const mask=overlay?.querySelector(".xy-sticker-edit-mask");
+  return {mask,input:mask?.querySelector("#xyStickerEditName"),heading:mask?.querySelector("#xyStickerEditHeading"),help:mask?.querySelector("#xyStickerEditHelp"),field:mask?.querySelector(".xy-sticker-edit-field"),danger:mask?.querySelector('[data-action="rename-delete"]'),save:mask?.querySelector('[data-action="rename-save"]')};
+}
+function setEditorMode(confirmDelete){
+  const {heading,help,field,danger,save}=editorNodes();
+  editingDelete=!!confirmDelete;
+  if(heading)heading.textContent=editingDelete?"确认删除表情包？":"修改表情包名称";
+  if(help)help.textContent=editingDelete?"删除后，历史聊天中的这张表情包也将无法显示。":"名称会帮助 AI 理解这张表情包的意思。";
+  if(field)field.hidden=editingDelete;
+  if(danger)danger.textContent=editingDelete?"确认删除":"删除";
+  if(save)save.textContent=editingDelete?"返回":"保存";
+}
 function more(id){
-  const x=cache.get(id);if(!x)return;
-  const name=prompt("修改表情包名称（输入「删除」可删除）",x.label);
-  if(name===null)return;
-  if(name.trim()==="删除"){
-    if(confirm("删除「"+x.label+"」？聊天记录里的这张图也会消失。"))remove(id);
-  }else if(short(name))edit(id,{label:short(name)});
+  const item=cache.get(id);if(!item||!overlay)return;
+  editingId=id;
+  const {mask,input}=editorNodes();
+  if(!mask||!input)return;
+  input.value=item.label;
+  mask.hidden=false;
+  setEditorMode(false);
+  requestAnimationFrame(()=>{input.focus();input.select()});
+}
+function closeEditor(){
+  const {mask}=editorNodes();
+  if(mask)mask.hidden=true;
+  editingId="";
+  editingDelete=false;
+}
+async function editorAction(action){
+  if(action==="rename-cancel"){closeEditor();return}
+  if(action==="rename-delete"){
+    if(!editingId)return;
+    if(!editingDelete){setEditorMode(true);return}
+    const id=editingId;closeEditor();await remove(id);return;
+  }
+  if(action==="rename-save"){
+    if(editingDelete){setEditorMode(false);editorNodes().input?.focus();return}
+    const label=short(editorNodes().input?.value);
+    if(!label){toast("请输入表情包名称");editorNodes().input?.focus();return}
+    const id=editingId;closeEditor();await edit(id,{label});return;
+  }
 }
 function installUI(){
   const menu=document.querySelector("#xyAttachMenu");
@@ -291,17 +327,29 @@ function installUI(){
     '<div class="xy-sticker-filter"><button type="button" data-action="filter" aria-pressed="false">只看当前角色</button><small>图片保存在本机；AI 通过名称理解表情</small></div>'+
     '<div class="xy-sticker-grid"></div><input id="xyStickerFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden></section>';
   document.body.appendChild(overlay);
+  const editor=document.createElement("div");
+  editor.className="xy-sticker-edit-mask";
+  editor.hidden=true;
+  editor.innerHTML='<section class="xy-sticker-edit-card" role="dialog" aria-modal="true" aria-labelledby="xyStickerEditHeading">'+
+    '<header><strong>砚屿</strong><button type="button" data-action="rename-cancel" aria-label="关闭修改窗口">×</button></header>'+
+    '<h3 id="xyStickerEditHeading">修改表情包名称</h3>'+
+    '<label class="xy-sticker-edit-field" for="xyStickerEditName"><span>表情包名称</span><input id="xyStickerEditName" maxlength="40" autocomplete="off" placeholder="例如：委屈巴巴"></label>'+
+    '<p id="xyStickerEditHelp">名称会帮助 AI 理解这张表情包的意思。</p>'+
+    '<div class="xy-sticker-edit-actions"><button type="button" class="xy-sticker-edit-danger" data-action="rename-delete">删除</button><button type="button" data-action="rename-cancel">取消</button><button type="button" class="xy-sticker-edit-primary" data-action="rename-save">保存</button></div></section>';
+  overlay.appendChild(editor);
   grid=overlay.querySelector(".xy-sticker-grid");
   overlay.addEventListener("click",async e=>{
     if(e.target===overlay)return close();
+    if(e.target.classList.contains("xy-sticker-edit-mask")){closeEditor();return}
     const button=e.target.closest("button[data-action]");if(!button)return;
     const {action,id}=button.dataset;
+    if(action.startsWith("rename-")){await editorAction(action);return}
     if(action==="close")close();
     if(action==="upload")overlay.querySelector("#xyStickerFile").click();
     if(action==="url"){
       const bar=overlay.querySelector(".xy-sticker-urlbar");
       bar.hidden=!bar.hidden;
-      if(!bar.hidden)bar.querySelector("input").focus();
+      if(!bar.hidden)bar.querySelector("textarea")?.focus();
     }
     if(action==="import-url"){
       if(button.disabled)return;
@@ -318,7 +366,10 @@ function installUI(){
   // Enter inserts a new URL line. Use the import button when ready.
   overlay.querySelector("#xyStickerFile").addEventListener("change",async e=>{await addFiles(e.target.files);e.target.value=""});
   grid.addEventListener("contextmenu",e=>{const card=e.target.closest("[data-id]");if(card){e.preventDefault();more(card.dataset.id)}});
-  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!overlay.hidden)close()});
+  editor.querySelector("#xyStickerEditName").addEventListener("keydown",e=>{
+    if(e.key==="Enter"){e.preventDefault();editorAction("rename-save")}
+  });
+  document.addEventListener("keydown",e=>{if(e.key!=="Escape"||overlay.hidden)return;if(!editor.hidden)closeEditor();else close()});
 }
 window.xyStickerShelf={ready:()=>ready,context,expandHistory,normalizeReply,renderText,hydrateRendered,open,close};
 installUI();
