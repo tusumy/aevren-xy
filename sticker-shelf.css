@@ -35,3 +35,5 @@
 @media(max-width:550px){.xy-sticker-toolbar{gap:6px;padding:0 10px 9px}.xy-sticker-toolbar button{padding:8px 9px;font-size:11px}.xy-sticker-urlbar{padding:0 10px 9px}}
 
 .xy-sticker-import-status{font-size:11px;line-height:1.4;color:#52665a;padding:0 16px 8px}.xy-sticker-import-status:empty{display:none}
+
+.xy-sticker-edit-mask[hidden]{display:none!important}
