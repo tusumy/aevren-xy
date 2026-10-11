@@ -1,5 +1,6 @@
 (()=>{
   const isAndroid=new URLSearchParams(location.search).get("app")==="android"||/AevrenXY\/Android/i.test(navigator.userAgent);
+  if(isAndroid)return;
   if(document.querySelector("#xySplash"))return;
   const splash=document.createElement("div");
   splash.id="xySplash";
