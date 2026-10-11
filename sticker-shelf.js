@@ -82,6 +82,35 @@ async function addFiles(files){
   if(count)toast("已收藏 "+count+" 张表情包");
   renderGrid();
 }
+async function addImageUrl(raw){
+  if(!await ready){toast("当前浏览器无法保存表情包");return false}
+  if(cache.size>=LIMIT){toast("最多收藏 "+LIMIT+" 张表情包");return false}
+  let parsed;
+  try{parsed=new URL(String(raw||"").trim())}catch{toast("请粘贴完整的 https 图片链接");return false}
+  if(parsed.protocol!=="https:"||parsed.username||parsed.password||parsed.href.length>2048){
+    toast("请使用有效的 https 图床图片直链");return false
+  }
+  parsed.hash="";
+  const url=parsed.toString();
+  if(Array.from(cache.values()).some(x=>x.remoteUrl===url)){toast("这张表情包已经收藏过了");return false}
+  try{
+    await new Promise((resolve,reject)=>{
+      const probe=new Image();
+      const timer=setTimeout(()=>{probe.onload=probe.onerror=null;reject(new Error("图片加载超时"))},12000);
+      probe.onload=()=>{clearTimeout(timer);resolve()};
+      probe.onerror=()=>{clearTimeout(timer);reject(new Error("无法打开图片，请使用图片直链"))};
+      probe.src=url;
+    });
+  }catch(e){toast(e.message||"图床图片不可用");return false}
+  let rawName="";
+  try{rawName=decodeURIComponent(parsed.pathname.split("/").pop()||"")}catch{rawName=parsed.pathname.split("/").pop()||""}
+  const label=short(rawName.replace(/\.(png|jpe?g|gif|webp)$/i,"").replace(/[_-]+/g," "))||"图床表情";
+  const item={id:id(),label,aiEnabled:true,scope:"all",characterId:activeId(),favorite:false,lastUsed:0,createdAt:Date.now(),mime:"image/remote",remoteUrl:url};
+  try{
+    await tx("items","readwrite",o=>o.add(item));
+    cache.set(item.id,item);renderGrid();toast("图床表情已添加");return true
+  }catch(e){toast("链接保存失败："+(e?.message||e));return false}
+}
 async function edit(id,patch){
   const old=cache.get(id);if(!old)return;
   const item={...old,...patch};
@@ -102,7 +131,11 @@ async function remove(id){
 }
 async function imageUrl(id){
   if(urls.has(id))return urls.get(id);
-  if(!cache.has(id)||!db)return "";
+  const item=cache.get(id);
+  if(item?.remoteUrl){
+    try{const u=new URL(item.remoteUrl);return u.protocol==="https:"?u.href:""}catch{return ""}
+  }
+  if(!item||!db)return "";
   const blob=await new Promise(resolve=>{
     const tr=db.transaction("images","readonly"),req=tr.objectStore("images").get(id);
     req.onsuccess=()=>resolve(req.result||null);req.onerror=()=>resolve(null);
@@ -152,7 +185,7 @@ function renderText(text){
 }
 async function hydrateRendered(root){
   for(const img of root?.querySelectorAll?.("img[data-xy-sticker]")||[]){
-    if(img.dataset.xyLoaded)return;
+    if(img.dataset.xyLoaded)continue;
     img.dataset.xyLoaded="1";
     const src=await imageUrl(img.dataset.xySticker);
     if(img.isConnected){if(src)img.src=src;else img.replaceWith(document.createTextNode("【一张已删除的表情包】"))}
@@ -216,7 +249,8 @@ function installUI(){
   }
   overlay=document.createElement("div");overlay.id="xyStickerShelf";overlay.className="xy-sticker-backdrop";overlay.hidden=true;
   overlay.innerHTML='<section class="xy-sticker-panel" role="dialog" aria-label="表情包小抽屉" aria-modal="true"><header><strong>表情包小抽屉</strong><button type="button" data-action="close" aria-label="关闭">×</button></header>'+
-    '<div class="xy-sticker-toolbar"><input id="xyStickerSearch" type="search" placeholder="搜索表情包名称" autocomplete="off"><button type="button" data-action="upload">＋ 上传</button></div>'+
+    '<div class="xy-sticker-toolbar"><input id="xyStickerSearch" type="search" placeholder="搜索表情包名称" autocomplete="off"><button type="button" data-action="upload">＋ 上传</button><button type="button" data-action="url">图床 URL</button></div>'+
+    '<div class="xy-sticker-urlbar" hidden><input id="xyStickerUrl" type="url" inputmode="url" placeholder="粘贴 https 图片直链" autocomplete="off"><button type="button" data-action="import-url">添加</button></div>'+
     '<div class="xy-sticker-filter"><button type="button" data-action="filter" aria-pressed="false">只看当前角色</button><small>图片保存在本机；AI 通过名称理解表情</small></div>'+
     '<div class="xy-sticker-grid"></div><input id="xyStickerFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden></section>';
   document.body.appendChild(overlay);
@@ -227,6 +261,19 @@ function installUI(){
     const {action,id}=button.dataset;
     if(action==="close")close();
     if(action==="upload")overlay.querySelector("#xyStickerFile").click();
+    if(action==="url"){
+      const bar=overlay.querySelector(".xy-sticker-urlbar");
+      bar.hidden=!bar.hidden;
+      if(!bar.hidden)bar.querySelector("input").focus();
+    }
+    if(action==="import-url"){
+      if(button.disabled)return;
+      button.disabled=true;
+      const field=overlay.querySelector("#xyStickerUrl");
+      try{
+        if(await addImageUrl(field.value)){field.value="";overlay.querySelector(".xy-sticker-urlbar").hidden=true}
+      }finally{button.disabled=false}
+    }
     if(action==="send")sendSticker(id);
     if(action==="favorite")edit(id,{favorite:!cache.get(id).favorite});
     if(action==="ai")edit(id,{aiEnabled:!cache.get(id).aiEnabled});
@@ -235,6 +282,9 @@ function installUI(){
     if(action==="filter"){permissionFilter=permissionFilter==="all"?"mine":"all";button.setAttribute("aria-pressed",String(permissionFilter==="mine"));renderGrid()}
   });
   overlay.querySelector("#xyStickerSearch").addEventListener("input",e=>{query=e.target.value.trim().toLowerCase();renderGrid()});
+  overlay.querySelector("#xyStickerUrl").addEventListener("keydown",e=>{
+    if(e.key==="Enter"){e.preventDefault();overlay.querySelector('[data-action="import-url"]').click()}
+  });
   overlay.querySelector("#xyStickerFile").addEventListener("change",async e=>{await addFiles(e.target.files);e.target.value=""});
   grid.addEventListener("contextmenu",e=>{const card=e.target.closest("[data-id]");if(card){e.preventDefault();more(card.dataset.id)}});
   document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!overlay.hidden)close()});
