@@ -216,7 +216,8 @@
     const timeContext="当前设备当地时间："+now.toLocaleString("zh-CN",{year:"numeric",month:"long",day:"numeric",weekday:"long",hour:"2-digit",minute:"2-digit",hour12:false})+"；时区："+Intl.DateTimeFormat().resolvedOptions().timeZone+"。这是消息发送时的时间，不要当作每个历史事件的发生时间。";
     const memorySummary=window.xyMemorySummaryFor?.(c.characterId||window.xyCurrentCharacter?.()?.id)||"";
     const heartInstruction=!fromCall?window.xyHeartNotes?.instruction?.()||'':'';
-    const system=[ep.system,timeContext,memorySummary?"角色的长期记忆摘要：\n"+memorySummary:"",memoryContext,phoneStyle,heartInstruction].filter(Boolean).join('\n\n');
+    await window.xyStickerShelf?.ready?.();
+    const system=[ep.system,timeContext,memorySummary?"角色的长期记忆摘要：\n"+memorySummary:"",memoryContext,phoneStyle,heartInstruction,fromCall?'':(window.xyStickerShelf?.context?.(c.characterId||window.xyCurrentCharacter?.()?.id)||'')].filter(Boolean).join('\n\n');
     // Keep only the requested number of recent chat turns in model context.
     // The 0 setting means unlimited history, not no history. System prompts
     // and explicit character/memory context are independent of this window.
@@ -239,6 +240,7 @@
       }
     }
     const history=normalizedHistory(historySource);
+    window.xyStickerShelf?.expandHistory?.(history);
     // A text-only primary model only receives independently generated image descriptions.
     if(ep.vision!==true||useBackup){
       for(const m of history)if(Array.isArray(m.content)){
@@ -272,6 +274,7 @@
           if(!reply)throw new Error('模型没有返回文本：'+diagnostic(data,raw));
           hideTyping();
           const heart=window.xyHeartNotes?.parse?.(reply)||{text:String(reply)};
+          heart.text=window.xyStickerShelf?.normalizeReply?.(heart.text,c.characterId||window.xyCurrentCharacter?.()?.id)??heart.text;
           c.messages.push({role:'assistant',text:heart.text,heartShort:heart.heartShort||'',heartFull:heart.heartFull||''});
           save();renderMessages();return;
         }
