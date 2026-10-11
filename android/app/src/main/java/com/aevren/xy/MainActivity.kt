@@ -17,7 +17,6 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Base64
 import android.graphics.Color
-import android.view.Gravity
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
@@ -30,9 +29,6 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -61,8 +57,6 @@ class MainActivity : Activity() {
     }
 
     private lateinit var webView: WebView
-    private var launchSplash: View? = null
-    private var pageRevealed = false
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var pendingAudioPermission: PermissionRequest? = null
     private var nativeVoiceBridge: NativeVoiceBridge? = null
@@ -84,20 +78,18 @@ class MainActivity : Activity() {
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
 
         val root = FrameLayout(this)
-        root.setBackgroundColor(Color.rgb(220, 233, 227))
+        // The animated HTML splash is the single branded startup screen.
+        // Keep the native root neutral while WebView loads.
+        root.setBackgroundColor(Color.rgb(223, 234, 230))
 
         webView = WebView(this)
-        webView.setBackgroundColor(0xFFDCE9E3.toInt())
-        webView.alpha = 0f
+        webView.setBackgroundColor(0xFFDFEAE6.toInt())
         webView.layoutParams = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
             FrameLayout.LayoutParams.MATCH_PARENT
         )
         webView.overScrollMode = View.OVER_SCROLL_NEVER
         root.addView(webView)
-
-        launchSplash = buildLaunchSplash()
-        root.addView(launchSplash)
 
         setContentView(root)
         applyImmersiveUi()
@@ -139,7 +131,6 @@ class MainActivity : Activity() {
 
             override fun onPageCommitVisible(view: WebView, url: String) {
                 super.onPageCommitVisible(view, url)
-                revealWebContent()
             }
 
             override fun onPageFinished(view: WebView, url: String) {
@@ -204,73 +195,6 @@ class MainActivity : Activity() {
         } else {
             webView.restoreState(savedInstanceState)
         }
-    }
-
-    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).roundToInt()
-
-    private fun buildLaunchSplash(): View {
-        val overlay = FrameLayout(this).apply {
-            setBackgroundColor(Color.rgb(220, 233, 227))
-            layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-        }
-
-        val column = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_HORIZONTAL
-        }
-
-        val icon = ImageView(this).apply {
-            setImageResource(com.aevren.xy.R.drawable.ic_launcher_foreground)
-            scaleType = ImageView.ScaleType.FIT_CENTER
-            layoutParams = LinearLayout.LayoutParams(dp(176), dp(176))
-        }
-        column.addView(icon)
-
-        val title = TextView(this).apply {
-            text = "砚屿"
-            textSize = 29f
-            setTextColor(Color.rgb(41, 68, 59))
-            gravity = Gravity.CENTER
-            letterSpacing = 0.18f
-            setPadding(0, dp(12), 0, 0)
-        }
-        column.addView(title, LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        ))
-
-        val subtitle = TextView(this).apply {
-            text = "回家了"
-            textSize = 12f
-            setTextColor(Color.argb(145, 41, 68, 59))
-            gravity = Gravity.CENTER
-            letterSpacing = 0.12f
-            setPadding(0, dp(8), 0, 0)
-        }
-        column.addView(subtitle, LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        ))
-
-        overlay.addView(column, FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.WRAP_CONTENT,
-            FrameLayout.LayoutParams.WRAP_CONTENT,
-            Gravity.CENTER
-        ))
-        return overlay
-    }
-
-    private fun revealWebContent() {
-        if (pageRevealed) return
-        pageRevealed = true
-        webView.animate().alpha(1f).setDuration(220).start()
-        launchSplash?.animate()?.alpha(0f)?.setDuration(260)?.withEndAction {
-            (launchSplash?.parent as? FrameLayout)?.removeView(launchSplash)
-            launchSplash = null
-        }?.start()
     }
 
     private fun installImeInsetBridge() {
