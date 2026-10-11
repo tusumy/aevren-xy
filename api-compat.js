@@ -182,6 +182,25 @@
     return {data,raw};
   }
 
+  // Reuse exactly the phone-local clock used by the message timestamps.
+  // Never convert this value to UTC before telling a model what time it is.
+  function deviceClock(){
+    const d=new Date(), pad=n=>String(n).padStart(2,'0');
+    const offset=-d.getTimezoneOffset();
+    const sign=offset>=0?'+':'-';
+    const utcOffset='UTC'+sign+pad(Math.floor(Math.abs(offset)/60))+':'+pad(Math.abs(offset)%60);
+    let zone='设备本地时区';
+    try{zone=Intl.DateTimeFormat().resolvedOptions().timeZone||zone}catch{}
+    const local=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日 星期'+'日一二三四五六'[d.getDay()]+' '+pad(d.getHours())+':'+pad(d.getMinutes());
+    return {local,utcOffset,zone};
+  }
+
+  function asksCurrentTime(value){
+    const text=String(value||'').trim().replace(/[\s?？!！。，,]/g,'');
+    if(/(?:明天|后天|昨天|前天|预约|开会|起飞|到站|营业)/.test(text))return false;
+    return /(?:现在|而家|依家|此刻|今日|今天|当地|本地).{0,12}(?:几点|幾點|时间|時間|几号|幾號|星期几|星期幾|礼拜几|禮拜幾|日期)|(?:几点了|几点钟|几点啊|几点呀|几点啦|幾點喇|幾點啦|幾點鐘|几点)/.test(text);
+  }
+
   async function compatSend(options){
     const fromCall=options?.__xyCall===true&&typeof options.text==='string';
     const el=$('#input'),text=fromCall?options.text.trim():el.value.trim();
@@ -212,8 +231,8 @@
     if(ep.key)headers.Authorization='Bearer '+ep.key;
     const memoryContext=memories.length?'长期记忆：\n'+memories.map(m=>'- ['+m.tag+'] '+m.text).join('\n'):'';
     const phoneStyle=fromCall?'正在进行语音电话。自然接话、用口语说给对方听；每轮通常一两句，不重复刚听到的话，不写 Markdown、列表或旁白，保留你原有的人设和说话习惯。':'';
-    const now=new Date();
-    const timeContext="当前设备当地时间："+now.toLocaleString("zh-CN",{year:"numeric",month:"long",day:"numeric",weekday:"long",hour:"2-digit",minute:"2-digit",hour12:false})+"；时区："+Intl.DateTimeFormat().resolvedOptions().timeZone+"。这是消息发送时的时间，不要当作每个历史事件的发生时间。";
+    const clock=deviceClock();
+    const timeContext="【砚屿设备实时时钟】手机当地日期与时间："+clock.local+"（24小时制）；手机时区："+clock.zone+"，时差："+clock.utcOffset+"。这个时刻已经是手机当地时间，绝对不要再换算成 UTC 或减去时差。用户问“现在几点”“今天几号”“星期几”时，直接据此回答，不猜时间。它只表示本轮发送时刻，不代表历史消息的发生时间。";
     const memorySummary=window.xyMemorySummaryFor?.(c.characterId||window.xyCurrentCharacter?.()?.id)||"";
     const heartInstruction=!fromCall?window.xyHeartNotes?.instruction?.()||'':'';
     await window.xyStickerShelf?.ready?.();
@@ -241,6 +260,16 @@
     }
     const history=normalizedHistory(historySource);
     window.xyStickerShelf?.expandHistory?.(history);
+    // Reinforce an explicit "what time is it now" question close to the latest
+    // outgoing user turn. Do not change the saved or displayed conversation.
+    if(asksCurrentTime(text)){
+      const latest=[...history].reverse().find(item=>item.role==='user');
+      const note='\n[砚屿应用附加时间校准：手机当前当地时间 '+clock.local+'（'+clock.utcOffset+'）。请按手机当地时间回答，不转换 UTC。]';
+      if(latest){
+        if(typeof latest.content==='string')latest.content+=note;
+        else if(Array.isArray(latest.content))latest.content.push({type:'text',text:note});
+      }
+    }
     // A text-only primary model only receives independently generated image descriptions.
     if(ep.vision!==true||useBackup){
       for(const m of history)if(Array.isArray(m.content)){
