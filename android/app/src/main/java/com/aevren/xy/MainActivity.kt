@@ -135,7 +135,6 @@ class MainActivity : Activity() {
 
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
-                revealWebContent()
                 applyImmersiveUi()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     view.requestApplyInsets()
