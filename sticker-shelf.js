@@ -267,7 +267,7 @@ async function sendSticker(id){
 }
 let editingId="", editingDelete=false;
 function editorNodes(){
-  const mask=overlay?.querySelector(".xy-sticker-edit-mask");
+  const mask=overlay?.querySelector(".xy-sticker-edit-dialog");
   return {mask,input:mask?.querySelector("#xyStickerEditName"),heading:mask?.querySelector("#xyStickerEditHeading"),help:mask?.querySelector("#xyStickerEditHelp"),field:mask?.querySelector(".xy-sticker-edit-field"),danger:mask?.querySelector('[data-action="rename-delete"]'),save:mask?.querySelector('[data-action="rename-save"]')};
 }
 function setEditorMode(confirmDelete){
@@ -275,7 +275,7 @@ function setEditorMode(confirmDelete){
   editingDelete=!!confirmDelete;
   if(heading)heading.textContent=editingDelete?"确认删除表情包？":"修改表情包名称";
   if(help)help.textContent=editingDelete?"删除后，历史聊天中的这张表情包也将无法显示。":"名称会帮助 AI 理解这张表情包的意思。";
-  if(field)field.hidden=editingDelete;
+  if(field)field.style.display=editingDelete?"none":"flex";
   if(danger)danger.textContent=editingDelete?"确认删除":"删除";
   if(save)save.textContent=editingDelete?"返回":"保存";
 }
@@ -285,13 +285,13 @@ function more(id){
   const {mask,input}=editorNodes();
   if(!mask||!input)return;
   input.value=item.label;
-  mask.hidden=false;
   setEditorMode(false);
+  if(!mask.open)mask.showModal();
   requestAnimationFrame(()=>{input.focus();input.select()});
 }
 function closeEditor(){
   const {mask}=editorNodes();
-  if(mask)mask.hidden=true;
+  if(mask?.open)mask.close();
   editingId="";
   editingDelete=false;
 }
@@ -327,20 +327,38 @@ function installUI(){
     '<div class="xy-sticker-filter"><button type="button" data-action="filter" aria-pressed="false">只看当前角色</button><small>图片保存在本机；AI 通过名称理解表情</small></div>'+
     '<div class="xy-sticker-grid"></div><input id="xyStickerFile" type="file" accept="image/png,image/jpeg,image/gif,image/webp" multiple hidden></section>';
   document.body.appendChild(overlay);
-  const editor=document.createElement("div");
-  editor.className="xy-sticker-edit-mask";
-  editor.hidden=true;
-  editor.innerHTML='<section class="xy-sticker-edit-card" role="dialog" aria-modal="true" aria-labelledby="xyStickerEditHeading">'+
+  const editor=document.createElement("dialog");
+  editor.className="xy-sticker-edit-dialog";
+  editor.setAttribute("aria-labelledby","xyStickerEditHeading");
+  editor.style.cssText="width:min(360px,90vw);max-width:90vw;border:0;border-radius:18px;padding:8px;background:#faf9f5;color:#344739;box-shadow:0 16px 50px rgba(20,30,24,.2)";
+  editor.innerHTML='<section class="xy-sticker-edit-card">'+
     '<header><strong>砚屿</strong><button type="button" data-action="rename-cancel" aria-label="关闭修改窗口">×</button></header>'+
     '<h3 id="xyStickerEditHeading">修改表情包名称</h3>'+
     '<label class="xy-sticker-edit-field" for="xyStickerEditName"><span>表情包名称</span><input id="xyStickerEditName" maxlength="40" autocomplete="off" placeholder="例如：委屈巴巴"></label>'+
     '<p id="xyStickerEditHelp">名称会帮助 AI 理解这张表情包的意思。</p>'+
     '<div class="xy-sticker-edit-actions"><button type="button" class="xy-sticker-edit-danger" data-action="rename-delete">删除</button><button type="button" data-action="rename-cancel">取消</button><button type="button" class="xy-sticker-edit-primary" data-action="rename-save">保存</button></div></section>';
   overlay.appendChild(editor);
+  const head=editor.querySelector("header");
+  head.style.cssText="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px";
+  head.querySelector("strong").style.cssText="font-size:13px;color:#466d55;letter-spacing:1px";
+  const closeBtn=head.querySelector("button");
+  closeBtn.style.cssText="border:0;background:transparent;font-size:23px;color:#718478";
+  editor.querySelector("h3").style.cssText="font-size:17px;margin:0 0 14px";
+  const field=editor.querySelector(".xy-sticker-edit-field");
+  field.style.cssText="display:flex;flex-direction:column;gap:8px;font-size:12px;color:#5c6f63";
+  editor.querySelector("#xyStickerEditName").style.cssText="width:100%;border:1px solid #ccd6cb;border-radius:10px;background:white;padding:10px;font-size:15px;color:#344739";
+  editor.querySelector("#xyStickerEditHelp").style.cssText="font-size:12px;color:#7a8b7d;line-height:1.6;margin:12px 0";
+  editor.querySelector(".xy-sticker-edit-actions").style.cssText="display:flex;gap:8px;align-items:center";
+  editor.querySelectorAll(".xy-sticker-edit-actions button").forEach(btn=>{
+    btn.style.cssText="border:1px solid #d7e0d7;border-radius:10px;padding:9px 12px;background:#fff;color:#35503b;font-size:13px";
+  });
+  editor.querySelector(".xy-sticker-edit-danger").style.cssText+=";margin-right:auto;color:#ab5252";
+  editor.querySelector(".xy-sticker-edit-primary").style.cssText+=";background:#385d4b;color:white";
+  editor.addEventListener("close",()=>{editingId="";editingDelete=false});
   grid=overlay.querySelector(".xy-sticker-grid");
   overlay.addEventListener("click",async e=>{
     if(e.target===overlay)return close();
-    if(e.target.classList.contains("xy-sticker-edit-mask")){closeEditor();return}
+    if(e.target===editor){closeEditor();return}
     const button=e.target.closest("button[data-action]");if(!button)return;
     const {action,id}=button.dataset;
     if(action.startsWith("rename-")){await editorAction(action);return}
@@ -369,7 +387,7 @@ function installUI(){
   editor.querySelector("#xyStickerEditName").addEventListener("keydown",e=>{
     if(e.key==="Enter"){e.preventDefault();editorAction("rename-save")}
   });
-  document.addEventListener("keydown",e=>{if(e.key!=="Escape"||overlay.hidden)return;if(!editor.hidden)closeEditor();else close()});
+  document.addEventListener("keydown",e=>{if(e.key!=="Escape"||overlay.hidden)return;e.preventDefault();if(editor.open)closeEditor();else close()});
 }
 window.xyStickerShelf={ready:()=>ready,context,expandHistory,normalizeReply,renderText,hydrateRendered,open,close};
 installUI();
