@@ -37,3 +37,5 @@
 .xy-sticker-import-status{font-size:11px;line-height:1.4;color:#52665a;padding:0 16px 8px}.xy-sticker-import-status:empty{display:none}
 
 .xy-sticker-edit-mask[hidden]{display:none!important}
+
+.xy-sticker-edit-card{background:white;padding:16px;border-radius:14px}
