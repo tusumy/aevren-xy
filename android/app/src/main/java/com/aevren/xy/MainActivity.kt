@@ -15,6 +15,7 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.util.Base64
 import android.graphics.Color
 import android.view.View
@@ -57,6 +58,10 @@ class MainActivity : Activity() {
     }
 
     private lateinit var webView: WebView
+    private var nativeSplash: SeaSplashView? = null
+    private val splashStartedAt = SystemClock.uptimeMillis()
+    private var splashClosing = false
+    private var splashCheckBusy = false
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private var pendingAudioPermission: PermissionRequest? = null
     private var nativeVoiceBridge: NativeVoiceBridge? = null
@@ -90,6 +95,7 @@ class MainActivity : Activity() {
         )
         webView.overScrollMode = View.OVER_SCROLL_NEVER
         root.addView(webView)
+        nativeSplash = SeaSplashView(this).also { root.addView(it, FrameLayout.LayoutParams(-1, -1)) }
 
         setContentView(root)
         applyImmersiveUi()
@@ -135,6 +141,7 @@ class MainActivity : Activity() {
 
             override fun onPageFinished(view: WebView, url: String) {
                 super.onPageFinished(view, url)
+                checkStartupReady()
                 applyImmersiveUi()
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     view.requestApplyInsets()
@@ -193,6 +200,41 @@ class MainActivity : Activity() {
             webView.loadUrl("${HOME}?app=android&shell=10&t=${System.currentTimeMillis()}")
         } else {
             webView.restoreState(savedInstanceState)
+        }
+        webView.postDelayed({ checkStartupReady() }, 900L)
+    }
+
+    private fun checkStartupReady() {
+        if (splashCheckBusy || splashClosing || nativeSplash == null) return
+        splashCheckBusy = true
+        webView.evaluateJavascript(
+            "(document.readyState === 'complete' && !!document.getElementById('messages'))"
+        ) { answer ->
+            splashCheckBusy = false
+            if (splashClosing || nativeSplash == null) return@evaluateJavascript
+            if (answer.trim() != "true") {
+                webView.postDelayed({ checkStartupReady() }, 350L)
+                return@evaluateJavascript
+            }
+            webView.postVisualStateCallback(
+                SystemClock.uptimeMillis(),
+                object : WebView.VisualStateCallback() {
+                    override fun onComplete(requestId: Long) {
+                        val minimumMs = 1400L
+                        val waitMs = (minimumMs - (SystemClock.uptimeMillis() - splashStartedAt)).coerceAtLeast(0L)
+                        webView.postDelayed({
+                            if (splashClosing) return@postDelayed
+                            splashClosing = true
+                            nativeSplash?.let { splash ->
+                                splash.animate().alpha(0f).setDuration(300L).withEndAction {
+                                    (splash.parent as? FrameLayout)?.removeView(splash)
+                                    if (nativeSplash === splash) nativeSplash = null
+                                }.start()
+                            }
+                        }, waitMs)
+                    }
+                }
+            )
         }
     }
 
