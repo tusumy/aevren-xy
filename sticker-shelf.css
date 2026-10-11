@@ -29,7 +29,9 @@
 /* 直接图床链接入口 */
 .xy-sticker-urlbar[hidden]{display:none!important}
 .xy-sticker-urlbar{display:flex;gap:8px;padding:0 16px 10px}
-.xy-sticker-urlbar input{flex:1;min-width:0;padding:10px 11px;background:white;border:1px solid #dbe0d9;border-radius:12px;font-size:13px;color:#333a34;outline:0}
+.xy-sticker-urlbar textarea{flex:1;min-width:0;max-height:140px;resize:vertical;padding:10px 11px;background:white;border:1px solid #dbe0d9;border-radius:12px;font-size:13px;color:#333a34;outline:0;line-height:1.4}
 .xy-sticker-urlbar button{flex:0 0 auto;border:0;border-radius:12px;background:#385d4b;color:white;padding:8px 14px;font-size:12px}
 .xy-sticker-urlbar button:disabled{opacity:.55;cursor:wait}
 @media(max-width:550px){.xy-sticker-toolbar{gap:6px;padding:0 10px 9px}.xy-sticker-toolbar button{padding:8px 9px;font-size:11px}.xy-sticker-urlbar{padding:0 10px 9px}}
+
+.xy-sticker-import-status{font-size:11px;line-height:1.4;color:#52665a;padding:0 16px 8px}.xy-sticker-import-status:empty{display:none}
