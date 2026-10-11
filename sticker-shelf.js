@@ -58,7 +58,7 @@ async function sniff(f){
   if(eq([82,73,70,70])&&bytes[8]===87&&bytes[9]===69&&bytes[10]===66&&bytes[11]===80)return "image/webp";
   return "";
 }
-function toast(t){window.xyAttachments?.toast?.(t)||window.xyAttachmentToast?.(t)||alert(t)}
+function toast(t){if(window.xyAttachments?.toast)window.xyAttachments.toast(t);else if(window.xyAttachmentToast)window.xyAttachmentToast(t);else alert(t)}
 async function addFiles(files){
   if(!await ready)return toast("当前浏览器无法保存本地表情包");
   let count=0;
