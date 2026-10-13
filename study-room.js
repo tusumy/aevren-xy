@@ -80,6 +80,7 @@ function draw(){
       '<h3>章节书架 · '+b.chapters.length+' 篇</h3>';
     html+=[...b.chapters].reverse().map(x=>'<article class="study-card"><strong>'+escape(x.name||"无标题")+'</strong><small>'+escape(new Date(x.updated||Date.now()).toLocaleDateString("zh-CN"))+'</small><p>'+escape(cap(x.summary||x.text,110))+'</p><div class="study-actions">'+btn("editChapter","打开 / 编辑",x.id)+btn("deleteChapter","删除",x.id,"danger")+'</div></article>').join("");
   }
+  if(tab==="chapter")html+=window.xyStudyAuto?.panelHTML?.()||"";
   html+='<footer class="study-footer">'+btn("export","导出本角色书房 JSON")+btn("copy","复制书房 JSON")+
     '<small>书房资料保存在本机，同时包含在「数据管理」的砚屿完整备份里。</small></footer></div>';
   host.innerHTML=html;panel.classList.add("open");document.querySelector("#scrim")?.classList.add("show");
@@ -192,6 +193,12 @@ style.textContent=String.raw`
 #xyStudy .study-cover{padding:15px;border-radius:16px;background:linear-gradient(135deg,#e5eee4,#f6f8f2);display:grid;gap:7px}
 #xyStudy .study-cover strong{font-size:15px}#xyStudy .study-cover small,#xyStudy .study-tip,#xyStudy .study-footer small{color:#748378;line-height:1.6;font-size:11px}
 #xyStudy .study-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+#xyStudy .study-card#xyStudyAuto{margin-top:8px}
+#xyStudyAuto .study-auto-result{padding:11px;border-radius:10px;background:#eff4ed}
+#xyStudyAuto .study-auto-result p{white-space:pre-wrap;line-height:1.7;margin:6px 0 0;font-size:12px}
+#xyStudyAuto .study-check input{flex:none}
+#xyStudyAuto button:disabled{opacity:.4;cursor:wait}
+
 #xyStudy button,#xyStudy .study-import{cursor:pointer;-webkit-tap-highlight-color:transparent}
 #xyStudy .study-tabs button{border:1px solid #d8e1d7;background:#fff;border-radius:9px;padding:10px 2px;color:#627667;font-size:12px}
 #xyStudy .study-tabs .selected{background:#365b49;color:#fff}
