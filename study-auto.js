@@ -132,6 +132,9 @@ async function run(c,{manual=false}={}){
   if(manual&&total===start){
     if(record.updated){setError(charId,chatId,"没有新对话需要整理");return false}
     start=Math.max(0,total-MIN_TURNS);
+  }else if(manual&&!record.updated&&start===0){
+    // First manual import captures the most recent eight turns, not the oldest eight.
+    start=Math.max(0,total-MIN_TURNS);
   }
   if(total===0||start>=total){setError(charId,chatId,"还没有可整理的文字对话");return false}
   // Bound every extra API call to eight pairs, even after returning to a long-untouched conversation.
