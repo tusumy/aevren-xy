@@ -175,9 +175,17 @@ document.querySelector("#panelBody")?.addEventListener("change",event=>{
   const {c,charId,chatId}=currentIds(),enabled=event.target.checked;
   try{saveEdit(charId,a=>{
     if(enabled&&!a.enabled){
-      const r=recordFor(a,chatId);
-      // Enabling doesn't silently re-send historical chat to an external model.
-      a.byChat[chatId]={...r,cursor:completedPairs(c).length,error:""};
+      // Seed the checkpoint of EVERY existing conversation in this character.
+      // Switching conversations must not silently upload older history.
+      const existing=typeof chats!=="undefined"?chats:[c];
+      for(const conversation of existing){
+        if(!conversation?.id)continue;
+        const targetId=label(conversation.id);
+        const owner=label(conversation.characterId||(targetId===chatId?charId:"xuan-yan"));
+        if(owner!==charId)continue;
+        const r=recordFor(a,targetId);
+        a.byChat[targetId]={...r,cursor:completedPairs(conversation).length,error:""};
+      }
     }
     a.enabled=enabled;
   })}catch(e){setError(charId,chatId,e)}
