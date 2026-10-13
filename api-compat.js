@@ -237,7 +237,8 @@
     const heartInstruction=!fromCall?window.xyHeartNotes?.instruction?.()||'':'';
     await window.xyStickerShelf?.ready?.();
     const studyContext=window.xyStudyRoom?.context?.({characterId:c.characterId||window.xyCurrentCharacter?.()?.id,query:text})||'';
-    const system=[ep.system,studyContext,timeContext,memorySummary?"角色的长期记忆摘要：\n"+memorySummary:"",memoryContext,phoneStyle,heartInstruction,fromCall?'':(window.xyStickerShelf?.context?.(c.characterId||window.xyCurrentCharacter?.()?.id)||'')].filter(Boolean).join('\n\n');
+    const studyAutoContext=window.xyStudyAuto?.context?.({characterId:c.characterId||window.xyCurrentCharacter?.()?.id,chatId:c.id})||'';
+    const system=[ep.system,studyContext,studyAutoContext,timeContext,memorySummary?"角色的长期记忆摘要：\n"+memorySummary:"",memoryContext,phoneStyle,heartInstruction,fromCall?'':(window.xyStickerShelf?.context?.(c.characterId||window.xyCurrentCharacter?.()?.id)||'')].filter(Boolean).join('\n\n');
     // Keep only the requested number of recent chat turns in model context.
     // The 0 setting means unlimited history, not no history. System prompts
     // and explicit character/memory context are independent of this window.
@@ -306,7 +307,7 @@
           const heart=window.xyHeartNotes?.parse?.(reply)||{text:String(reply)};
           heart.text=window.xyStickerShelf?.normalizeReply?.(heart.text,c.characterId||window.xyCurrentCharacter?.()?.id)??heart.text;
           c.messages.push({role:'assistant',text:heart.text,heartShort:heart.heartShort||'',heartFull:heart.heartFull||''});
-          save();renderMessages();return;
+          save();renderMessages();window.xyStudyAuto?.afterReply?.(c);return;
         }
 
         messages.push({role:'assistant',content:msg.content||null,tool_calls:calls});
