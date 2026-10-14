@@ -6,11 +6,11 @@
   const clip=(value,count)=>Array.from(String(value||"").replace(/\s+/g," ").trim()).slice(0,count).join("");
   const expanded=new WeakSet();
   const instruction=()=>enabled()?[
-    "请照常自然回复聊天。心音是完全可选的：只有你此刻确实有一句具体、真实、未在正文说出的情绪或想法，才在正文末尾另起一行附加心音标记；没有就只回复正文，绝对不要为了格式或每轮打卡硬写心音。",
-    "允许连续很多轮没有心音，也允许情绪强烈时自然出现；由当前交流决定，不按概率、不按固定频率出现。不要用套话、重复正文或凑数的想抱你代替真正的心音。",
-    '仅在需要心音时，格式为：⟦heart{"short":"有点吃醋","full":"刚听见你夸别人，我心里酸了一下，想把你的注意力拉回来。"}⟧',
-    "short 用2～10个汉字写最直白的瞬间心情；full 用第一人称、面向对方写1～2句具体的可展示心音。两项都要有内容，使用有效 JSON 字符串。",
-    "心音只是角色的可展示旁白，不是推理过程。不解释标记，不在正文重复心音；若有 ⟦opts...⟧ 快捷选项，把心音放在它之前。"
+    "重要：你每一次正常聊天回复都必须附带且只能附带一条完整心音，不允许省略。先自然回复正文，之后另起一行输出心音标记；即使回复很短、闲聊或问答也要写，不要等用户提醒才写。",
+    '心音标记格式：⟦heart{"short":"有点吃醋","full":"听见你夸别人，我心里酸了一下，想把你的注意力拉回来。"}⟧',
+    "short 直接写此刻最直白、具体的情绪或冲动，2～10 个汉字；full 写第一人称、面向对方的即时可展示心里话，1～2 句，贴合这轮内容，不空泛复读。",
+    "心音必须随本轮具体对话变化，不要一直套用同一个例子；只提供角色可展示的心情旁白，不要提供隐藏推理过程。short 和 full 均不可为空；输出标准 JSON 字符串。",
+    "这条规定始终生效，优先于其他可选格式要求。不要解释标记，也不要在正文重复心音；若另有 ⟦opts...⟧ 快捷选项，把心音放在它之前。"
   ].join("\n"):"";
   function parse(raw){
     let text=String(raw??""),heartShort="",heartFull="",valid=false;
@@ -24,9 +24,23 @@
         return "";
       }catch{return whole}
     });
-    // Remove incomplete end markers rather than showing implementation text in chat.
-    text=text.replace(/\n?⟦heart(?:\{[^⟧]*)?$/,"").trim();
+    // Invalid or truncated heart markup should never leak into the visible chat.
+    text=text.replace(/⟦heart[\s\S]*?⟧/g,"").replace(/\n?⟦heart(?:\{[^⟧]*)?$/,"").trim();
     return {text,heartShort,heartFull,hasHeart:valid};
+  }
+  function parseStandalone(raw){
+    // The repair request expects a JSON object rather than another chat reply.
+    let input=String(raw??"").trim().replace(/^\x60\x60\x60(?:json)?\s*/i,"").replace(/\s*\x60\x60\x60$/,"").trim();
+    const tagged=input.match(/⟦heart(\{[\s\S]*?\})⟧/);
+    if(tagged)input=tagged[1];
+    let data;
+    try{data=JSON.parse(input)}catch{
+      const a=input.indexOf("{"),b=input.lastIndexOf("}");
+      if(a<0||b<a)return null;
+      try{data=JSON.parse(input.slice(a,b+1))}catch{return null}
+    }
+    const short=clip(data?.short,16),full=String(data?.full||"").trim().slice(0,400);
+    return short&&full?{heartShort:short,heartFull:full,hasHeart:true}:null;
   }
   const markText=(m)=>typeof m?.heartShort==="string"&&m.heartShort.trim()||typeof m?.heartFull==="string"&&m.heartFull.trim();
   function decorate(){
@@ -58,7 +72,7 @@
     if(!body||body.querySelector("#xyHeartNotesToggle"))return;
     const card=document.createElement("section");
     card.className="setting-card xy-heart-setting";
-    card.innerHTML='<label class="xy-heart-settings-label"><span><strong>心音胶囊</strong><small>有想说的心音才出现；点击短胶囊展开完整心音，语音只读正文。</small></span><input type="checkbox" id="xyHeartNotesToggle"></label>';
+    card.innerHTML='<label class="xy-heart-settings-label"><span><strong>心音胶囊</strong><small>每条 AI 回复都有心音；缺失时自动补生成（可能多调用一次模型）。点击胶囊展开全文，语音只读正文。</small></span><input type="checkbox" id="xyHeartNotesToggle"></label>';
     body.appendChild(card);
     const input=card.querySelector("input");
     input.checked=enabled();
@@ -79,6 +93,6 @@
     if(type==="settings")requestAnimationFrame(settingsUI);
     return ret;
   };
-  window.xyHeartNotes={enabled,instruction,parse,decorate};
+  window.xyHeartNotes={enabled,instruction,parse,parseStandalone,decorate};
   requestAnimationFrame(decorate);
 })();
