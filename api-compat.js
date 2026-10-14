@@ -274,6 +274,12 @@
     if(ep.key)headers.Authorization='Bearer '+ep.key;
     const memoryContext=memories.length?'长期记忆：\n'+memories.map(m=>'- ['+m.tag+'] '+m.text).join('\n'):'';
     const phoneStyle=fromCall?'正在进行语音电话。自然接话、用口语说给对方听；每轮通常一两句，不重复刚听到的话，不写 Markdown、列表或旁白，保留你原有的人设和说话习惯。':'';
+    const endedCall=[...(c.messages||[])].reverse().find(m=>m?.kind==="call"&&m?.endedAt);
+    const callEndedContext=!fromCall&&endedCall
+      ?"【砚屿实际通话状态】最近一次与当前角色的语音电话已挂断。结束于："+new Date(endedCall.endedAt).toLocaleString("zh-CN",{hour12:false})+
+       "，通话时长："+String(endedCall.duration||"未知")+"。当前是通话结束后的文字聊天；不要声称电话仍在进行。"
+      :"";
+
     const clock=deviceClock();
     const timeContext="【砚屿设备实时时钟】手机当地日期与时间："+clock.local+"（24小时制）；手机时区："+clock.zone+"，时差："+clock.utcOffset+"。这个时刻已经是手机当地时间，绝对不要再换算成 UTC 或减去时差。用户问“现在几点”“今天几号”“星期几”时，直接据此回答，不猜时间。它只表示本轮发送时刻，不代表历史消息的发生时间。";
     const memorySummary=window.xyMemorySummaryFor?.(c.characterId||window.xyCurrentCharacter?.()?.id)||"";
@@ -287,7 +293,7 @@
     const studyContext=window.xyStudyRoom?.context?.({characterId:c.characterId||currentRole?.id,chatId:c.id,query:text,recent:studyRecent})||'';
     const studyAutoContext=window.xyStudyAuto?.context?.({characterId:c.characterId||currentRole?.id,chatId:c.id})||'';
     const immediateCallInstruction=!fromCall?window.xyProactiveCalls?.instruction?.()||'':'';
-    const system=[roleSystem,studyContext,studyAutoContext,timeContext,memorySummary?"角色的长期记忆摘要:\n"+memorySummary:"",memoryContext,phoneStyle,fromCall?'':(window.xyStickerShelf?.context?.(c.characterId||window.xyCurrentCharacter?.()?.id)||''),heartInstruction,immediateCallInstruction].filter(Boolean).join('\n\n');
+    const system=[roleSystem,studyContext,studyAutoContext,callEndedContext,timeContext,memorySummary?"角色的长期记忆摘要:\n"+memorySummary:"",memoryContext,phoneStyle,fromCall?'':(window.xyStickerShelf?.context?.(c.characterId||window.xyCurrentCharacter?.()?.id)||''),heartInstruction,immediateCallInstruction].filter(Boolean).join('\n\n');
     // Keep only the requested number of recent chat turns in model context.
     // The 0 setting means unlimited history, not no history. System prompts
     // and explicit character/memory context are independent of this window.

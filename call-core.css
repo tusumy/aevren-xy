@@ -15,3 +15,7 @@ html[data-theme-mode="dark"] .xy-call-push.recording{background:rgba(190,82,82,.
   background-repeat:no-repeat;
   color:transparent;
 }
+
+/* Respect hidden on buttons after a call is connected. */
+.xy-call-actions button[hidden],.xy-call.connected .xy-call-answer{display:none!important}
+.xy-call.connected .xy-call-actions{gap:0;justify-content:center}
