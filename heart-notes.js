@@ -18,9 +18,9 @@
       try{
         const obj=JSON.parse(json);
         if(!obj||typeof obj!=="object")return whole;
-        heartShort=clip(obj.short,16);
-        heartFull=String(obj.full||"").trim().slice(0,400);
-        valid=!!(heartShort&&heartFull);
+        const short=clip(obj.short,16);
+        const full=String(obj.full||"").trim().slice(0,400);
+        if(short&&full){heartShort=short;heartFull=full;valid=true}
         return "";
       }catch{return whole}
     });
