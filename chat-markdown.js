@@ -40,13 +40,13 @@ function render(value){
   return segments.map(s=>{
     if(s.startsWith("```")&&s.endsWith("```")){
       const body=s.slice(3,-3).replace(/^[a-zA-Z0-9_+-]+[ \t]*\n/,"");
-      return '<pre class="xy-md-pre"><code>'+escapeHtml(body)+'</code></pre>';
+      return '<span class="xy-md-pre"><code>'+escapeHtml(body)+'</code></span>';
     }
     return s.split("\n").map(line).join("\n");
   }).join("");
 }
 const style=document.createElement("style");
-style.textContent=".bubble-text strong{font-weight:700}.bubble-text em{font-style:italic}.bubble-text .xy-md-heading{font-size:1.06em}.bubble-text .xy-md-quote{display:block;border-left:3px solid #b1c3b7;padding-left:10px}.bubble-text .xy-md-code{background:rgba(90,105,93,.12);padding:1px 4px;border-radius:4px;font-size:.9em}.bubble-text .xy-md-pre{font-size:.9em;white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;padding:12px;border-radius:10px;background:rgba(70,86,74,.10)}.bubble-text del{opacity:.7}";
+style.textContent=".bubble-text strong{font-weight:700}.bubble-text em{font-style:italic}.bubble-text .xy-md-heading{font-size:1.06em}.bubble-text .xy-md-quote{display:block;border-left:3px solid #b1c3b7;padding-left:10px}.bubble-text .xy-md-code{background:rgba(90,105,93,.12);padding:1px 4px;border-radius:4px;font-size:.9em}.bubble-text .xy-md-pre{display:block;font-size:.9em;white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;padding:12px;border-radius:10px;background:rgba(70,86,74,.10)}.bubble-text del{opacity:.7}";
 document.head.appendChild(style);
 window.xyChatMarkdown={render};
 })();
