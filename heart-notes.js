@@ -47,15 +47,39 @@
     if(!enabled())return;
     const c=typeof chat==="function"?chat():null,box=document.querySelector("#messages");
     if(!c||!box)return;
+    const latest=[...(c.messages||[])].map((m,index)=>({m,index})).filter(x=>x.m?.role==="assistant"&&!x.m.localOnly).at(-1)?.index;
     (c.messages||[]).forEach((m,index)=>{
-      if(m?.role!=="assistant"||!markText(m))return;
+      if(m?.role!=="assistant"||m.localOnly)return;
+      const hasHeart=!!markText(m);
+      // A single AI response can be split into several visual bubbles.
+      // Display one heart (or a visible recovery action) for the response.
+      if(!hasHeart&&index!==latest)return;
       const row=box.querySelector('.message.assistant[data-message="'+index+'"][data-part="0"]');
       const stack=row?.querySelector(".message-stack");
       if(!stack||stack.querySelector(".xy-heart-note"))return;
+      const wrap=document.createElement("div");
+      wrap.className="xy-heart-note"+(hasHeart?"":" xy-heart-recovery");
+      if(!hasHeart){
+        wrap.innerHTML='<button type="button" class="xy-heart-pill" aria-label="补写当前回复的心音"><span class="xy-heart-dot">♡</span>心音缺失 · 点此补写</button>';
+        stack.insertBefore(wrap,stack.querySelector(".bubble")||stack.firstChild);
+        const button=wrap.querySelector("button");
+        button.addEventListener("click",async()=>{
+          if(button.disabled)return;
+          button.disabled=true;button.textContent="正在补写心音…";
+          try{
+            await window.xyRepairHeartNote?.(c,index);
+            if(!markText(m))throw new Error("模型仍未返回有效心音");
+            renderMessages();
+          }catch(err){
+            button.disabled=false;
+            button.textContent="心音补写失败 · 重试";
+            button.title=String(err?.message||err).slice(0,300);
+          }
+        });
+        return;
+      }
       const short=clip(m.heartShort,16)||"心音",full=m.heartFull||m.heartShort;
       const open=expanded.has(m);
-      const wrap=document.createElement("div");
-      wrap.className="xy-heart-note";
       wrap.innerHTML='<button type="button" class="xy-heart-pill" aria-expanded="'+open+'" aria-label="展开或收起心音"><span class="xy-heart-dot">♡</span><span class="xy-heart-brief">'+escHtml(short)+'</span><span class="xy-heart-angle">'+(open?"⌃":"⌄")+'</span></button><div class="xy-heart-detail" '+(open?"":"hidden")+'>'+escHtml(full)+'</div>';
       stack.insertBefore(wrap,stack.querySelector(".bubble")||stack.firstChild);
       wrap.querySelector("button").addEventListener("click",()=>{
