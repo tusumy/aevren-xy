@@ -9,7 +9,7 @@ const safe=(s,n)=>String(s??"").trim().slice(0,n);
 const parseNative=raw=>{try{return typeof raw==="string"?JSON.parse(raw):raw||{}}catch(e){return {ok:false,error:String(e)}}};
 const state=()=>{try{return bridge()?.getProactiveState?parseNative(bridge().getProactiveState()):{native:false,enabled:false}}catch{return {native:false,enabled:false}}};
 const enabled=()=>state().enabled===true;
-let pendingMigration=false;
+let pendingMigration=false,lastRingKey='';
 function stopOldReservations(){
   const b=bridge(),st=state();
   if(!b||!st.enabled||!st.scheduledAt||pendingMigration)return;
@@ -48,14 +48,17 @@ function ringNow(c){
   const id=String(c.characterId||ch.id||"xuan-yan");
   const name=safe(ch.name||"角色",80);
   const payload={id,name};
+  const key=String(c.id)+":"+String(c.messages?.length||0);
+  if(lastRingKey===key)return false;
   // Keep a single call surface. Foreground: in-app ringing screen.
   // If the user backgrounded the app while the reply was loading, prefer
   // Android's existing native incoming-call notification instead.
   if(document.visibilityState==="hidden"&&api.nativeIncomingCall){
-    try{if(api.nativeIncomingCall(payload)?.ok)return true}
+    try{if(api.nativeIncomingCall(payload)?.ok){lastRingKey=key;return true}}
     catch(error){console.warn("[砚屿] 后台来电通知不可用：",error)}
   }
   api.ring(payload);
+  lastRingKey=key;
   return true;
 }
 function showSettings(){
