@@ -41,7 +41,17 @@ function draw(){
   document.querySelector("#sidebar")?.classList.remove("open");
   document.querySelector("#panelEyebrow").textContent="AEVREN · STUDY";
   document.querySelector("#panelTitle").textContent="书房";
-  let html='<div id="xyStudy"><section class="study-cover"><strong>'+escape(charName())+'的书房</strong><small>这里的设定按角色分别保存，不动原有聊天、记忆和日记。</small></section>'+
+  const activeChat=typeof chat==="function"?chat():null;
+  const lastUser=[...(activeChat?.messages||[])].reverse().find(m=>m?.role==="user")?.text||"";
+  const recent=(activeChat?.messages||[]).slice(-8).map(m=>String(m?.text||"").slice(0,350)).join("\n");
+  const preview=context({characterId:id(),chatId:activeChat?.id,query:lastUser,recent});
+  const bindingNote=c.name&&c.name!==charName()?"已导入「"+c.name+"」角色卡，但当前聊天角色仍是「"+charName()+"」。两边设定可能冲突；角色名不会自动修改。":"当前聊天绑定「"+charName()+"」，本书房只供这个角色使用。";
+  let html='<div id="xyStudy"><section class="study-cover"><strong>'+escape(charName())+'的书房</strong><small>'+escape(bindingNote)+'</small></section>'+
+    '<details class="study-preview"><summary>本轮能读到什么 · 点击核对</summary>'+
+    '<p>预览以当前对话最近一次提问和近期聊天为依据；下次发送消息时会重新匹配。角色不能直接翻阅未被选中的整本书。</p>'+
+    '<p>角色卡：'+(c.enabled?'已启用':'未启用')+' · 预设：'+(p.enabled?'已启用':'未启用')+
+    ' · 世界书：'+b.lore.filter(x=>x.enabled!==false).length+' 条已启用 · 章节：'+b.chapters.length+' 篇</p>'+
+    '<pre>'+escape(preview||'当前没有可注入的书房内容。请先启用角色卡、预设或填写可触发的世界书。')+'</pre></details>'+
     '<div class="study-tabs">'+[["card","角色卡"],["preset","预设"],["lore","世界书"],["chapter","剧情"]].map(x=>btn("tab",x[1],x[0],x[0]===tab?"selected":"")).join("")+'</div>'+
     (status?'<p class="study-status" role="status">'+escape(status)+'</p>':"");
   if(tab==="card")html+='<p class="study-tip">支持酒馆 V1 / V2 角色卡 JSON。PNG 角色卡暂不支持；启用后新消息会自动带上这里的设定。</p>'+
@@ -60,7 +70,7 @@ function draw(){
     check("studyPresetActive","启用这个预设",p.enabled)+btn("savePreset","保存预设","","primary");
   if(tab==="lore"){
     const x=b.lore.find(e=>e.id===editLore)||{};
-    html+='<p class="study-tip">常驻条目每轮加入上下文；关键词条目在本轮消息触发时才加入，最多同时读取四条。</p>'+
+    html+='<p class="study-tip">常驻条目每轮加入上下文；关键词会结合本轮消息和最近几条聊天来触发，最多同时读取四条。未命中时只有目录可见，条目正文不会发给角色。</p>'+
       '<label class="study-import">导入世界书 JSON<input type="file" id="studyLoreImport" accept=".json,application/json" hidden></label>'+
       inputField("studyLoreName","设定名称",x.name)+
       inputField("studyLoreKeys","关键词（逗号分开）",arr(x.keys).join("，"))+
@@ -73,7 +83,7 @@ function draw(){
   }
   if(tab==="chapter"){
     const x=b.chapters.find(e=>e.id===editChapter)||{};
-    html+='<p class="study-tip">可以将长剧情保存成章节。章节正文不会全部塞进聊天，只有开启摘要后才引用最新章节摘要。</p>'+
+    html+='<p class="study-tip">可以将长剧情保存成章节。启用摘要时，只引用本对话的自动章节或公共手写章节；同角色其他对话的自动章节不会串进来。具体章名也可在聊天里提问。</p>'+
       inputField("studyChapterName","章节标题",x.name)+textField("studyChapterText","章节正文",x.text,11)+
       textField("studyChapterSummary","章节摘要",x.summary,4)+check("studyChapterActive","引用最新章节摘要",b.useSummary)+
       '<div class="study-actions">'+btn("saveChapter",editChapter?"更新章节":"保存新章节","","primary")+(editChapter?btn("cancelChapter","取消编辑"):"")+'</div>'+
@@ -130,21 +140,50 @@ async function importFile(file,kind){
   }catch(e){status="导入失败："+String(e?.message||e);draw()}
 }
 function bundle(){return JSON.stringify({format:"AevrenXYStudy",version:1,characterId:id(),characterName:charName(),at:new Date().toISOString(),data:current()},null,2)}
-function context(options){
-  const b=book(load(),String(options?.characterId||id())),q=String(options?.query||"").toLowerCase(),sections=[],c=b.card||{},p=b.preset||{};
-  if(p.enabled&&p.content)sections.push("【书房·预设】\n"+cap(p.content,2100));
+function context(options={}){
+  const b=book(load(),String(options.characterId||id()));
+  const q=String(options.query||"").toLowerCase();
+  const recent=String(options.recent||"").toLowerCase().slice(-2600);
+  const c=b.card||{},p=b.preset||{},sections=[];
+  const conversationId=String(options.chatId??(typeof chat==="function"?chat()?.id:"")??"");
+  if(p.enabled&&p.content)sections.push("【书房·预设】\n"+cap(p.content,1900));
   if(c.enabled){
     const fields=[["名字",c.name],["描述",c.description],["性格",c.personality],["背景",c.scenario],["设定",c.system_prompt]]
-      .filter(x=>x[1]).map(x=>x[0]+"："+cap(x[1],x[0]==="描述"?850:450));
+      .filter(x=>x[1]).map(x=>x[0]+"："+cap(x[1],x[0]==="描述"?800:400));
     if(fields.length)sections.push("【书房·角色卡】\n"+fields.join("\n"));
   }
-  const matched=b.lore.filter(x=>x.enabled!==false&&x.content&&(x.constant||arr(x.keys).some(k=>k&&q.includes(String(k).toLowerCase())))).slice(0,4);
-  if(matched.length)sections.push("【书房·世界书】\n"+matched.map(x=>(x.name||"设定")+"："+cap(x.content,500)).join("\n"));
-  if(b.useSummary&&b.chapters.length){
-    const latest=b.chapters[b.chapters.length-1];
-    if(latest.summary)sections.push("【书房·最近剧情摘要】\n"+cap(latest.summary,700));
+  // The model gets a bounded table of contents, not every page of the archive.
+  // This lets it know what can be looked up and explain gaps instead of inventing lore.
+  const visibleChapters=b.chapters.filter(x=>!x.generated||String(x.originChatId)===conversationId);
+  const titles=visibleChapters.slice(-10).map(x=>cap(x.name,30)).filter(Boolean);
+  const loreNames=b.lore.filter(x=>x.enabled!==false).slice(0,14).map(x=>cap(x.name,30)).filter(Boolean);
+  if(titles.length||loreNames.length){
+    const nav=[];
+    if(loreNames.length)nav.push("世界书条目："+loreNames.join("、"));
+    if(titles.length)nav.push("章节："+titles.join("、"));
+    sections.push("【书房·可用目录（非正文）】\n"+cap(nav.join("\n"),520));
   }
-  return cap(sections.join("\n\n"),6300);
+  const matched=b.lore.filter(x=>{
+    if(x.enabled===false||!x.content)return false;
+    if(x.constant)return true;
+    return arr(x.keys).some(k=>{
+      const token=String(k||"").trim().toLowerCase();
+      return !!token&&(q.includes(token)||recent.includes(token));
+    });
+  }).slice(0,4);
+  if(matched.length)sections.push("【书房·当前触发的世界书正文】\n"+matched.map(x=>(x.name||"设定")+"："+cap(x.content,550)).join("\n"));
+  const latest=visibleChapters[visibleChapters.length-1];
+  if(b.useSummary&&latest?.summary)sections.push("【书房·本对话最近剧情摘要】\n"+cap(latest.summary,750));
+  const relevant=[...visibleChapters].reverse().find(x=>{
+    const name=String(x.name||"").trim().toLowerCase();
+    return name.length>=2&&q.includes(name);
+  })||((/书房|章节|前一章|上一章|回顾|前面发生|之前的剧情/.test(q))?latest:null);
+  if(relevant&&(relevant.text||relevant.summary)){
+    // Only provide an excerpt when the user asks for a chapter/topic.
+    const body=cap(relevant.text||relevant.summary,1450);
+    sections.push("【书房·查询到的章节："+cap(relevant.name,60)+"】\n"+body);
+  }
+  return cap(sections.join("\n\n"),7200);
 }
 const host=document.querySelector("#panelBody");
 host?.addEventListener("change",event=>{
@@ -193,6 +232,11 @@ style.textContent=String.raw`
 #xyStudy .study-cover{padding:15px;border-radius:16px;background:linear-gradient(135deg,#e5eee4,#f6f8f2);display:grid;gap:7px}
 #xyStudy .study-cover strong{font-size:15px}#xyStudy .study-cover small,#xyStudy .study-tip,#xyStudy .study-footer small{color:#748378;line-height:1.6;font-size:11px}
 #xyStudy .study-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+#xyStudy .study-preview{border:1px solid #cedbd0;border-radius:12px;background:#f7faf5;padding:10px 12px;overflow-wrap:anywhere}
+#xyStudy .study-preview summary{font-size:12px;cursor:pointer;color:#355c44;font-weight:600}
+#xyStudy .study-preview p{font-size:11px;line-height:1.6;color:#657b6a}
+#xyStudy .study-preview pre{display:block;white-space:pre-wrap;overflow-wrap:anywhere;max-height:280px;overflow-y:auto;padding:10px;background:#fff;border-radius:8px;font-size:11px;line-height:1.6;color:#364a3b}
+
 #xyStudy .study-card#xyStudyAuto{margin-top:8px}
 #xyStudyAuto .study-auto-result{padding:11px;border-radius:10px;background:#eff4ed}
 #xyStudyAuto .study-auto-result p{white-space:pre-wrap;line-height:1.7;margin:6px 0 0;font-size:12px}

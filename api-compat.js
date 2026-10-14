@@ -258,9 +258,14 @@
     const memorySummary=window.xyMemorySummaryFor?.(c.characterId||window.xyCurrentCharacter?.()?.id)||"";
     const heartInstruction=!fromCall?window.xyHeartNotes?.instruction?.()||'':'';
     await window.xyStickerShelf?.ready?.();
-    const studyContext=window.xyStudyRoom?.context?.({characterId:c.characterId||window.xyCurrentCharacter?.()?.id,query:text})||'';
-    const studyAutoContext=window.xyStudyAuto?.context?.({characterId:c.characterId||window.xyCurrentCharacter?.()?.id,chatId:c.id})||'';
-    const system=[ep.system,studyContext,studyAutoContext,timeContext,memorySummary?"角色的长期记忆摘要：\n"+memorySummary:"",memoryContext,phoneStyle,fromCall?'':(window.xyStickerShelf?.context?.(c.characterId||window.xyCurrentCharacter?.()?.id)||''),heartInstruction].filter(Boolean).join('\n\n');
+    const currentRole=window.xyCurrentCharacter?.();
+    // Resolve the character system prompt per current chat, never reuse the
+    // endpoint's stale prompt after switching conversations.
+    const roleSystem=typeof currentRole?.system==="string"?currentRole.system:ep.system;
+    const studyRecent=c.messages.slice(-8).map(m=>String(m?.text||"").slice(0,350)).join("\n");
+    const studyContext=window.xyStudyRoom?.context?.({characterId:c.characterId||currentRole?.id,chatId:c.id,query:text,recent:studyRecent})||'';
+    const studyAutoContext=window.xyStudyAuto?.context?.({characterId:c.characterId||currentRole?.id,chatId:c.id})||'';
+    const system=[roleSystem,studyContext,studyAutoContext,timeContext,memorySummary?"角色的长期记忆摘要：\n"+memorySummary:"",memoryContext,phoneStyle,fromCall?'':(window.xyStickerShelf?.context?.(c.characterId||window.xyCurrentCharacter?.()?.id)||''),heartInstruction].filter(Boolean).join('\n\n');
     // Keep only the requested number of recent chat turns in model context.
     // The 0 setting means unlimited history, not no history. System prompts
     // and explicit character/memory context are independent of this window.
