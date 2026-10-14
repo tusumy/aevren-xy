@@ -361,7 +361,7 @@
           }
           heart.text=window.xyStickerShelf?.normalizeReply?.(heart.text,c.characterId||window.xyCurrentCharacter?.()?.id)??heart.text;
           c.messages.push({role:'assistant',text:heart.text,heartShort:heart.heartShort||'',heartFull:heart.heartFull||''});
-          save();renderMessages();window.xyStudyAuto?.afterReply?.(c);return;
+          save();renderMessages();window.xyStudyAuto?.afterReply?.(c);if(!fromCall)window.xyProactiveCalls?.afterReply?.(c);return;
         }
 
         messages.push({role:'assistant',content:msg.content||null,tool_calls:calls});

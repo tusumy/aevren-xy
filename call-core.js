@@ -365,6 +365,18 @@
 
   async function acceptNativeCall(payload){
     if(phase!=="idle")hangup();
+    const callerId=String(payload?.id||"");
+    // A planned call may belong to a different character than the chat
+    // currently on screen. Switch before opening the call dialogue.
+    if(callerId&&callerId!==String(activeCharacter()?.id||"")&&typeof chats!=="undefined"){
+      let chosen=chats.find(c=>String(c.characterId||"")===callerId);
+      if(!chosen){
+        chosen={id:Date.now(),title:String(payload?.name||"角色")+"来电",characterId:callerId,messages:[]};
+        chats.unshift(chosen);
+      }
+      current=chosen.id;
+      save();renderChats();renderMessages();
+    }
     ring(payload);
     await answer();
   }

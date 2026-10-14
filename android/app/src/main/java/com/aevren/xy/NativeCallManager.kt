@@ -196,6 +196,31 @@ class NativeCallBridge(
     }
 
     @JavascriptInterface
+    fun getProactiveState(): String =
+        ProactiveCallManager.getState(activity).toString()
+
+    @JavascriptInterface
+    fun setProactiveEnabled(enabled: Boolean): String {
+        if (enabled && Build.VERSION.SDK_INT >= 33 &&
+            activity.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            activity.runOnUiThread {
+                activity.requestPermissions(
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    MainActivity.CALL_NOTIFICATION_PERMISSION
+                )
+            }
+            return JSONObject().put("ok", false)
+                .put("error", "notification_permission_requested").toString()
+        }
+        return ProactiveCallManager.setEnabled(activity, enabled).toString()
+    }
+
+    @JavascriptInterface
+    fun scheduleProactiveCall(characterId: String, characterName: String, timestampMillis: Long): String =
+        ProactiveCallManager.schedule(activity, characterId, characterName, timestampMillis).toString()
+
+    @JavascriptInterface
     fun dismissIncomingCall() {
         NativeCallManager.dismiss(activity)
     }
