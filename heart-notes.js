@@ -24,8 +24,8 @@
         return "";
       }catch{return whole}
     });
-    // Remove incomplete end markers rather than showing implementation text in chat.
-    text=text.replace(/\n?⟦heart(?:\{[^⟧]*)?$/,"").trim();
+    // Invalid or truncated heart markup should never leak into the visible chat.
+    text=text.replace(/⟦heart[\s\S]*?⟧/g,"").replace(/\n?⟦heart(?:\{[^⟧]*)?$/,"").trim();
     return {text,heartShort,heartFull,hasHeart:valid};
   }
   function parseStandalone(raw){
