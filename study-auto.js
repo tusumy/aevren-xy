@@ -89,15 +89,71 @@ function textFrom(data){
   if(Array.isArray(data?.content))return data.content.map(x=>x?.text||"").join("\n");
   return "";
 }
-function parseResult(text){
-  const raw=String(text||"").trim().replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/,"");
-  let obj;try{obj=JSON.parse(raw)}catch{
-    const first=raw.indexOf("{"),last=raw.lastIndexOf("}");
-    if(first<0||last<first)throw Error("模型没有返回 JSON");
-    obj=JSON.parse(raw.slice(first,last+1));
+// Extract complete JSON values one at a time. Some OpenAI-compatible
+// providers return a valid object followed by a second object, a closing
+// commentary line, or a Markdown fence. Parsing first-to-last "{"...""
+// wrongly joins independent objects and raises "Unexpected non-whitespace
+// character after JSON".
+function balancedJsonFragments(input){
+  const source=String(input||"");
+  const found=[];
+  for(let i=0;i<source.length&&found.length<24;i++){
+    const first=source[i];
+    if(first!=="{"&&first!=="[")continue;
+    const stack=[],pairs={"}":"{","]":"["};
+    let quoted=false,escaped=false;
+    for(let j=i;j<source.length;j++){
+      const ch=source[j];
+      if(quoted){
+        if(escaped)escaped=false;
+        else if(ch==="\\")escaped=true;
+        else if(ch==='"')quoted=false;
+        continue;
+      }
+      if(ch==='"'){quoted=true;continue}
+      if(ch==="{"||ch==="[")stack.push(ch);
+      else if(ch==="}"||ch==="]"){
+        if(stack.pop()!==pairs[ch])break;
+        if(!stack.length){
+          found.push(source.slice(i,j+1));
+          i=j; // Treat this as one self-contained value, not a joined span.
+          break;
+        }
+      }
+    }
   }
-  if(!obj||typeof obj!=="object"||typeof obj.summary!=="string"||!obj.summary.trim())throw Error("缺少剧情摘要");
-  return {title:cap(obj.title||"自动整理",70),summary:cap(obj.summary,1600),board:cap(obj.board,1300)};
+  return found;
+}
+function validSummary(value){
+  const candidates=Array.isArray(value)?value:[value];
+  for(const raw of candidates){
+    if(!raw||typeof raw!=="object"||Array.isArray(raw))continue;
+    // Support common schema aliases without manufacturing narrative detail.
+    const summary=typeof raw.summary==="string"?raw.summary:
+      typeof raw.digest==="string"?raw.digest:"";
+    if(!summary.trim())continue;
+    const title=typeof raw.title==="string"?raw.title:
+      typeof raw.name==="string"?raw.name:"自动整理";
+    const board=typeof raw.board==="string"?raw.board:
+      typeof raw.state==="string"?raw.state:"";
+    return {title:cap(title||"自动整理",70),summary:cap(summary,1600),board:cap(board,1300)};
+  }
+  return null;
+}
+function parseResult(text){
+  const raw=String(text||"").trim();
+  if(!raw)throw Error("整理模型没有返回文字");
+  const candidates=[raw,raw.replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/,"")];
+  // Also search balanced segments within prose, code fences or successive
+  // JSON objects, respecting nested braces and JSON string escapes.
+  candidates.push(...balancedJsonFragments(raw));
+  for(const candidate of candidates){
+    try{
+      const accepted=validSummary(JSON.parse(candidate));
+      if(accepted)return accepted;
+    }catch{} // Try the next independent JSON value.
+  }
+  throw Error("模型返回的剧情摘要格式不完整，未覆盖原聊天；可点「整理最近 8 轮」重试");
 }
 async function requestModel(ep,transcript,prior){
   const url=apiEndpoint(ep?.base);
