@@ -83,7 +83,7 @@
       const split=parts.length>1?` split-piece ${first?"split-first":""} ${last?"split-last":"split-mid"}`:"";
       const ts=last&&stamp?`<span class="message-time" title="${esc(title)}">${esc(stamp)}</span>`:"";
       const attachments=first?media:"";
-      const text=part?`<span class="bubble-text">${window.xyStickerShelf?.renderText?.(part)??esc(part)}</span>`:"";
+      const text=part?`<span class="bubble-text">${window.xyChatMarkdown?.render?.(part)??(window.xyStickerShelf?.renderText?.(part)??esc(part))}</span>`:"";
       return `<div class="message ${m.role}${split}" data-message="${index}" data-part="${i}"><div class="message-stack"><div class="bubble">${attachments}${text}</div>${ts}</div></div>`;
     }).join("");
   }
@@ -91,7 +91,7 @@
   function pendingHtml(item){
     const stamp=timeText(item.createdAt),title=timeTitle(item.createdAt);
     const ts=stamp?`<span class="message-time" title="${esc(title)}">${esc(stamp)}</span>`:"";
-    const media=attachmentHtml(item.attachments),text=item.text?`<span class="bubble-text">${window.xyStickerShelf?.renderText?.(item.text)??esc(item.text)}</span>`:"";
+    const media=attachmentHtml(item.attachments),text=item.text?`<span class="bubble-text">${window.xyChatMarkdown?.render?.(item.text)??(window.xyStickerShelf?.renderText?.(item.text)??esc(item.text))}</span>`:"";
     return `<div class="message user xy-pending" data-pending="${item.id}"><div class="message-stack"><div class="bubble">${media}${text}</div>${ts}</div></div>`;
   }
 

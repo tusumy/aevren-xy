@@ -223,6 +223,27 @@
     return notes.parseStandalone(contentText(msg?.content)||data?.output_text||"");
   }
 
+  window.xyRepairHeartNote=async function(targetChat,index){
+    const c=targetChat,m=c?.messages?.[index];
+    if(!m||m.role!=="assistant"||m.localOnly)throw new Error("这条消息不能补写心音");
+    if(!window.xyHeartNotes?.enabled?.())throw new Error("心音功能尚未开启");
+    const active=chat();
+    if(active!==c)throw new Error("请先回到需要补写心音的对话");
+    const ep=endpoints.find(x=>x.active)||endpoints[0];
+    if(!ep?.base||!ep.model)throw new Error("请先设置有效的模型接口");
+    const previous=c.messages.slice(0,index).reverse().find(x=>x?.role==="user");
+    const name=window.xyCurrentCharacter?.()?.name||"角色";
+    const extra=await repairMissingHeart(m.text,ep,previous?.text||"",name);
+    if(!extra?.hasHeart)throw new Error("模型仍未返回完整的心音数据");
+    // This can be an active alternative of a regenerated answer.
+    if(chat()!==c||c.messages[index]!==m)throw new Error("聊天内容已变化，请重新尝试");
+    m.heartShort=extra.heartShort;m.heartFull=extra.heartFull;
+    const variant=Array.isArray(m.variants)&&m.variants.length?m.variants[Math.min(Math.max(Number(m.activeVariant)||0,0),m.variants.length-1)]:null;
+    if(variant){variant.heartShort=extra.heartShort;variant.heartFull=extra.heartFull}
+    save();renderMessages();
+    return extra;
+  };
+
   async function compatSend(options){
     const fromCall=options?.__xyCall===true&&typeof options.text==='string';
     const el=$('#input'),text=fromCall?options.text.trim():el.value.trim();
