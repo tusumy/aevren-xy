@@ -6,11 +6,11 @@
   const clip=(value,count)=>Array.from(String(value||"").replace(/\s+/g," ").trim()).slice(0,count).join("");
   const expanded=new WeakSet();
   const instruction=()=>enabled()?[
-    "请照常回复聊天内容；在正文末尾另起一行附上一个供客户端显示的心音标记：",
-    '⟦heart{"short":"想抱你","full":"她还装不认识我。想把这只得意的小猫抱紧，亲到她笑着认领。"}⟧',
-    "short 必须是你此刻最直白的情绪或冲动，2～10 个汉字；full 是第一人称、面向对方的即时内心旁白，1～2 句，具体、不空泛。",
-    "这只是角色的可展示情绪旁白，不要写推理过程。不要解释标记，也不要在正文重复心音。",
-    "请输出有效 JSON 字符串；若另有 ⟦opts...⟧ 快捷选项标记，把心音标记放在它之前。"
+    "请照常自然回复聊天。心音是完全可选的：只有你此刻确实有一句具体、真实、未在正文说出的情绪或想法，才在正文末尾另起一行附加心音标记；没有就只回复正文，绝对不要为了格式或每轮打卡硬写心音。",
+    "允许连续很多轮没有心音，也允许情绪强烈时自然出现；由当前交流决定，不按概率、不按固定频率出现。不要用套话、重复正文或凑数的想抱你代替真正的心音。",
+    '仅在需要心音时，格式为：⟦heart{"short":"有点吃醋","full":"刚听见你夸别人，我心里酸了一下，想把你的注意力拉回来。"}⟧',
+    "short 用2～10个汉字写最直白的瞬间心情；full 用第一人称、面向对方写1～2句具体的可展示心音。两项都要有内容，使用有效 JSON 字符串。",
+    "心音只是角色的可展示旁白，不是推理过程。不解释标记，不在正文重复心音；若有 ⟦opts...⟧ 快捷选项，把心音放在它之前。"
   ].join("\n"):"";
   function parse(raw){
     let text=String(raw??""),heartShort="",heartFull="",valid=false;
@@ -20,7 +20,7 @@
         if(!obj||typeof obj!=="object")return whole;
         heartShort=clip(obj.short,16);
         heartFull=String(obj.full||"").trim().slice(0,400);
-        valid=!!(heartShort||heartFull);
+        valid=!!(heartShort&&heartFull);
         return "";
       }catch{return whole}
     });
@@ -58,7 +58,7 @@
     if(!body||body.querySelector("#xyHeartNotesToggle"))return;
     const card=document.createElement("section");
     card.className="setting-card xy-heart-setting";
-    card.innerHTML='<label class="xy-heart-settings-label"><span><strong>心音胶囊</strong><small>回复上方只显示短心音，点击才展开完整心音；语音只读正文。</small></span><input type="checkbox" id="xyHeartNotesToggle"></label>';
+    card.innerHTML='<label class="xy-heart-settings-label"><span><strong>心音胶囊</strong><small>有想说的心音才出现；点击短胶囊展开完整心音，语音只读正文。</small></span><input type="checkbox" id="xyHeartNotesToggle"></label>';
     body.appendChild(card);
     const input=card.querySelector("input");
     input.checked=enabled();
