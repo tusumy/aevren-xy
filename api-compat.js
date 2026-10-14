@@ -201,6 +201,28 @@
     return /(?:现在|而家|依家|此刻|今日|今天|当地|本地).{0,12}(?:几点|幾點|时间|時間|几号|幾號|星期几|星期幾|礼拜几|禮拜幾|日期)|(?:几点了|几点钟|几点啊|几点呀|几点啦|幾點喇|幾點啦|幾點鐘|几点)/.test(text);
   }
 
+  async function repairMissingHeart(mainReply,ep,userText,roleName){
+    const notes=window.xyHeartNotes;
+    if(!notes?.enabled?.()||typeof notes?.parseStandalone!=="function")return null;
+    const prompt="角色："+String(roleName||"角色").slice(0,80)+
+      "\n对方刚说："+String(userText||"").slice(0,1000)+
+      "\n角色刚回复："+String(mainReply||"").replace(/⟦opts[\s\S]*?⟧/g,"").slice(0,4200);
+    const req={
+      model:ep.model,stream:false,max_tokens:350,temperature:0.8,
+      messages:[
+        {role:"system",content:"为上一句角色回复补写一条本来应该附带的可展示心音。仅输出一个有效的 JSON 对象，包含 short 和 full 两个非空字符串，不要 markdown、前言或其他标记。short 用2到10个汉字写最直白的即时情绪；full 用第一人称对对方说1到2句具体的心里话，贴合真实对话，不要胡编背景、不要复述正文。这是角色可展示的情绪旁白，不是隐藏推理过程。"},
+        {role:"user",content:prompt}
+      ]
+    };
+    const headers={"Content-Type":"application/json",Accept:"application/json"};
+    if(ep.key)headers.Authorization="Bearer "+ep.key;
+    const res=await fetch(completeChatEndpoint(ep.base),{method:"POST",headers,body:JSON.stringify(req)});
+    const {data,raw}=await readJsonResponse(res);
+    if(!res.ok||data?.error)throw new Error("心音补生成失败："+diagnostic(data,raw));
+    const msg=normalizeApiResponse(data);
+    return notes.parseStandalone(contentText(msg?.content)||data?.output_text||"");
+  }
+
   async function compatSend(options){
     const fromCall=options?.__xyCall===true&&typeof options.text==='string';
     const el=$('#input'),text=fromCall?options.text.trim():el.value.trim();
@@ -238,7 +260,7 @@
     await window.xyStickerShelf?.ready?.();
     const studyContext=window.xyStudyRoom?.context?.({characterId:c.characterId||window.xyCurrentCharacter?.()?.id,query:text})||'';
     const studyAutoContext=window.xyStudyAuto?.context?.({characterId:c.characterId||window.xyCurrentCharacter?.()?.id,chatId:c.id})||'';
-    const system=[ep.system,studyContext,studyAutoContext,timeContext,memorySummary?"角色的长期记忆摘要：\n"+memorySummary:"",memoryContext,phoneStyle,heartInstruction,fromCall?'':(window.xyStickerShelf?.context?.(c.characterId||window.xyCurrentCharacter?.()?.id)||'')].filter(Boolean).join('\n\n');
+    const system=[ep.system,studyContext,studyAutoContext,timeContext,memorySummary?"角色的长期记忆摘要：\n"+memorySummary:"",memoryContext,phoneStyle,fromCall?'':(window.xyStickerShelf?.context?.(c.characterId||window.xyCurrentCharacter?.()?.id)||''),heartInstruction].filter(Boolean).join('\n\n');
     // Keep only the requested number of recent chat turns in model context.
     // The 0 setting means unlimited history, not no history. System prompts
     // and explicit character/memory context are independent of this window.
@@ -305,6 +327,12 @@
           if(!reply)throw new Error('模型没有返回文本：'+diagnostic(data,raw));
           hideTyping();
           const heart=window.xyHeartNotes?.parse?.(reply)||{text:String(reply)};
+          if(window.xyHeartNotes?.enabled?.()&&!heart.hasHeart){
+            try{
+              const extra=await repairMissingHeart(heart.text,ep,text,window.xyCurrentCharacter?.()?.name||"角色");
+              if(extra?.hasHeart){heart.heartShort=extra.heartShort;heart.heartFull=extra.heartFull;heart.hasHeart=true}
+            }catch(err){console.warn("[砚屿] 心音自动补生成失败：",String(err?.message||err))}
+          }
           heart.text=window.xyStickerShelf?.normalizeReply?.(heart.text,c.characterId||window.xyCurrentCharacter?.()?.id)??heart.text;
           c.messages.push({role:'assistant',text:heart.text,heartShort:heart.heartShort||'',heartFull:heart.heartFull||''});
           save();renderMessages();window.xyStudyAuto?.afterReply?.(c);return;
