@@ -146,6 +146,18 @@
   function stopNativeRecognition(){
     try{return parseNativeVoiceResult(nativeVoiceBridge()?.stopRecognition?.())}catch{return {ok:false,error:"native_speech_stop_failed"}}
   }
+  // Cancellation must clear both the Android recognizer and the JS promise.
+  function cancelNativeRecognition(){
+    const reject=nativeRecognitionReject;
+    clearTimeout(nativeRecognitionTimer);nativeRecognitionTimer=null;
+    nativeRecognizing=false;
+    nativeRecognitionResolve=null;nativeRecognitionReject=null;
+    nativeRecognitionFallbackTried=false;
+    try{nativeVoiceBridge()?.cancelRecognition?.()}catch{}
+    if(reject)reject(new Error("speech_cancelled"));
+    notifyRecognition("state","cancelled");
+    return {ok:true};
+  }
   const currentText=m=>String(m?.text||"").trim();
   const messageKey=(c,index)=>`${c?.id||"chat"}:${index}`;
 
@@ -736,6 +748,7 @@
     onRecognitionProgress(observer){recognitionObserver=typeof observer==="function"?observer:null},
     recognizeNativeOnce(options){return recognizeNativeOnce(options)},
     stopNativeRecognition(){return stopNativeRecognition()},
+    cancelNativeRecognition(){return cancelNativeRecognition()},
     startNativeRecognitionActivity(){return startNativeRecognitionActivity()},
     stop(){
       if(activeAudio){activeAudio.pause();activeAudio=null}
