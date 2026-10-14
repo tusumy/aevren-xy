@@ -48,10 +48,14 @@ function ringNow(c){
   const id=String(c.characterId||ch.id||"xuan-yan");
   const name=safe(ch.name||"角色",80);
   const payload={id,name};
-  // Present the incoming-call screen immediately in the currently open chat.
+  // Keep a single call surface. Foreground: in-app ringing screen.
+  // If the user backgrounded the app while the reply was loading, prefer
+  // Android's existing native incoming-call notification instead.
+  if(document.visibilityState==="hidden"&&api.nativeIncomingCall){
+    try{if(api.nativeIncomingCall(payload)?.ok)return true}
+    catch(error){console.warn("[砚屿] 后台来电通知不可用：",error)}
+  }
   api.ring(payload);
-  // Native Android ringtone/heads-up notification, when supported.
-  try{api.nativeIncomingCall?.(payload)}catch(error){console.warn("[砚屿] 原生来电提示不可用：",error)}
   return true;
 }
 function showSettings(){

@@ -6,6 +6,36 @@
   let callCharacter=null,callUseNative=false,nativeAutoTimer=null,callGeneration=0,callChat=null,callLines=[],missedSpeech=0;
   let forceRecordedStt=false;
   let ambience=null,ambienceEvents=[];
+  let ringtoneContext=null,ringtoneTimer=null;
+  function stopRingtone(){
+    if(ringtoneTimer){clearInterval(ringtoneTimer);ringtoneTimer=null}
+    if(ringtoneContext){try{ringtoneContext.close?.()}catch{}ringtoneContext=null}
+  }
+  function startRingtone(){
+    stopRingtone();
+    const Ctx=window.AudioContext||window.webkitAudioContext;
+    if(!Ctx)return;
+    try{
+      const ctx=new Ctx();ringtoneContext=ctx;
+      ctx.resume?.().catch?.(()=>{});
+      const pulse=()=>{
+        if(phase!=="ringing")return stopRingtone();
+        const t=ctx.currentTime;
+        for(const freq of [440,480]){
+          const wave=ctx.createOscillator(),gain=ctx.createGain();
+          wave.type="sine";wave.frequency.value=freq;
+          gain.gain.setValueAtTime(0.0001,t);
+          gain.gain.exponentialRampToValueAtTime(0.017,t+0.03);
+          gain.gain.setValueAtTime(0.017,t+0.68);
+          gain.gain.exponentialRampToValueAtTime(0.0001,t+0.85);
+          wave.connect(gain).connect(ctx.destination);
+          wave.start(t);wave.stop(t+0.87);
+        }
+      };
+      pulse();ringtoneTimer=setInterval(pulse,2300);
+    }catch(e){stopRingtone();console.warn("砚屿来电铃声未启动",e)}
+  }
+
   const nativeAcousticLimit=3;
   window.__xyNativeAcousticEvent=label=>{
     if(phase!=="connected"||!callUseNative)return;
@@ -90,6 +120,7 @@
     transcriptEl.innerHTML="";statusEl.textContent="语音来电";timeEl.textContent="00:00";acceptBtn.hidden=false;hangupBtn.hidden=false;
     fallbackWrap.hidden=true;pushBtn.hidden=true;
     navigator.vibrate?.([180,120,180]);
+    startRingtone();
   }
 
   function voiceStage({stage,detail}={}){
@@ -108,6 +139,7 @@
 
   async function answer(){
     if(phase!=="ringing")return;
+    stopRingtone();
     try{window.AevrenCallNative?.dismissIncomingCall?.()}catch{}
     phase="connected";startedAt=Date.now();overlay.classList.remove("ringing");overlay.classList.add("connected");acceptBtn.hidden=true;statusEl.textContent=SpeechRecognition?"正在接通…":"已接通";
     timerId=setInterval(()=>{if(phase==="connected")timeEl.textContent=fmtTime(Date.now()-startedAt)},500);
@@ -383,6 +415,7 @@
   }
 
   function hangup(){
+    stopRingtone();
     try{window.AevrenCallNative?.dismissIncomingCall?.()}catch{}
     if(phase==="idle")return;
     const wasConnected=phase==="connected";
