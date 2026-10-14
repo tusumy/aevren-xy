@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <queries>
         <intent><action android:name="android.speech.RecognitionService" /></intent>
@@ -19,6 +20,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Theme.Yanyu"
         android:usesCleartextTraffic="true">
+        <receiver android:name=".ProactiveCallReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
         <activity
             android:name=".IncomingCallActivity"
             android:exported="false"
