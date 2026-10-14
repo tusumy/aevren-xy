@@ -106,7 +106,7 @@
     if(phase==="connected"&&callLines.length<160)callLines.push({role,text:String(text).slice(0,1200)});
   }
 
-  function ring(payload){
+  function ring(payload, options={}){
     ensureUi();
     if(phase!=="idle")return;
     const active=activeCharacter(),incoming=payload&&typeof payload==="object"?payload:{};
@@ -120,7 +120,7 @@
     transcriptEl.innerHTML="";statusEl.textContent="语音来电";timeEl.textContent="00:00";acceptBtn.hidden=false;hangupBtn.hidden=false;
     fallbackWrap.hidden=true;pushBtn.hidden=true;
     navigator.vibrate?.([180,120,180]);
-    startRingtone();
+    if(options.nativeAccepted!==true)startRingtone();
   }
 
   function voiceStage({stage,detail}={}){
@@ -410,7 +410,9 @@
       current=chosen.id;
       save();renderChats();renderMessages();
     }
-    ring(payload);
+    // Android already played its own ringtone and presented the native
+    // incoming call screen; do not replay the web double-tone on answer.
+    ring(payload,{nativeAccepted:true});
     await answer();
   }
 

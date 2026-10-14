@@ -50,16 +50,22 @@ function ringNow(c){
   const payload={id,name};
   const key=String(c.id)+":"+String(c.messages?.length||0);
   if(lastRingKey===key)return false;
-  // Keep a single call surface. Foreground: in-app ringing screen.
-  // If the user backgrounded the app while the reply was loading, prefer
-  // Android's existing native incoming-call notification instead.
-  if(document.visibilityState==="hidden"&&api.nativeIncomingCall){
-    try{if(api.nativeIncomingCall(payload)?.ok){lastRingKey=key;return true}}
-    catch(error){console.warn("[砚屿] 后台来电通知不可用：",error)}
+  // ALWAYS use the same Android incoming-call path as the user's manual
+  // call button: lock-screen layout, caller image and SYSTEM ringtone.
+  // Don't open the lightweight JS overlay or play the synthetic tone.
+  if(typeof api.nativeIncomingCall!=="function")return false;
+  try{
+    const result=api.nativeIncomingCall(payload);
+    if(result?.ok){lastRingKey=key;return true}
+    const reason=String(result?.error||"unknown");
+    console.warn("[砚屿] 原生来电启动失败：",reason);
+    if(reason==="notification_permission_requested")window.showNotice?.("请允许通知权限，再开启 AI 主动来电",true);
+    else window.showNotice?.("AI 来电未能启动："+reason.slice(0,70),true);
+  }catch(error){
+    console.warn("[砚屿] 原生来电不可用：",error);
+    window.showNotice?.("原生来电启动失败，请检查通知权限",true);
   }
-  api.ring(payload);
-  lastRingKey=key;
-  return true;
+  return false;
 }
 function showSettings(){
   const body=document.querySelector("#panelBody");
