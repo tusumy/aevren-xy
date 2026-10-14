@@ -15,7 +15,7 @@ import java.util.Calendar
 /**
  * Delivers a previously approved, AI-planned call even when the WebView is closed.
  * No API credentials or chat messages are held by Android. Scheduling is opt-in,
- * limited to 09:00–22:00 device time and one delivered call per 20 hours.
+ * limited to 09:00–22:00 device time. The character may choose multiple calls per day.
  */
 object ProactiveCallManager {
     private const val PREFS = "xy.proactive.calls.v1"
@@ -28,7 +28,6 @@ object ProactiveCallManager {
     private const val REQUEST_CODE = 8912
     private const val MIN_NOTICE_MS = 20 * 60 * 1000L
     private const val MAX_WINDOW_MS = 24 * 60 * 60 * 1000L
-    private const val COOLDOWN_MS = 20 * 60 * 60 * 1000L
 
     private fun prefs(context: Context) =
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -103,8 +102,7 @@ object ProactiveCallManager {
         val now = System.currentTimeMillis()
         if (whenMillis < now + MIN_NOTICE_MS || whenMillis > now + MAX_WINDOW_MS)
             return JSONObject().put("ok", false).put("error", "invalid_schedule_window")
-        val lastCall = prefs(context).getLong(LAST_CALL, 0)
-        val candidate = approvedTime(maxOf(whenMillis, lastCall + COOLDOWN_MS))
+        val candidate = approvedTime(whenMillis)
         if (candidate > now + 36 * 60 * 60 * 1000L)
             return JSONObject().put("ok", false).put("error", "outside_allowed_window")
         clearAlarm(context)

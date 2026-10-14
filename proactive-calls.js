@@ -2,7 +2,7 @@
 "use strict";
 // Chat models decide whether to plan a future call while the app is open.
 // Android subsequently delivers that call independently of the WebView.
-const KEY="xy.proactive.planner.v1",PLAN_INTERVAL=4*60*60*1000;
+const KEY="xy.proactive.planner.v1",PLAN_INTERVAL=60*60*1000;
 let busy=false;
 const bridge=()=>window.AevrenCallNative;
 const safe=(s,n=200)=>String(s??"").trim().slice(0,n);
@@ -64,9 +64,9 @@ function showSettings(){
   const section=document.createElement("section");
   section.className="setting-card xy-proactive-settings";
   section.id="xyProactiveSettings";
-  section.innerHTML='<label class="xy-proactive-label"><span><strong>AI 主动来电 · Android 实验功能</strong><small>开启后，角色会根据最近聊天判断是否安排未来来电。由安卓后台响铃，无需你先按拨号；每天最多一次，22:00–09:00 不打扰。</small></span><input type="checkbox" id="xyProactiveEnabled"></label>'+
+  section.innerHTML='<label class="xy-proactive-label"><span><strong>AI 主动来电 · Android 实验功能</strong><small>开启后，角色会根据最近聊天判断是否安排未来来电。由安卓后台响铃，无需你先按拨号；不设每日通数上限，22:00–09:00 不打扰。</small></span><input type="checkbox" id="xyProactiveEnabled"></label>'+
     '<p class="xy-proactive-state" id="xyProactiveStatus"></p>'+
-    '<p class="xy-proactive-info">默认关闭。开启后每隔至少四小时才会再次请求模型做决定；每次判断会发送最近最多十二条文字聊天并产生额外 API 费用。关闭后会取消未发生的来电。安卓系统可能延迟通知或限制锁屏弹窗。</p>';
+    '<p class="xy-proactive-info">默认关闭。开启后，每隔至少一小时才会再次请求模型判断；每次判断会发送最近最多十二条文字聊天并产生额外 API 费用。关闭后会取消未发生的来电。安卓系统可能延迟通知或限制锁屏弹窗。</p>';
   host.appendChild(section);
   const check=section.querySelector("#xyProactiveEnabled"),status=section.querySelector("#xyProactiveStatus");
   function update(message=""){
@@ -99,7 +99,6 @@ async function choose(c,force=false){
   const cur=state();
   if(cur.error||!cur.enabled||!cur.notificationsAllowed)return;
   if(cur.scheduledAt&&cur.scheduledAt>Date.now())return;
-  if(cur.lastCallAt&&Date.now()-cur.lastCallAt<20*60*60*1000)return;
   const history=lastCharacters(c);
   if(history.length<3||!history.some(x=>x.role==="user")||!history.some(x=>x.role==="assistant"))return;
   const character=currentCharacter(c);
@@ -116,7 +115,7 @@ async function choose(c,force=false){
     const request={
       model:ep.model,stream:false,max_tokens:170,temperature:0.65,
       messages:[
-        {role:"system",content:"你是聊天中的角色「"+safe(character.name,60)+"」。根据近期你和对方的真实交流，判断你是否真想在今天稍后主动打一次语音电话。允许拒绝打电话。你有自己的好奇、想念或想主动分享的话题时可以选择拨打，普通对话不必硬凑理由。不为提醒健康、紧急事件等假装来电，也不要泄露隐私。只能返回严格 JSON：{\"call\":true或false,\"afterMinutes\":90到720的整数}；不要其他解释。客户端会自动避开22:00到09:00，并限制来电次数。"},
+        {role:"system",content:"你是聊天中的角色「"+safe(character.name,60)+"」。根据近期你和对方的真实交流，判断你是否真想在接下来主动拨出一通语音电话。允许拒绝打电话。你有自己的好奇、想念或想主动分享的话题时可以选择拨打，普通对话不必硬凑理由。不为提醒健康、紧急事件等假装来电，也不要泄露隐私。只能返回严格 JSON：{\"call\":true或false,\"afterMinutes\":90到720的整数}；不要其他解释。客户端会避开22:00到09:00，已预约的电话不会重复预约；不设每日固定次数上限。"},
         {role:"user",content:"最近聊天记录（只是参考，不要复述）：\n"+history.map(x=>(x.role==="assistant"?"你":"对方")+"："+x.content).join("\n")}
       ]};
     const headers={"Content-Type":"application/json",Accept:"application/json"};
