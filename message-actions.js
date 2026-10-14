@@ -64,6 +64,7 @@
       save=()=>{};renderMessages=()=>{};renderChats=()=>{};showTyping=()=>{};hideTyping=()=>{};
       if(input)input.value=promptText;
       window.xyActiveSendAttachments=promptAttachments;
+      window.xyRegenerating=true;
       await window.AevrenApiCompat.send();
       const last=c.messages.at(-1);
       if(last?.role==='assistant'){
@@ -74,6 +75,7 @@
     finally{
       save=oldSave;renderMessages=oldRenderMessages;renderChats=oldRenderChats;
       showTyping=oldShowTyping;hideTyping=oldHideTyping;
+      window.xyRegenerating=false;
       window.xyActiveSendAttachments=originalAttachments;
       c.messages=originalMessages;c.title=originalTitle;
       if(input)input.value=originalInput;

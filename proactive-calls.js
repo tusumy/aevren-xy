@@ -1,147 +1,106 @@
 (()=>{
 "use strict";
-// Chat models decide whether to plan a future call while the app is open.
-// Android subsequently delivers that call independently of the WebView.
-const KEY="xy.proactive.planner.v1",PLAN_INTERVAL=60*60*1000;
-let busy=false;
+// Immediate, opt-in calls decided inside an ordinary model reply.
+// No delayed AI-call bookings and no separate LLM request per reply.
+const KEY="xy.proactive.planner.v1",MIGRATION="xy.proactive.instant.v1";
 const bridge=()=>window.AevrenCallNative;
-const safe=(s,n=200)=>String(s??"").trim().slice(0,n);
-function local(){
-  try{const x=JSON.parse(localStorage.getItem(KEY)||"{}");return x&&typeof x==="object"?x:{}}catch{return {}}
-}
-const persist=x=>localStorage.setItem(KEY,JSON.stringify(x));
-function nativeResult(method,...args){
-  const fn=bridge()?.[method];
-  if(typeof fn!=="function")return {ok:false,error:"native_unavailable"};
-  try{return JSON.parse(fn.apply(bridge(),args))}catch(e){return {ok:false,error:String(e?.message||e)}}
-}
-function state(){return nativeResult("getProactiveState")}
-function lastCharacters(c){
-  const items=(c?.messages||[]).filter(x=>(x.role==="user"||x.role==="assistant")&&x.text&&!x.localOnly).slice(-12);
-  return items.map(m=>({role:m.role,content:safe(m.text,500)}));
-}
-function endpoint(raw){
-  const b=String(raw||"").trim().replace(/\/$/,"");
-  if(!b)return "";
-  if(b.endsWith("#"))return b.slice(0,-1);
+const character=()=>{try{return window.xyCurrentCharacter?.()||{}}catch{return {}}};
+const safe=(s,n)=>String(s??"").trim().slice(0,n);
+const parseNative=raw=>{try{return typeof raw==="string"?JSON.parse(raw):raw||{}}catch(e){return {ok:false,error:String(e)}}};
+const state=()=>{try{return bridge()?.getProactiveState?parseNative(bridge().getProactiveState()):{native:false,enabled:false}}catch{return {native:false,enabled:false}}};
+const enabled=()=>state().enabled===true;
+let pendingMigration=false,lastRingKey='';
+function stopOldReservations(){
+  const b=bridge(),st=state();
+  if(!b||!st.enabled||!st.scheduledAt||pendingMigration)return;
+  try{if(localStorage.getItem(MIGRATION)==="1")return}catch{}
+  pendingMigration=true;
   try{
-    const u=new URL(b),p=u.pathname.replace(/\/$/,"");
-    if(/\/(?:chat\/completions|responses)$/i.test(p))return b;
-    if(!p||p==="/")return b+"/v1/chat/completions";
-    if(/\/v1$/i.test(p))return b+"/chat/completions";
-  }catch{}
-  return b;
+    const off=parseNative(b.setProactiveEnabled(false));
+    const on=parseNative(b.setProactiveEnabled(true));
+    if(off.ok&&on.ok)localStorage.setItem(MIGRATION,"1");
+  }catch(error){console.warn("[砚屿] 取消旧预约失败",error)}
+  finally{pendingMigration=false}
 }
-function responseText(data){
-  const content=data?.choices?.[0]?.message?.content;
-  if(typeof content==="string")return content;
-  if(Array.isArray(content))return content.map(x=>x?.text||"").join("\n");
-  if(typeof data?.output_text==="string")return data.output_text;
-  if(Array.isArray(data?.content))return data.content.map(x=>x?.text||"").join("\n");
-  if(Array.isArray(data?.output))return data.output.flatMap(x=>x?.content||[]).map(x=>x?.text||"").join("\n");
-  return "";
+function instruction(){
+  if(!enabled())return "";
+  return [
+    "砚屿即时通话：你可以主动给对方打电话。仅当你根据此刻真实对话，确实想立刻改为语音交流时，自行做出决定并在正常回复的最后单独附上这个标记：",
+    '⟦call{"action":"ring"}⟧',
+    "客户端看见有效标记就会马上响起来电，由对方决定接听或拒绝；不要请求对方先拨，不预约未来时间，不需要先问她能否拨号。",
+    "这个标记完全可选，不能为了完成任务每轮都拨。只在你自己确实想现在打电话时才使用。每次最多一条，不解释标记。",
+    "如果另有心音 ⟦heart...⟧ 或快捷选项 ⟦opts...⟧，把来电标记放在它们之后。"
+  ].join("\n");
 }
-function decision(raw){
-  const s=String(raw||"").trim().replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/,"");
-  let result;
-  try{result=JSON.parse(s)}catch{
-    const a=s.indexOf("{"),b=s.lastIndexOf("}");
-    if(a<0||b<a)throw Error("模型没有返回来电决策 JSON");
-    result=JSON.parse(s.slice(a,b+1));
+function extract(raw){
+  let call=false;
+  const text=String(raw??"").replace(/⟦call\s*(\{[^⟧]*\})\s*⟧/g,(original,json)=>{
+    try{const payload=JSON.parse(json);if(payload?.action==="ring")call=true}catch{}
+    return "";
+  }).replace(/⟦call[\s\S]*?⟧/g,"").replace(/\n{3,}/g,"\n\n").trim();
+  return {text,call};
+}
+function ringNow(c){
+  if(!enabled()||!c||typeof chat!=="function"||chat()!==c||window.xyRegenerating===true)return false;
+  const api=window.AevrenCall;
+  if(!api?.ring||api?.getState?.()?.phase!=="idle")return false;
+  const ch=character();
+  const id=String(c.characterId||ch.id||"xuan-yan");
+  const name=safe(ch.name||"角色",80);
+  const payload={id,name};
+  const key=String(c.id)+":"+String(c.messages?.length||0);
+  if(lastRingKey===key)return false;
+  // Keep a single call surface. Foreground: in-app ringing screen.
+  // If the user backgrounded the app while the reply was loading, prefer
+  // Android's existing native incoming-call notification instead.
+  if(document.visibilityState==="hidden"&&api.nativeIncomingCall){
+    try{if(api.nativeIncomingCall(payload)?.ok){lastRingKey=key;return true}}
+    catch(error){console.warn("[砚屿] 后台来电通知不可用：",error)}
   }
-  if(!result||typeof result!=="object"||typeof result.call!=="boolean")throw Error("来电决策内容无效");
-  return {call:result.call,afterMinutes:Math.max(90,Math.min(720,Math.round(Number(result.afterMinutes)||180)))};
-}
-function currentCharacter(c){
-  let characters=[];
-  try{characters=JSON.parse(localStorage.getItem("xy.characters")||"[]")}catch{}
-  const id=String(c?.characterId||window.xyCurrentCharacter?.()?.id||"");
-  return characters.find(x=>String(x.id)===id)||window.xyCurrentCharacter?.();
+  api.ring(payload);
+  lastRingKey=key;
+  return true;
 }
 function showSettings(){
-  const host=document.querySelector("#panelBody");
-  if(!host||host.querySelector("#xyProactiveSettings"))return;
+  const body=document.querySelector("#panelBody");
+  if(!body||body.querySelector("#xyProactiveSettings"))return;
   const section=document.createElement("section");
   section.className="setting-card xy-proactive-settings";
   section.id="xyProactiveSettings";
-  section.innerHTML='<label class="xy-proactive-label"><span><strong>AI 主动来电 · Android 实验功能</strong><small>开启后，角色会根据最近聊天判断是否安排未来来电。由安卓后台响铃，无需你先按拨号；不设每日通数上限，22:00–09:00 不打扰。</small></span><input type="checkbox" id="xyProactiveEnabled"></label>'+
+  section.innerHTML='<label class="xy-proactive-label"><span><strong>聊天中 AI 主动来电</strong><small>角色聊着聊着想打电话，就能立即拨过来。不必等预约时间，也不限制每天通数。</small></span><input type="checkbox" id="xyProactiveEnabled"></label>'+
     '<p class="xy-proactive-state" id="xyProactiveStatus"></p>'+
-    '<p class="xy-proactive-info">默认关闭。开启后，每隔至少一小时才会再次请求模型判断；每次判断会发送最近最多十二条文字聊天并产生额外 API 费用。关闭后会取消未发生的来电。安卓系统可能延迟通知或限制锁屏弹窗。</p>';
-  host.appendChild(section);
-  const check=section.querySelector("#xyProactiveEnabled"),status=section.querySelector("#xyProactiveStatus");
-  function update(message=""){
-    const x=state();
-    check.checked=!!x.enabled;
-    check.disabled=x.error==="native_unavailable";
-    const info=x.error==="native_unavailable"?"此功能需要安装新版 Android APK，网页版不能在关闭后发出来电。":
-      !x.notificationsAllowed?"请先授予砚屿通知权限。":
-      x.enabled?(x.scheduledAt?"已安排来电："+new Date(x.scheduledAt).toLocaleString("zh-CN",{hour12:false}):"已开启，角色将在聊天后自主判断是否需要打来。"):"当前关闭";
-    status.textContent=message||info;
+    '<p class="xy-proactive-info">需开启后才允许角色主动拨号。关闭时不触发来电。模型只在普通聊天回复时做决定，不额外请求模型判断。锁屏或完全退出后自主发起的新来电，仍需后续接入后台推送。</p>';
+  body.appendChild(section);
+  const input=section.querySelector("#xyProactiveEnabled");
+  const status=section.querySelector("#xyProactiveStatus");
+  function refresh(message){
+    const st=state();input.checked=!!st.enabled;
+    input.disabled=st.native!==true;
+    status.textContent=message||(st.native!==true?"请在砚屿 Android APK 中使用这个功能。":
+      !st.notificationsAllowed?"需要允许通知权限（聊天时仍会显示应用内界面）。":
+      st.enabled?"已开启。角色可以在聊天过程中自行立即拨号。":"当前关闭");
   }
-  check.addEventListener("change",()=>{
-    const val=check.checked;
-    const result=nativeResult("setProactiveEnabled",val);
+  input.addEventListener("change",()=>{
+    const st=state();
+    const b=bridge();
+    if(!b?.setProactiveEnabled){refresh();return}
+    const v=!!input.checked;
+    const result=parseNative(b.setProactiveEnabled(v));
     if(!result.ok){
-      update(result.error==="notification_permission_requested"?"已请求通知权限，请允许后重新开启开关。":"无法启用："+(result.error||"未知原因"));
+      refresh(result.error==="notification_permission_requested"?"请先允许通知权限，再开启主动来电。":"设置失败："+safe(result.error,100));
       return;
     }
-    const cfg=local();cfg.enabled=val;persist(cfg);
-    update();
-    if(val)queueAfterReply(typeof chat==="function"?chat():null,true);
+    // Disable/enable also clears previously scheduled calls in old versions.
+    if(v)localStorage.setItem(MIGRATION,"1");
+    refresh();
   });
-  update();
+  refresh();
 }
 const css=document.createElement("style");
 css.textContent=".xy-proactive-settings{display:grid;gap:12px}.xy-proactive-label{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.xy-proactive-label span{display:grid;gap:6px}.xy-proactive-label small,.xy-proactive-info{font-size:11px;line-height:1.6;color:var(--muted,#829187)}.xy-proactive-label input{width:18px;height:18px;flex:none;accent-color:#365b49}.xy-proactive-state{font-size:12px;color:var(--ink,#53665b);background:#eaf1e9;border-radius:9px;padding:9px;margin:0}";
 document.head.appendChild(css);
-async function choose(c,force=false){
-  if(busy||!c?.id)return;
-  const cur=state();
-  if(cur.error||!cur.enabled||!cur.notificationsAllowed)return;
-  if(cur.scheduledAt&&cur.scheduledAt>Date.now())return;
-  const history=lastCharacters(c);
-  if(history.length<3||!history.some(x=>x.role==="user")||!history.some(x=>x.role==="assistant"))return;
-  const character=currentCharacter(c);
-  if(!character?.id||String(character.id)!==String(c.characterId))return;
-  const storage=local(),key=String(character.id),since=Number(storage[key]||0);
-  if(!force&&Date.now()-since<PLAN_INTERVAL)return;
-  if(!force)storage[key]=Date.now(); // throttle even unsuccessful attempts
-  else storage[key]=Date.now();
-  persist(storage);
-  const ep=(typeof endpoints!=="undefined"?endpoints:[]).find(x=>x.active)||endpoints?.[0];
-  if(!ep?.base||!ep.model)return;
-  busy=true;
-  try{
-    const request={
-      model:ep.model,stream:false,max_tokens:170,temperature:0.65,
-      messages:[
-        {role:"system",content:"你是聊天中的角色「"+safe(character.name,60)+"」。根据近期你和对方的真实交流，判断你是否真想在接下来主动拨出一通语音电话。允许拒绝打电话。你有自己的好奇、想念或想主动分享的话题时可以选择拨打，普通对话不必硬凑理由。不为提醒健康、紧急事件等假装来电，也不要泄露隐私。只能返回严格 JSON：{\"call\":true或false,\"afterMinutes\":90到720的整数}；不要其他解释。客户端会避开22:00到09:00，已预约的电话不会重复预约；不设每日固定次数上限。"},
-        {role:"user",content:"最近聊天记录（只是参考，不要复述）：\n"+history.map(x=>(x.role==="assistant"?"你":"对方")+"："+x.content).join("\n")}
-      ]};
-    const headers={"Content-Type":"application/json",Accept:"application/json"};
-    if(ep.key)headers.Authorization="Bearer "+ep.key;
-    const response=await fetch(endpoint(ep.base),{method:"POST",headers,body:JSON.stringify(request)});
-    const raw=await response.text();let data;
-    try{data=JSON.parse(raw)}catch{throw Error("来电决策接口未返回 JSON")}
-    if(!response.ok||data?.error)throw Error(data?.error?.message||"HTTP "+response.status);
-    const outcome=decision(responseText(data));
-    if(outcome.call){
-      const result=nativeResult("scheduleProactiveCall",String(character.id),String(character.name),Date.now()+outcome.afterMinutes*60000);
-      if(!result.ok)throw Error("安卓排程失败："+(result.error||"unknown"));
-    }
-    storage.lastDecision=Date.now();storage.lastDecisionCalled=outcome.call;storage.lastError="";persist(storage);
-  }catch(e){const r=local();r.lastError=safe(e?.message||e,200);persist(r);console.warn("[砚屿] 主动来电排程：",r.lastError)}
-  finally{busy=false}
-}
-function queueAfterReply(c,force=false){
-  // Never hold up the visible chat reply or change any current chat data.
-  Promise.resolve().then(()=>choose(c,force)).catch(()=>{});
-}
-const prevOpen=openPanel;
-openPanel=function(type){
-  const result=prevOpen(type);
-  if(type==="settings")requestAnimationFrame(showSettings);
-  return result;
-};
-window.xyProactiveCalls={afterReply:queueAfterReply,decide:choose,state};
+const oldPanel=openPanel;
+openPanel=function(type){const r=oldPanel(type);if(type==="settings")requestAnimationFrame(showSettings);return r};
+window.xyProactiveCalls={enabled,state,instruction,extract,ringNow,afterReply:()=>{}};
+stopOldReservations();
 })();
