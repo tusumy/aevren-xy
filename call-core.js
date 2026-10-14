@@ -108,6 +108,7 @@
 
   async function answer(){
     if(phase!=="ringing")return;
+    try{window.AevrenCallNative?.dismissIncomingCall?.()}catch{}
     phase="connected";startedAt=Date.now();overlay.classList.remove("ringing");overlay.classList.add("connected");acceptBtn.hidden=true;statusEl.textContent=SpeechRecognition?"正在接通…":"已接通";
     timerId=setInterval(()=>{if(phase==="connected")timeEl.textContent=fmtTime(Date.now()-startedAt)},500);
     if(window.AevrenVoice?.hasNativeRecognition?.()){
@@ -382,6 +383,7 @@
   }
 
   function hangup(){
+    try{window.AevrenCallNative?.dismissIncomingCall?.()}catch{}
     if(phase==="idle")return;
     const wasConnected=phase==="connected";
     const duration=startedAt?fmtTime(Date.now()-startedAt):"00:00";
