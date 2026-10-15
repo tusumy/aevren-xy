@@ -535,3 +535,123 @@
   background:var(--story-card)!important;
   border-color:var(--story-line)!important;
 }
+
+/* Tap-to-read chapters: closed cards stay compact; the open card is a page. */
+#panel #xyStudy details.study-chapter-entry{
+  display:block;
+  padding:0;
+  gap:0;
+  overflow:visible;
+  background:var(--story-paper);
+  transition:border-color .18s ease,box-shadow .18s ease;
+}
+#panel #xyStudy details.study-chapter-entry[open]{
+  border-color:#a5c3ad;
+  box-shadow:0 9px 28px rgba(48,78,53,.075);
+}
+#panel #xyStudy .study-chapter-cover{
+  display:grid;
+  gap:10px;
+  padding:17px 17px 16px;
+  cursor:pointer;
+  list-style:none;
+  -webkit-tap-highlight-color:transparent;
+  outline-offset:3px;
+  border-radius:inherit;
+  color:var(--story-ink);
+  min-width:0;
+}
+#panel #xyStudy .study-chapter-cover::-webkit-details-marker{display:none}
+#panel #xyStudy .study-chapter-cover::marker{content:""}
+#panel #xyStudy .study-chapter-cover:focus-visible{
+  outline:2px solid #6e9c7a;
+}
+#panel #xyStudy .study-chapter-cover .study-chapter-excerpt{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  line-clamp:2;
+  overflow:hidden;
+  font-size:12px;
+  color:var(--story-muted);
+  line-height:1.8;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+#panel #xyStudy .study-chapter-open-hint{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding-top:10px;
+  margin-top:3px;
+  border-top:1px dashed var(--story-line);
+  color:var(--story-accent);
+  font-size:11px;
+  font-weight:650;
+}
+#panel #xyStudy .study-chapter-chevron{
+  display:inline-flex;
+  width:27px;height:27px;
+  justify-content:center;align-items:center;
+  border-radius:50%;
+  background:var(--story-cover);
+  font-size:17px;
+  transition:transform .16s ease;
+}
+#panel #xyStudy .study-chapter-close-label{display:none}
+#panel #xyStudy .study-chapter-entry[open] .study-chapter-open-label{display:none}
+#panel #xyStudy .study-chapter-entry[open] .study-chapter-close-label{display:inline}
+#panel #xyStudy .study-chapter-entry[open] .study-chapter-chevron{transform:rotate(180deg)}
+#panel #xyStudy .study-chapter-reading{
+  border-top:1px solid var(--story-line);
+  margin:0 17px;
+  padding:17px 0 18px;
+  display:grid;
+  gap:13px;
+  min-width:0;
+}
+#panel #xyStudy .study-chapter-reading-label{
+  color:var(--story-accent);
+  font-size:10px;
+  letter-spacing:.13em;
+  font-weight:700;
+}
+#panel #xyStudy .study-chapter-full{
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  font-size:13px;
+  line-height:1.95;
+  color:var(--story-ink);
+  max-height:none;
+  overflow:visible;
+  user-select:text;
+  -webkit-user-select:text;
+}
+#panel #xyStudy .study-chapter-reading .study-actions{
+  border-top:1px dashed var(--story-line);
+  padding-top:14px;
+  gap:9px;
+}
+#panel #xyStudy .study-chapter-reading .study-actions button{
+  min-height:38px;
+  padding:9px 12px;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy details.study-chapter-entry[open]{
+  border-color:rgba(164,217,175,.55)!important;
+  background:var(--story-paper)!important;
+  box-shadow:0 7px 23px rgba(0,0,0,.13);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy :is(.study-chapter-cover,.study-chapter-cover strong,.study-chapter-full){
+  color:var(--story-ink)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy :is(.study-chapter-excerpt,.study-chapter-reading-label,.study-chapter-open-hint){
+  color:var(--story-muted)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-chapter-chevron{
+  background:var(--story-cover)!important;
+  color:var(--story-ink)!important;
+}
+@media(prefers-reduced-motion:reduce){
+  #panel #xyStudy .study-chapter-chevron{transition:none}
+}
