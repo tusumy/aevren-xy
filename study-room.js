@@ -154,14 +154,24 @@ function draw(){
       (ordered.length?'<div class="study-timeline">'+ordered.map((entry,index)=>{
         const day=new Date(entry.updated||Date.now()).toLocaleDateString("zh-CN");
         const type=entry.generated?"自动归档":"手写章节";
-        const excerpt=cap(entry.summary||entry.text,220);
-        return '<article class="study-card study-chapter-entry">'+
-          '<div class="study-chapter-top"><span class="study-chapter-number">'+String(ordered.length-index).padStart(2,"0")+'</span>'+
-          '<span class="study-chapter-type">'+type+'</span><time>'+escape(day)+'</time></div>'+
-          '<strong>'+escape(entry.name||"无标题")+'</strong>'+
-          '<p>'+escape(excerpt||"暂未填写摘要")+'</p>'+
-          '<div class="study-actions">'+btn("editChapter","打开 / 编辑",entry.id)+btn("deleteChapter","删除",entry.id,"danger")+'</div>'+
-        '</article>';
+        const excerpt=cap(entry.summary||entry.text,165);
+        const fullText=String(entry.text||entry.summary||"").trim();
+        const readingLabel=entry.generated?"本章原始聊天":"完整章节正文";
+        return '<details class="study-card study-chapter-entry">'+
+          '<summary class="study-chapter-cover" aria-label="展开或收起章节：'+escape(entry.name||"无标题")+'">'+
+            '<span class="study-chapter-top"><span class="study-chapter-number">'+String(ordered.length-index).padStart(2,"0")+'</span>'+
+              '<span class="study-chapter-type">'+type+'</span><time>'+escape(day)+'</time></span>'+
+            '<strong>'+escape(entry.name||"无标题")+'</strong>'+
+            '<span class="study-chapter-excerpt">'+escape(excerpt||"点开查看章节内容")+'</span>'+
+            '<span class="study-chapter-open-hint"><span class="study-chapter-open-label">点击阅读整章</span>'+
+              '<span class="study-chapter-chevron" aria-hidden="true">⌄</span></span>'+
+          '</summary>'+
+          '<div class="study-chapter-reading">'+
+            '<div class="study-chapter-reading-label">'+escape(readingLabel)+'</div>'+
+            '<div class="study-chapter-full">'+escape(fullText||"这一章还没有正文。")+'</div>'+
+            '<div class="study-actions">'+btn("editChapter","编辑章节",entry.id)+btn("deleteChapter","删除章节",entry.id,"danger")+'</div>'+
+          '</div>'+
+        '</details>';
       }).join("")+'</div>':
       '<div class="study-empty">还没有章节。聊过的故事，可以从上面的「整理最近 8 轮」开始收集。</div>')+
       '</section>';
