@@ -68,40 +68,68 @@ function draw(){
     '<p>角色卡 '+(c.enabled?"已启用":"未启用")+' · 预设 '+(p.enabled?"已启用":"未启用")+
     ' · 世界书 '+counts.lore+' 条 · 章节 '+counts.chapters+' 篇</p>'+
     '<pre>'+escape(preview||"本轮暂无可注入的书房内容。")+'</pre></div></details>';
-  if(tab==="card")html+='<p class="study-tip">支持酒馆 V1 / V2 角色卡 JSON。PNG 角色卡暂不支持；启用后新消息会自动带上这里的设定。</p>'+
-    '<label class="study-import">导入角色卡 JSON<input type="file" id="studyCardImport" accept=".json,application/json" hidden></label>'+
-    inputField("studyCardName","角色名称",c.name)+
-    textField("studyCardDesc","角色描述",c.description,5)+
-    textField("studyCardPersonality","性格",c.personality)+
-    textField("studyCardScenario","背景 / 场景",c.scenario)+
-    textField("studyCardSystem","系统设定",c.system_prompt)+
-    textField("studyCardGreeting","默认开场白",c.first_mes)+
-    (arr(c.alternate_greetings).length?'<details class="study-alts"><summary>备选开场白 · '+arr(c.alternate_greetings).length+' 条（点击展开）</summary>'+
-      arr(c.alternate_greetings).map((text,i)=>textField("studyAlt"+i,"备选 "+(i+2),text,4)).join("")+'</details>':"")+
-    (([c.first_mes,...arr(c.alternate_greetings)].filter(Boolean)).length
-      ?'<section class="study-card"><strong>选择开场 · '+([c.first_mes,...arr(c.alternate_greetings)].filter(Boolean).length)+' 条</strong>'+
-      '<select id="studyGreetingChoice">'+[c.first_mes,...arr(c.alternate_greetings)].filter(Boolean).map((text,i)=>
-        '<option value="'+i+'">'+(i+1)+' · '+escape(cap(String(text).replace(/\\s+/g," "),36))+'</option>').join("")+'</select>'+
-      '<textarea id="studyGreetingPreview" readonly rows="5">'+escape(c.first_mes||arr(c.alternate_greetings)[0]||"")+'</textarea>'+
-      btn("startGreetingChat","用选中开场新建对话","","primary")+'</section>':"")+
-    check("studyCardActive","启用角色卡上下文",c.enabled)+
-    btn("saveCard","保存角色卡","","primary");
-  if(tab==="preset")html+='<p class="study-tip">附加系统预设，不修改原来的接口和模型参数。导入后默认关闭，检查完内容再启用。</p>'+
-    '<label class="study-import">导入预设 JSON<input type="file" id="studyPresetImport" accept=".json,application/json" hidden></label>'+
-    inputField("studyPresetName","预设名称",p.name)+textField("studyPresetContent","预设指令",p.content,12)+
-    check("studyPresetActive","启用这个预设",p.enabled)+btn("savePreset","保存预设","","primary");
+  if(tab==="card"){
+    const openings=[c.first_mes,...arr(c.alternate_greetings)].filter(Boolean);
+    const first=Math.min(greetingChoice,Math.max(0,openings.length-1));
+    html+='<section class="study-section-heading"><span class="study-eyebrow">CHARACTER / 人物手记</span>'+
+      '<h3>和谁一起写故事</h3><p>先选择相遇的方式。角色的详细设定，藏在下面的编辑页里。</p></section>'+
+      '<label class="study-import">＋ 导入酒馆角色卡 JSON<input type="file" id="studyCardImport" accept=".json,application/json" hidden></label>'+
+      (openings.length?'<section class="study-card study-greeting-picker">'+
+        '<span class="study-eyebrow">FIRST MEETING / 开场</span><strong>选择一场相遇 · '+openings.length+' 种开场</strong>'+
+        '<select id="studyGreetingChoice" aria-label="选择开场白">'+openings.map((text,i)=>
+          '<option value="'+i+'" '+(i===first?"selected":"")+'>'+(i+1)+' · '+escape(cap(String(text).replace(/\s+/g," "),40))+'</option>').join("")+'</select>'+
+        '<textarea id="studyGreetingPreview" readonly rows="6" aria-label="完整开场白预览">'+escape(openings[first])+'</textarea>'+
+        '<small>选中的开场会开启一条新对话，原来的聊天不会改变。</small>'+
+        btn("startGreetingChat","用这一条开场 · 开始聊天","","primary")+'</section>':
+        '<div class="study-empty">暂时没有开场白，先导入酒馆角色卡吧。</div>')+
+      '<details class="study-editor" '+(!c.name?"open":"")+'>'+
+      '<summary><span>人物设定与其他开场</span><small>'+(c.enabled?"角色卡已启用":"角色卡未启用")+'</small></summary>'+
+      '<div class="study-editor-fields">'+
+      inputField("studyCardName","角色名称",c.name)+
+      textField("studyCardDesc","角色描述",c.description,5)+
+      textField("studyCardPersonality","性格",c.personality)+
+      textField("studyCardScenario","背景 / 场景",c.scenario)+
+      textField("studyCardSystem","系统设定",c.system_prompt)+
+      textField("studyCardGreeting","默认开场白",c.first_mes)+
+      (arr(c.alternate_greetings).length?'<details class="study-alts"><summary>编辑其它 '+arr(c.alternate_greetings).length+' 条开场</summary>'+
+        arr(c.alternate_greetings).map((txt,i)=>textField("studyAlt"+i,"备选 "+(i+2),txt,4)).join("")+'</details>':"")+
+      check("studyCardActive","启用角色卡上下文",c.enabled)+
+      btn("saveCard","保存人物设定","","primary")+'</div></details>';
+  }
+  if(tab==="preset"){
+    html+='<section class="study-section-heading"><span class="study-eyebrow">PRESET / 角色补充</span>'+
+      '<h3>故事的语气与规则</h3><p>附加到模型的预设指令，不改变原接口或聊天角色。</p></section>'+
+      '<label class="study-import">＋ 导入预设 JSON<input type="file" id="studyPresetImport" accept=".json,application/json" hidden></label>'+
+      '<details class="study-editor" '+(!p.content?"open":"")+'>'+
+        '<summary><span>'+(p.name?escape(p.name):"编辑预设内容")+'</span><small>'+(p.enabled?"使用中":"暂未启用")+'</small></summary>'+
+        '<div class="study-editor-fields">'+inputField("studyPresetName","预设名称",p.name)+
+        textField("studyPresetContent","预设指令",p.content,12)+
+        check("studyPresetActive","启用这个预设",p.enabled)+btn("savePreset","保存预设","","primary")+'</div></details>';
+  }
   if(tab==="lore"){
     const x=b.lore.find(e=>e.id===editLore)||{};
-    html+='<p class="study-tip">常驻条目每轮加入上下文；关键词会结合本轮消息和最近几条聊天来触发，最多同时读取四条。未命中时只有目录可见，条目正文不会发给角色。</p>'+
-      '<label class="study-import">导入世界书 JSON<input type="file" id="studyLoreImport" accept=".json,application/json" hidden></label>'+
-      inputField("studyLoreName","设定名称",x.name)+
-      inputField("studyLoreKeys","关键词（逗号分开）",arr(x.keys).join("，"))+
-      textField("studyLoreContent","正文",x.content,6)+
-      check("studyLoreConstant","常驻设定",x.constant)+check("studyLoreActive","启用条目",x.enabled!==false)+
-      '<div class="study-actions">'+btn("saveLore",editLore?"保存修改":"添加条目","","primary")+(editLore?btn("cancelLore","取消编辑"):"")+'</div>'+
-      '<h3>世界书 · '+b.lore.length+' 条</h3>';
-    html+=b.lore.map(x=>'<article class="study-card"><strong>'+escape(x.name||"设定")+'</strong><small>'+(x.enabled===false?"已关闭 · ":"")+
-      (x.constant?"常驻":escape(arr(x.keys).join(" / ")||"未设置关键词"))+'</small><p>'+escape(cap(x.content,105))+'</p><div class="study-actions">'+btn("editLore","编辑",x.id)+btn("deleteLore","删除",x.id,"danger")+'</div></article>').join("");
+    html+='<section class="study-section-heading"><span class="study-eyebrow">WORLD / 设定集</span>'+
+      '<h3>世界藏在细节里</h3><p>常驻条目每轮可见；关键词条目会结合最近聊天触发，最多读取四条正文。</p></section>'+
+      '<label class="study-import">＋ 导入世界书 JSON<input type="file" id="studyLoreImport" accept=".json,application/json" hidden></label>'+
+      '<details class="study-editor" '+(editLore?"open":"")+'>'+
+        '<summary><span>'+(editLore?"正在编辑设定":"＋ 写一条世界书")+'</span><small>地点 · 人物 · 物品 · 规则</small></summary>'+
+        '<div class="study-editor-fields">'+
+        inputField("studyLoreName","设定名称",x.name)+
+        inputField("studyLoreKeys","关键词（逗号分开）",arr(x.keys).join("，"))+
+        textField("studyLoreContent","正文",x.content,6)+
+        check("studyLoreConstant","常驻设定",x.constant)+
+        check("studyLoreActive","启用条目",x.enabled!==false)+
+        '<div class="study-actions">'+btn("saveLore",editLore?"保存修改":"添加条目","","primary")+
+        (editLore?btn("cancelLore","取消编辑"):"")+'</div></div></details>'+
+        '<div class="study-shelf-head"><div><span class="study-eyebrow">INDEX / WORLD BOOK</span><h3>设定目录</h3></div><span class="study-count">'+b.lore.length+' 条</span></div>';
+    html+=(b.lore.length?b.lore.map(x=>'<article class="study-card study-lore-entry">'+
+      '<div class="study-chapter-top"><span class="study-chapter-type">'+(x.constant?"常驻":"关键词")+'</span>'+
+      '<time>'+(x.enabled===false?"已关闭":"已启用")+'</time></div>'+
+      '<strong>'+escape(x.name||"设定")+'</strong>'+
+      '<small>'+escape(arr(x.keys).join(" / ")||"随时可用")+'</small>'+
+      '<p>'+escape(cap(x.content,135))+'</p>'+
+      '<div class="study-actions">'+btn("editLore","编辑",x.id)+btn("deleteLore","删除",x.id,"danger")+'</div></article>').join(""):
+      '<div class="study-empty">世界书还是空白的。地点、人物、约定，都可以写在这里。</div>');
   }
   if(tab==="chapter"){
     const x=b.chapters.find(e=>e.id===editChapter)||{};
@@ -281,7 +309,7 @@ host?.addEventListener("click",event=>{
     if(!e.content||(!e.keys.length&&!e.constant)){status="请填写正文与关键词，或开启常驻";draw();return}
     saveStudy(b=>{const i=b.lore.findIndex(x=>x.id===editLore);if(i>=0)b.lore[i]=e;else b.lore.push(e);editLore=""});return;
   }
-  if(action==="editLore"){editLore=key;status="";draw();return}
+  if(action==="editLore"){editLore=key;status="";draw();document.querySelector("#xyStudy .study-editor")?.scrollIntoView?.({behavior:"smooth",block:"start"});return}
   if(action==="cancelLore"){editLore="";draw();return}
   if(action==="deleteLore"){if(!confirm("删除这条世界书设定？"))return;saveStudy(b=>{b.lore=b.lore.filter(x=>x.id!==key);editLore=""},"已删除条目");return}
   if(action==="saveChapter"){
@@ -289,7 +317,7 @@ host?.addEventListener("click",event=>{
     if(!e.text){status="章节正文不能为空";draw();return}
     saveStudy(b=>{const i=b.chapters.findIndex(x=>x.id===editChapter);if(i>=0)b.chapters[i]=e;else b.chapters.push(e);b.useSummary=on("studyChapterActive");editChapter=""});return;
   }
-  if(action==="editChapter"){editChapter=key;status="";draw();return}
+  if(action==="editChapter"){editChapter=key;status="";draw();document.querySelector("#xyStudy .study-editor")?.scrollIntoView?.({behavior:"smooth",block:"start"});return}
   if(action==="cancelChapter"){editChapter="";draw();return}
   if(action==="deleteChapter"){if(!confirm("删除这一章？"))return;saveStudy(b=>{b.chapters=b.chapters.filter(x=>x.id!==key);editChapter=""},"已删除章节");return}
   if(action==="export"){
