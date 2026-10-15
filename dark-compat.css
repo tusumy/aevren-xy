@@ -62,3 +62,36 @@ html[data-theme-mode="dark"] #panel #xyProactiveSettings :is(.xy-proactive-label
 html[data-theme-mode="dark"] #panel #xyProactiveStatus{
  background:#2b4032!important;color:#e6f0e8!important;border:1px solid var(--xy-night-border)
 }
+
+/* Tavern study draws its own light stylesheet after the page has loaded. */
+html[data-theme-mode="dark"] #panel #xyStudy{color:#ecf2ed!important}
+html[data-theme-mode="dark"] #panel #xyStudy :is(.study-cover,.study-preview){
+ background:linear-gradient(135deg,#2d3b32,#253129)!important;
+ border:1px solid var(--xy-night-border)!important;
+}
+html[data-theme-mode="dark"] #panel #xyStudy :is(.study-cover strong,.study-cover small,.study-preview summary,.study-preview p){
+ color:#ecf2ed!important
+}
+html[data-theme-mode="dark"] #panel #xyStudy .study-preview pre{
+ color:#ecf2ed!important;background:#1b2820!important;border:1px solid var(--xy-night-border)!important
+}
+html[data-theme-mode="dark"] #panel #xyStudy :is(.study-card,.study-alts,.study-greeting-all,.study-greeting-picker){
+ background:linear-gradient(135deg,#2d392f,#263129)!important;
+ border:1px solid var(--xy-night-border)!important;color:#ecf2ed!important
+}
+html[data-theme-mode="dark"] #panel #xyStudy :is(.study-card strong,.study-card h3,.study-alts summary,.study-greeting-all summary){color:#ecf2ed!important}
+html[data-theme-mode="dark"] #panel #xyStudy :is(.study-card p,.study-card small,.study-greeting-picker small,.study-tip,.study-field span,.study-footer small){
+ color:#b4c4b9!important
+}
+html[data-theme-mode="dark"] #panel #xyStudy :is(input:not([type="checkbox"]),textarea,select){
+ background:#1b2620!important;color:#ecf2ed!important;border:1px solid var(--xy-night-border)!important
+}
+html[data-theme-mode="dark"] #panel #xyStudy :is(textarea[readonly],.study-greeting-picker textarea){
+ background:#202c24!important;color:#edf4ef!important
+}
+html[data-theme-mode="dark"] #panel #xyStudy :is(.study-tabs button,.study-actions button:not(.primary),.study-footer button){
+ background:#2e3c32!important;color:#ecf2ed!important;border:1px solid var(--xy-night-border)!important
+}
+html[data-theme-mode="dark"] #panel #xyStudy .study-tabs .selected{
+ background:#40634d!important;color:#fff!important;border-color:#83a58d!important
+}
