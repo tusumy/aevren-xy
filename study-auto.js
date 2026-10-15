@@ -49,6 +49,22 @@ function firstSentencePreview(value){
   // Show at most the first sentence, with a bounded preview for long prose.
   return cap(punctuation>=0?oneLine.slice(0,punctuation+1):oneLine,110);
 }
+// Both story summaries share one renderer so the plot and character/state
+// cards cannot drift into different interactions again.
+function foldedSummaryCard(number,label,title,content,extraClass=""){
+  if(!String(content||"").trim())return "";
+  return '<details class="study-memory-page study-memory-digest'+(extraClass?" "+extraClass:"")+'">'+
+    '<summary class="study-digest-toggle" aria-label="'+html("展开或收起完整"+label)+'">'+
+      '<span class="study-page-kicker"><span>'+html(number)+'</span> '+html(label)+'</span>'+
+      '<span class="study-digest-heading">'+html(title)+'</span>'+
+      '<span class="study-digest-one-line">'+html(firstSentencePreview(content))+'</span>'+
+      '<span class="study-digest-hint"><span class="study-digest-read">点击展开全文</span>'+
+        '<span class="study-digest-close">点击收起</span>'+
+        '<span class="study-digest-arrow" aria-hidden="true">⌄</span></span>'+
+    '</summary>'+
+    '<div class="study-digest-full"><p>'+html(content)+'</p></div>'+
+  '</details>';
+}
 function panelHTML(){
   const {c,charId,chatId}=currentIds(),auto=getSettings(charId),record=recordFor(auto,chatId);
   const currentCount=completedPairs(c).length;
@@ -79,20 +95,8 @@ function panelHTML(){
     (busy.has(chatId)?'<p class="study-status" role="status">正在翻阅这八轮聊天，请稍等…</p>':"")+
     (record.error?'<p class="study-status study-error" role="alert">上次整理失败：'+html(cap(record.error,210))+'。原聊天没有被覆盖。</p>':"")+
     (hasResults?'<div class="study-summary-pages">'+
-      (record.digest?'<details class="study-memory-page study-memory-digest">'+
-        '<summary class="study-digest-toggle" aria-label="展开或收起完整剧情脉络">'+
-          '<span class="study-page-kicker"><span>01</span> 剧情脉络</span>'+
-          '<span class="study-digest-heading">上次故事说到这里</span>'+
-          '<span class="study-digest-one-line">'+html(firstSentencePreview(record.digest))+'</span>'+
-          '<span class="study-digest-hint"><span class="study-digest-read">点击展开全文</span>'+
-          '<span class="study-digest-close">点击收起</span>'+
-          '<span class="study-digest-arrow" aria-hidden="true">⌄</span></span>'+
-        '</summary>'+
-        '<div class="study-digest-full"><p>'+html(record.digest)+'</p></div>'+
-      '</details>':"")+
-      (record.board?'<article class="study-memory-page study-memory-board">'+
-        '<div class="study-page-kicker"><span>02</span> 人物与场景</div><h4>目前的故事状态</h4>'+
-        '<p>'+html(record.board)+'</p></article>':"")+
+      foldedSummaryCard("01","剧情脉络","上次故事说到这里",record.digest)+
+      foldedSummaryCard("02","人物与场景","目前的故事状态",record.board,"study-memory-board")+
       '</div>':'<div class="study-summary-empty"><span aria-hidden="true">✧</span>'+
         '<p>故事还没有整理成章。按上面的按钮，收下最近的八轮对话。</p></div>')+
     '</section>';
