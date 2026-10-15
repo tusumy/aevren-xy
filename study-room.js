@@ -68,6 +68,7 @@ function draw(){
       ?'<section class="study-card"><strong>选择开场 · '+([c.first_mes,...arr(c.alternate_greetings)].filter(Boolean).length)+' 条</strong>'+
       '<select id="studyGreetingChoice">'+[c.first_mes,...arr(c.alternate_greetings)].filter(Boolean).map((text,i)=>
         '<option value="'+i+'">'+(i+1)+' · '+escape(cap(String(text).replace(/\\s+/g," "),36))+'</option>').join("")+'</select>'+
+      '<textarea id="studyGreetingPreview" readonly rows="5">'+escape(c.first_mes||arr(c.alternate_greetings)[0]||"")+'</textarea>'+
       btn("startGreetingChat","用选中开场新建对话","","primary")+'</section>':"")+
     check("studyCardActive","启用角色卡上下文",c.enabled)+
     btn("saveCard","保存角色卡","","primary");
@@ -142,7 +143,7 @@ async function importFile(file,kind){
     const raw=JSON.parse(await file.text());
     if(kind==="card"){
       const card=parseCard(raw);let extra=[];try{extra=parseLore(raw)}catch{}
-      greetingChoice=0;saveStudy(b=>{b.card=card;appendLore(b,extra)},"角色卡已导入 · "+(1+card.alternate_greetings.length)+" 条开场白"+(extra.length?"，含世界书":""));
+      greetingChoice=0;saveStudy(b=>{b.card=card;appendLore(b,extra)},"角色卡已导入 · "+([card.first_mes,...card.alternate_greetings].filter(Boolean).length)+" 条开场白"+(extra.length?"，含世界书":""));
     }else if(kind==="preset")saveStudy(b=>{b.preset=parsePreset(raw)},"预设已导入，检查后再启用");
     else{const entries=parseLore(raw);if(!entries.length)throw Error("没有有效世界书条目");saveStudy(b=>appendLore(b,entries),"世界书已导入 "+entries.length+" 条（重复条目跳过）")}
   }catch(e){status="导入失败："+String(e?.message||e);draw()}
