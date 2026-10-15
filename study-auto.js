@@ -43,6 +43,12 @@ function completedPairs(c){
   return out;
 }
 function recordFor(auto,chatId){return auto.byChat[chatId]&&typeof auto.byChat[chatId]==="object"?auto.byChat[chatId]:{}}
+function firstSentencePreview(value){
+  const oneLine=String(value||"").replace(/\s+/g," ").trim();
+  const punctuation=oneLine.search(/[。！？!?]/);
+  // Show at most the first sentence, with a bounded preview for long prose.
+  return cap(punctuation>=0?oneLine.slice(0,punctuation+1):oneLine,110);
+}
 function panelHTML(){
   const {c,charId,chatId}=currentIds(),auto=getSettings(charId),record=recordFor(auto,chatId);
   const currentCount=completedPairs(c).length;
@@ -53,12 +59,12 @@ function panelHTML(){
   const lastDate=record.updated?new Date(record.updated).toLocaleString("zh-CN",{hour12:false}):"";
   const hasResults=!!(record.digest||record.board);
   return '<section id="xyStudyAuto" class="study-card study-auto-panel">'+
-    '<header class="study-auto-head">'+
+    '<div class="study-auto-head">'+
       '<div class="study-auto-title"><span class="study-eyebrow">CHAPTER / AUTO MEMORY</span>'+
       '<h3>让故事自己长出记忆</h3>'+
       '<p>从真实聊天里提炼剧情，原话永远保留。</p></div>'+
       '<div class="study-progress-num"><b>'+finished+'</b><span>/ 8 轮</span></div>'+
-    '</header>'+
+    '</div>'+
     '<div class="study-progress-bar" role="progressbar" aria-label="距离下次整理的进度" aria-valuenow="'+finished+'" aria-valuemin="0" aria-valuemax="8">'+
       '<span style="width:'+percent+'%"></span></div>'+
     '<p class="study-progress-note">'+(auto.enabled?(remaining?"再聊 "+remaining+" 轮将自动整理":"可以整理新的剧情了"):"自动整理已关闭 · 可以手动整理")+
@@ -73,9 +79,17 @@ function panelHTML(){
     (busy.has(chatId)?'<p class="study-status" role="status">正在翻阅这八轮聊天，请稍等…</p>':"")+
     (record.error?'<p class="study-status study-error" role="alert">上次整理失败：'+html(cap(record.error,210))+'。原聊天没有被覆盖。</p>':"")+
     (hasResults?'<div class="study-summary-pages">'+
-      (record.digest?'<article class="study-memory-page">'+
-        '<div class="study-page-kicker"><span>01</span> 剧情脉络</div><h4>上次故事说到这里</h4>'+
-        '<p>'+html(record.digest)+'</p></article>':"")+
+      (record.digest?'<details class="study-memory-page study-memory-digest">'+
+        '<summary class="study-digest-toggle" aria-label="展开或收起完整剧情脉络">'+
+          '<span class="study-page-kicker"><span>01</span> 剧情脉络</span>'+
+          '<span class="study-digest-heading">上次故事说到这里</span>'+
+          '<span class="study-digest-one-line">'+html(firstSentencePreview(record.digest))+'</span>'+
+          '<span class="study-digest-hint"><span class="study-digest-read">点击展开全文</span>'+
+          '<span class="study-digest-close">点击收起</span>'+
+          '<span class="study-digest-arrow" aria-hidden="true">⌄</span></span>'+
+        '</summary>'+
+        '<div class="study-digest-full"><p>'+html(record.digest)+'</p></div>'+
+      '</details>':"")+
       (record.board?'<article class="study-memory-page study-memory-board">'+
         '<div class="study-page-kicker"><span>02</span> 人物与场景</div><h4>目前的故事状态</h4>'+
         '<p>'+html(record.board)+'</p></article>':"")+
