@@ -46,14 +46,28 @@ function draw(){
   const recent=(activeChat?.messages||[]).slice(-8).map(m=>String(m?.text||"").slice(0,350)).join("\n");
   const preview=context({characterId:id(),chatId:activeChat?.id,query:lastUser,recent});
   const bindingNote=c.name&&c.name!==charName()?"已导入「"+c.name+"」角色卡，但当前聊天角色仍是「"+charName()+"」。两边设定可能冲突；角色名不会自动修改。":"当前聊天绑定「"+charName()+"」，本书房只供这个角色使用。";
-  let html='<div id="xyStudy"><section class="study-cover"><strong>'+escape(charName())+'的书房</strong><small>'+escape(bindingNote)+'</small></section>'+
-    '<details class="study-preview"><summary>本轮能读到什么 · 点击核对</summary>'+
-    '<p>预览以当前对话最近一次提问和近期聊天为依据；下次发送消息时会重新匹配。角色不能直接翻阅未被选中的整本书。</p>'+
-    '<p>角色卡：'+(c.enabled?'已启用':'未启用')+' · 预设：'+(p.enabled?'已启用':'未启用')+
-    ' · 世界书：'+b.lore.filter(x=>x.enabled!==false).length+' 条已启用 · 章节：'+b.chapters.length+' 篇</p>'+
-    '<pre>'+escape(preview||'当前没有可注入的书房内容。请先启用角色卡、预设或填写可触发的世界书。')+'</pre></details>'+
-    '<div class="study-tabs">'+[["card","角色卡"],["preset","预设"],["lore","世界书"],["chapter","剧情"]].map(x=>btn("tab",x[1],x[0],x[0]===tab?"selected":"")).join("")+'</div>'+
-    (status?'<p class="study-status" role="status">'+escape(status)+'</p>':"");
+  const counts={
+    greetings:[c.first_mes,...arr(c.alternate_greetings)].filter(Boolean).length,
+    lore:b.lore.filter(x=>x.enabled!==false).length,
+    chapters:b.chapters.length
+  };
+  const hero='<header class="study-cover">'+
+    '<span class="study-cover-kicker">THE STORY ARCHIVE <i>✦</i></span>'+
+    '<strong>'+escape(charName())+'的故事档案</strong>'+
+    '<p>'+escape(bindingNote)+'</p>'+
+    '<div class="study-overview">'+
+      '<span><b>'+counts.greetings+'</b><small>种开场</small></span>'+
+      '<span><b>'+counts.lore+'</b><small>条设定</small></span>'+
+      '<span><b>'+counts.chapters+'</b><small>篇章节</small></span>'+
+    '</div></header>';
+  let html='<div id="xyStudy">'+hero+
+    '<nav class="study-tabs" aria-label="书房页面">'+[["card","人物"],["preset","预设"],["lore","世界书"],["chapter","故事线"]].map(x=>btn("tab",x[1],x[0],x[0]===tab?"selected":"")).join("")+'</nav>'+
+    (status?'<p class="study-status" role="status">'+escape(status)+'</p>':"")+
+    '<details class="study-preview"><summary>这轮角色读到了什么 <span>核对上下文 ↗</span></summary>'+
+    '<div class="study-preview-inner"><p>这里只展示当前对话实际可读的设定。未触发的世界书不会整本注入。</p>'+
+    '<p>角色卡 '+(c.enabled?"已启用":"未启用")+' · 预设 '+(p.enabled?"已启用":"未启用")+
+    ' · 世界书 '+counts.lore+' 条 · 章节 '+counts.chapters+' 篇</p>'+
+    '<pre>'+escape(preview||"本轮暂无可注入的书房内容。")+'</pre></div></details>';
   if(tab==="card")html+='<p class="study-tip">支持酒馆 V1 / V2 角色卡 JSON。PNG 角色卡暂不支持；启用后新消息会自动带上这里的设定。</p>'+
     '<label class="study-import">导入角色卡 JSON<input type="file" id="studyCardImport" accept=".json,application/json" hidden></label>'+
     inputField("studyCardName","角色名称",c.name)+
@@ -91,14 +105,39 @@ function draw(){
   }
   if(tab==="chapter"){
     const x=b.chapters.find(e=>e.id===editChapter)||{};
-    html+='<p class="study-tip">可以将长剧情保存成章节。启用摘要时，只引用本对话的自动章节或公共手写章节；同角色其他对话的自动章节不会串进来。具体章名也可在聊天里提问。</p>'+
-      inputField("studyChapterName","章节标题",x.name)+textField("studyChapterText","章节正文",x.text,11)+
-      textField("studyChapterSummary","章节摘要",x.summary,4)+check("studyChapterActive","引用最新章节摘要",b.useSummary)+
-      '<div class="study-actions">'+btn("saveChapter",editChapter?"更新章节":"保存新章节","","primary")+(editChapter?btn("cancelChapter","取消编辑"):"")+'</div>'+
-      '<h3>章节书架 · '+b.chapters.length+' 篇</h3>';
-    html+=[...b.chapters].reverse().map(x=>'<article class="study-card"><strong>'+escape(x.name||"无标题")+'</strong><small>'+escape(new Date(x.updated||Date.now()).toLocaleDateString("zh-CN"))+'</small><p>'+escape(cap(x.summary||x.text,110))+'</p><div class="study-actions">'+btn("editChapter","打开 / 编辑",x.id)+btn("deleteChapter","删除",x.id,"danger")+'</div></article>').join("");
+    html+='<section class="study-section-heading">'+
+      '<span class="study-eyebrow">STORY / CHAPTERS</span>'+
+      '<h3>故事在这里继续</h3>'+
+      '<p>先看最新剧情，再沿着时间线翻阅章节。想手写内容时，展开编辑页就好。</p></section>';
+    html+=window.xyStudyAuto?.panelHTML?.()||"";
+    html+='<details class="study-editor" '+(editChapter?"open":"")+'>'+
+      '<summary><span>'+(editChapter?"正在编辑章节":"＋ 手写一篇章节")+'</span><small>'+(editChapter?"保存后会返回故事书架":"点开后再填写")+'</small></summary>'+
+      '<div class="study-editor-fields">'+
+      inputField("studyChapterName","章节标题",x.name)+
+      textField("studyChapterText","章节正文",x.text,11)+
+      textField("studyChapterSummary","章节摘要",x.summary,4)+
+      check("studyChapterActive","引用最新章节摘要",b.useSummary)+
+      '<div class="study-actions">'+btn("saveChapter",editChapter?"更新章节":"保存新章节","","primary")+
+      (editChapter?btn("cancelChapter","取消编辑"):"")+'</div></div></details>';
+    const ordered=[...b.chapters].reverse();
+    html+='<section class="study-shelf"><div class="study-shelf-head">'+
+      '<div><span class="study-eyebrow">ARCHIVE / SAVED STORIES</span><h3>章节书架</h3></div>'+
+      '<span class="study-count">'+ordered.length+' 篇</span></div>'+
+      (ordered.length?'<div class="study-timeline">'+ordered.map((entry,index)=>{
+        const day=new Date(entry.updated||Date.now()).toLocaleDateString("zh-CN");
+        const type=entry.generated?"自动归档":"手写章节";
+        const excerpt=cap(entry.summary||entry.text,220);
+        return '<article class="study-card study-chapter-entry">'+
+          '<div class="study-chapter-top"><span class="study-chapter-number">'+String(ordered.length-index).padStart(2,"0")+'</span>'+
+          '<span class="study-chapter-type">'+type+'</span><time>'+escape(day)+'</time></div>'+
+          '<strong>'+escape(entry.name||"无标题")+'</strong>'+
+          '<p>'+escape(excerpt||"暂未填写摘要")+'</p>'+
+          '<div class="study-actions">'+btn("editChapter","打开 / 编辑",entry.id)+btn("deleteChapter","删除",entry.id,"danger")+'</div>'+
+        '</article>';
+      }).join("")+'</div>':
+      '<div class="study-empty">还没有章节。聊过的故事，可以从上面的「整理最近 8 轮」开始收集。</div>')+
+      '</section>';
   }
-  if(tab==="chapter")html+=window.xyStudyAuto?.panelHTML?.()||"";
   html+='<footer class="study-footer">'+btn("export","导出本角色书房 JSON")+btn("copy","复制书房 JSON")+
     '<small>书房资料保存在本机，同时包含在「数据管理」的砚屿完整备份里。</small></footer></div>';
   host.innerHTML=html;panel.classList.add("open");document.querySelector("#scrim")?.classList.add("show");
