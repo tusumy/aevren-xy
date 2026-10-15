@@ -140,6 +140,22 @@ function validSummary(value){
   }
   return null;
 }
+function parsePlainSummary(text){
+  const fields={title:[],summary:[],board:[]};
+  let active="";
+  for(const line of String(text||"").split(/\r?\n/)){
+    const m=line.match(/^\s*(?:#{1,4}\s*)?(?:\*\*)?\s*(章节标题|标题|title|剧情摘要|情节摘要|故事梗概|摘要|总结|summary|人物与场景|人物状态|角色状态|场景状态|当前状态|未解决事项|board|state)(?:\*\*)?\s*(?:[：:]|\s*[-—]\s*|\s*$)\s*(.*)$/i);
+    if(m){
+      const name=m[1].toLowerCase();
+      active=/^(?:标题|章节标题|title)$/.test(name)?"title":
+        /^(?:剧情摘要|情节摘要|故事梗概|摘要|总结|summary)$/.test(name)?"summary":"board";
+      if(m[2].trim())fields[active].push(m[2].trim());
+    }else if(active&&line.trim()&&!/^```/.test(line))fields[active].push(line.trim());
+  }
+  if(!fields.summary.length)return null;
+  return validSummary({title:fields.title.join(" ")||"自动整理",
+    summary:fields.summary.join("\n"),board:fields.board.join("\n")});
+}
 function parseResult(text){
   const raw=String(text||"").trim();
   if(!raw)throw Error("整理模型没有返回文字");
@@ -153,7 +169,9 @@ function parseResult(text){
       if(accepted)return accepted;
     }catch{} // Try the next independent JSON value.
   }
-  throw Error("模型返回的剧情摘要格式不完整，未覆盖原聊天；可点「整理最近 8 轮」重试");
+  const headings=parsePlainSummary(raw);
+  if(headings)return headings;
+  throw Error("模型未提供完整的剧情摘要 JSON 或带标题的摘要，请检查当前模型的输出格式");
 }
 async function requestModel(ep,transcript,prior){
   const url=apiEndpoint(ep?.base);
