@@ -449,3 +449,89 @@
   #panel #xyStudy .study-auto-trigger{min-width:0}
   #panel #xyStudy .study-editor summary{display:grid}
 }
+
+/* Character openings and concise world-book index. */
+#panel #xyStudy .study-import{
+  border:1px dashed #afcbb5;
+  background:#eaf3e9;
+  color:#3d6850;
+  border-radius:12px;
+  padding:14px;
+  font-size:12px;
+  font-weight:650;
+}
+#panel #xyStudy .study-greeting-picker{
+  display:grid;
+  gap:13px;
+  background:var(--story-paper);
+  border:1px solid var(--story-line);
+  border-radius:17px;
+  padding:18px;
+}
+#panel #xyStudy .study-greeting-picker strong{
+  color:var(--story-ink);
+  font-size:16px;
+}
+#panel #xyStudy .study-greeting-picker select{
+  min-width:0;
+  max-width:100%;
+  width:100%;
+  padding:11px 13px;
+  color:var(--story-ink);
+  background:var(--story-card);
+  border:1px solid var(--story-line);
+  border-radius:10px;
+}
+#panel #xyStudy .study-greeting-picker #studyGreetingPreview{
+  line-height:1.85;
+  border:1px solid var(--story-line);
+  border-radius:11px;
+  color:var(--story-ink);
+  background:var(--story-card);
+  padding:14px;
+  min-height:140px;
+}
+#panel #xyStudy .study-greeting-picker small{
+  color:var(--story-muted);
+  font-size:11px;
+  line-height:1.6;
+}
+#panel #xyStudy .study-lore-entry{
+  gap:9px;
+  background:var(--story-paper);
+  border:1px solid var(--story-line);
+  border-radius:15px;
+  padding:16px;
+}
+#panel #xyStudy .study-lore-entry strong{
+  font-size:15px;
+  color:var(--story-ink);
+}
+#panel #xyStudy .study-lore-entry small{
+  color:var(--story-muted);
+  font-size:11px;
+}
+#panel #xyStudy .study-lore-entry p{
+  line-height:1.75;
+  font-size:12px;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-import{
+  background:#2b4636!important;
+  border-color:#668f70!important;
+  color:#def2e1!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy :is(.study-greeting-picker,.study-lore-entry){
+  background:var(--story-paper)!important;
+  border-color:var(--story-line)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-greeting-picker :is(strong,small){
+  color:var(--story-ink)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-lore-entry :is(strong,small,p){
+  color:var(--story-ink)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-greeting-picker :is(select,#studyGreetingPreview){
+  color:var(--story-ink)!important;
+  background:var(--story-card)!important;
+  border-color:var(--story-line)!important;
+}
