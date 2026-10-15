@@ -10,3 +10,70 @@
 .xy-heart-settings-label span{display:grid;gap:6px}
 .xy-heart-settings-label small{font-size:11px;color:var(--muted,#81918a);line-height:1.5}
 .xy-heart-settings-label input{flex:0 0 auto;width:18px;height:18px}
+
+
+/* The note is its own readable surface, independent of custom chat text.
+ * Model replies may use very light custom text in the chat itself. */
+.message.assistant .xy-heart-note .xy-heart-pill{
+  color:#2c5140!important;
+  -webkit-text-fill-color:#2c5140;
+  background:rgba(237,247,239,.96)!important;
+  border:1px solid rgba(84,126,97,.35)!important;
+  box-shadow:0 3px 12px rgba(21,50,30,.10);
+  min-height:39px;
+  max-width:100%;
+  text-align:left;
+  white-space:normal;
+  touch-action:manipulation;
+}
+.message.assistant .xy-heart-note .xy-heart-dot{
+  color:#4e8965!important;
+  -webkit-text-fill-color:#4e8965;
+  font-size:16px;
+}
+.message.assistant .xy-heart-note .xy-heart-brief{
+  color:inherit!important;
+  -webkit-text-fill-color:inherit;
+  line-height:1.65;
+  font-weight:550;
+}
+.message.assistant .xy-heart-note .xy-heart-detail{
+  background:rgba(243,249,244,.97)!important;
+  color:#274636!important;
+  -webkit-text-fill-color:#274636;
+  border:1px solid rgba(96,136,107,.24);
+  box-shadow:0 5px 16px rgba(26,55,34,.09);
+  line-height:1.85;
+  white-space:pre-wrap;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.message.assistant .xy-heart-note :is(.xy-heart-pill,.xy-heart-detail):focus-visible{
+  outline:2px solid #619c75;
+  outline-offset:3px;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .message.assistant .xy-heart-note .xy-heart-pill{
+  color:#edf7ee!important;
+  -webkit-text-fill-color:#edf7ee;
+  background:rgba(31,55,42,.97)!important;
+  border:1px solid rgba(166,208,177,.4)!important;
+  box-shadow:0 3px 14px rgba(0,0,0,.20);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .message.assistant .xy-heart-note .xy-heart-dot{
+  color:#b2ddbc!important;
+  -webkit-text-fill-color:#b2ddbc;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .message.assistant .xy-heart-note .xy-heart-brief{
+  color:#edf7ee!important;
+  -webkit-text-fill-color:#edf7ee;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .message.assistant .xy-heart-note .xy-heart-detail{
+  color:#edf5ed!important;
+  -webkit-text-fill-color:#edf5ed;
+  background:rgba(34,55,43,.98)!important;
+  border-color:rgba(160,204,173,.27)!important;
+  box-shadow:0 5px 17px rgba(0,0,0,.22);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .message.assistant .xy-heart-note :is(.xy-heart-pill,.xy-heart-detail):focus-visible{
+  outline-color:#98d7aa;
+}
