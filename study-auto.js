@@ -45,18 +45,42 @@ function completedPairs(c){
 function recordFor(auto,chatId){return auto.byChat[chatId]&&typeof auto.byChat[chatId]==="object"?auto.byChat[chatId]:{}}
 function panelHTML(){
   const {c,charId,chatId}=currentIds(),auto=getSettings(charId),record=recordFor(auto,chatId);
-  const currentCount=completedPairs(c).length,old=Math.min(Number(record.cursor)||0,currentCount),remaining=Math.max(0,MIN_TURNS-(currentCount-old));
-  return '<section id="xyStudyAuto" class="study-card">'+
-    '<h3>自动整理剧情</h3><p>按当前对话单独归档人物状态和章节摘要，不改原聊天。默认关闭。</p>'+
-    '<label class="study-check"><input type="checkbox" id="studyAutoToggle" '+(auto.enabled?'checked':'')+'><span>每新增 8 轮有效对话，自动整理一次</span></label>'+
-    '<p class="study-tip">每次整理通常额外请求 1 次聊天模型；如模型输出格式异常，会再试 1 次（最多 2 次请求，可能增加费用）。失败后自动暂停 30 分钟，可随时手动重试。</p>'+
-    '<div class="study-actions"><button type="button" data-study-auto="manual" '+(busy.has(chatId)?'disabled':'')+'>整理最近 8 轮</button></div>'+
-    '<small>当前对话：'+(auto.enabled?'还差 '+remaining+' 轮触发自动整理':'自动整理未开启')+
-    (record.updated?' · 上次 '+html(new Date(record.updated).toLocaleString("zh-CN",{hour12:false})):'')+'</small>'+
-    (busy.has(chatId)?'<p class="study-status">正在整理，请稍等…</p>':'')+
-    (record.error?'<p class="study-status">上次整理失败：'+html(cap(record.error,210))+' · 自动整理失败后暂停 30 分钟，手动重试不限。</p>':'')+
-    (record.digest?'<div class="study-auto-result"><strong>最新剧情脉络</strong><p>'+html(record.digest)+'</p></div>':'')+
-    (record.board?'<div class="study-auto-result"><strong>人物与场景状态</strong><p>'+html(record.board)+'</p></div>':'')+
+  const currentCount=completedPairs(c).length;
+  const old=Math.min(Number(record.cursor)||0,currentCount);
+  const finished=Math.min(MIN_TURNS,Math.max(0,currentCount-old));
+  const remaining=Math.max(0,MIN_TURNS-finished);
+  const percent=Math.round(finished/MIN_TURNS*100);
+  const lastDate=record.updated?new Date(record.updated).toLocaleString("zh-CN",{hour12:false}):"";
+  const hasResults=!!(record.digest||record.board);
+  return '<section id="xyStudyAuto" class="study-card study-auto-panel">'+
+    '<header class="study-auto-head">'+
+      '<div class="study-auto-title"><span class="study-eyebrow">CHAPTER / AUTO MEMORY</span>'+
+      '<h3>让故事自己长出记忆</h3>'+
+      '<p>从真实聊天里提炼剧情，原话永远保留。</p></div>'+
+      '<div class="study-progress-num"><b>'+finished+'</b><span>/ 8 轮</span></div>'+
+    '</header>'+
+    '<div class="study-progress-bar" role="progressbar" aria-label="距离下次整理的进度" aria-valuenow="'+finished+'" aria-valuemin="0" aria-valuemax="8">'+
+      '<span style="width:'+percent+'%"></span></div>'+
+    '<p class="study-progress-note">'+(auto.enabled?(remaining?"再聊 "+remaining+" 轮将自动整理":"可以整理新的剧情了"):"自动整理已关闭 · 可以手动整理")+
+       (lastDate?" · 上次 "+html(lastDate):"")+'</p>'+
+    '<div class="study-auto-action">'+
+      '<button type="button" class="study-auto-trigger" data-study-auto="manual" '+(busy.has(chatId)?"disabled":"")+'>'+
+       (busy.has(chatId)?"正在整理…":"✦ 整理最近 8 轮")+'</button>'+
+      '<label class="study-auto-toggle"><input type="checkbox" id="studyAutoToggle" '+(auto.enabled?"checked":"")+'><span>自动整理</span></label>'+
+    '</div>'+
+    '<details class="study-auto-help"><summary>整理规则和调用费用</summary>'+
+       '<p>每新增 8 轮有效聊天归档一次，只整理本对话。通常额外请求模型 1 次；格式异常时最多重试 1 次，可能产生额外费用。失败后自动暂停 30 分钟，手动重试不受限制。</p></details>'+
+    (busy.has(chatId)?'<p class="study-status" role="status">正在翻阅这八轮聊天，请稍等…</p>':"")+
+    (record.error?'<p class="study-status study-error" role="alert">上次整理失败：'+html(cap(record.error,210))+'。原聊天没有被覆盖。</p>':"")+
+    (hasResults?'<div class="study-summary-pages">'+
+      (record.digest?'<article class="study-memory-page">'+
+        '<div class="study-page-kicker"><span>01</span> 剧情脉络</div><h4>上次故事说到这里</h4>'+
+        '<p>'+html(record.digest)+'</p></article>':"")+
+      (record.board?'<article class="study-memory-page study-memory-board">'+
+        '<div class="study-page-kicker"><span>02</span> 人物与场景</div><h4>目前的故事状态</h4>'+
+        '<p>'+html(record.board)+'</p></article>':"")+
+      '</div>':'<div class="study-summary-empty"><span aria-hidden="true">✧</span>'+
+        '<p>故事还没有整理成章。按上面的按钮，收下最近的八轮对话。</p></div>')+
     '</section>';
 }
 function refresh(){
