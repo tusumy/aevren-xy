@@ -49,7 +49,7 @@ function panelHTML(){
   return '<section id="xyStudyAuto" class="study-card">'+
     '<h3>自动整理剧情</h3><p>按当前对话单独归档人物状态和章节摘要，不改原聊天。默认关闭。</p>'+
     '<label class="study-check"><input type="checkbox" id="studyAutoToggle" '+(auto.enabled?'checked':'')+'><span>每新增 8 轮有效对话，自动整理一次</span></label>'+
-    '<p class="study-tip">每次整理会额外调用一次当前聊天模型，并向其发送这 8 轮对话。产生的接口费用取决于你的提供商。</p>'+
+    '<p class="study-tip">每次整理通常额外请求 1 次聊天模型；如模型输出格式异常，会再试 1 次（最多 2 次请求，可能增加费用）。失败后自动暂停 30 分钟，可随时手动重试。</p>'+
     '<div class="study-actions"><button type="button" data-study-auto="manual" '+(busy.has(chatId)?'disabled':'')+'>整理最近 8 轮</button></div>'+
     '<small>当前对话：'+(auto.enabled?'还差 '+remaining+' 轮触发自动整理':'自动整理未开启')+
     (record.updated?' · 上次 '+html(new Date(record.updated).toLocaleString("zh-CN",{hour12:false})):'')+'</small>'+
@@ -192,7 +192,28 @@ async function requestModel(ep,transcript,prior){
   const raw=await response.text();let data;
   try{data=JSON.parse(raw)}catch{throw Error("模型接口返回了非 JSON 响应")}
   if(!response.ok||data?.error)throw Error(data?.error?.message||"HTTP "+response.status);
-  return parseResult(textFrom(data));
+  const first=textFrom(data);
+  try{return parseResult(first)}
+  catch(formatErr){
+    // Retry only malformed model output, not network/API errors.
+    // The second attempt requests headings rather than rigid JSON, which
+    // works with providers that prepend commentary or truncate JSON.
+    const easy="仅从以下真实对话整理已发生的事实，不续写、不推测。请输出普通文字而非 JSON，按以下三个标题，每项有实际内容：\n"+
+      "标题：不超过20字\n摘要：用100到250字概括真实交流\n人物与场景：已知人物关系、地点和未解决事项。\n不要解释、不要代码块。";
+    const retryBody={...body,max_tokens:2400,temperature:0.1,
+      messages:[{role:"system",content:easy},{role:"user",content:prompt}]};
+    const retryController=new AbortController();
+    const retryTimer=setTimeout(()=>retryController.abort(),60000);
+    let secondResponse;
+    try{
+      secondResponse=await fetch(url,{method:"POST",headers,body:JSON.stringify(retryBody),signal:retryController.signal});
+    }finally{clearTimeout(retryTimer)}
+    const secondRaw=await secondResponse.text();let secondData;
+    try{secondData=JSON.parse(secondRaw)}catch{throw Error("模型重试时接口没有返回 JSON")}
+    if(!secondResponse.ok||secondData?.error)throw Error(secondData?.error?.message||"重试 HTTP "+secondResponse.status);
+    try{return parseResult(textFrom(secondData))}
+    catch{throw Error("模型两次都未生成可识别的摘要。可换一个擅长总结的聊天模型，再点「整理最近 8 轮」")}
+  }
 }
 async function run(c,{manual=false}={}){
   if(!c?.id)return false;
