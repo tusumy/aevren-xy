@@ -1,6 +1,6 @@
 (()=>{
 "use strict";
-const KEY="xy.study.v1",MIN_TURNS=8;
+const KEY="xy.study.v1",MIN_TURNS=8,FAILURE_COOLDOWN=30*60*1000;
 const html=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const cap=(x,n)=>String(x??"").trim().slice(0,n);
 const uid=()=>"auto-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,8);
@@ -54,7 +54,7 @@ function panelHTML(){
     '<small>当前对话：'+(auto.enabled?'还差 '+remaining+' 轮触发自动整理':'自动整理未开启')+
     (record.updated?' · 上次 '+html(new Date(record.updated).toLocaleString("zh-CN",{hour12:false})):'')+'</small>'+
     (busy.has(chatId)?'<p class="study-status">正在整理，请稍等…</p>':'')+
-    (record.error?'<p class="study-status">上次整理失败：'+html(cap(record.error,210))+'</p>':'')+
+    (record.error?'<p class="study-status">上次整理失败：'+html(cap(record.error,210))+' · 自动整理失败后暂停 30 分钟，手动重试不限。</p>':'')+
     (record.digest?'<div class="study-auto-result"><strong>最新剧情脉络</strong><p>'+html(record.digest)+'</p></div>':'')+
     (record.board?'<div class="study-auto-result"><strong>人物与场景状态</strong><p>'+html(record.board)+'</p></div>':'')+
     '</section>';
@@ -64,7 +64,7 @@ function refresh(){
   if(target)target.outerHTML=panelHTML();
 }
 function setError(charId,chatId,error){
-  try{saveEdit(charId,a=>{const r=a.byChat[chatId]||{};a.byChat[chatId]={...r,error:cap(error?.message||error,300)}})}catch{}
+  try{saveEdit(charId,a=>{const r=a.byChat[chatId]||{};a.byChat[chatId]={...r,error:cap(error?.message||error,300),failedAt:Date.now()}})}catch{}
   refresh();
 }
 function apiEndpoint(raw){
@@ -165,7 +165,7 @@ async function requestModel(ep,transcript,prior){
     "如果没有真实的剧情发展，就只记录实际交流，不得编造故事。";
   const prompt="之前的剧情摘要与状态（可能为空，仅供承接）：\n"+cap(prior.digest||"",1100)+"\n"+cap(prior.board||"",700)+
     "\n\n本次需要归档的真实聊天记录：\n"+transcript;
-  const body={model:ep.model,stream:false,temperature:0.2,max_tokens:1200,
+  const body={model:ep.model,stream:false,temperature:0.2,max_tokens:2400,
     messages:[{role:"system",content:instructions},{role:"user",content:prompt}]};
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),60000);
   let response;
@@ -183,6 +183,7 @@ async function run(c,{manual=false}={}){
   const a=getSettings(charId),record=recordFor(a,chatId),pairs=completedPairs(c);
   const total=pairs.length;
   if(!manual&&!a.enabled)return false;
+  if(!manual&&record.failedAt&&Date.now()-Number(record.failedAt)<FAILURE_COOLDOWN)return false;
   let start=Math.min(Math.max(0,Number(record.cursor)||0),total);
   if(!manual&&total-start<MIN_TURNS)return false;
   if(manual&&total===start){
@@ -208,7 +209,7 @@ async function run(c,{manual=false}={}){
     const latest=getSettings(charId),prior=recordFor(latest,chatId);
     if((Number(prior.cursor)||0)!==(Number(record.cursor)||0))throw Error("已经有更新的整理结果，本次未覆盖");
     saveEdit(charId,(auto,s)=>{
-      auto.byChat[chatId]={cursor:end,digest:result.summary,board:result.board,updated:Date.now(),error:""};
+      auto.byChat[chatId]={cursor:end,digest:result.summary,board:result.board,updated:Date.now(),error:"",failedAt:0};
       const title=result.title||"自动整理";
       // Archive real conversation text, never generated fanfiction in the original chat.
       s.chapters.push({id:uid(),name:title,text:transcript,summary:result.summary,updated:Date.now(),generated:true,originChatId:chatId,range:[start+1,end]});
