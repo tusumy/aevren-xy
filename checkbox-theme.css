@@ -1,0 +1,20 @@
+/* 砚屿：所有页面统一复选框的勾选色，避免浏览器默认的亮蓝色。
+   Only change native checkbox state/keyboard focus; keep each control's
+   dimensions, layout and checked/disabled behavior unchanged. */
+:root{
+  --xy-check-accent:#477c5c;
+}
+/* Covers settings, memories, study room, vision and feature toggles,
+   including inputs created after the page has loaded. */
+input[type="checkbox"]{
+  accent-color:var(--xy-check-accent)!important;
+}
+input[type="checkbox"]:focus-visible{
+  outline:2px solid var(--xy-check-accent);
+  outline-offset:3px;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) input[type="checkbox"]{
+  --xy-check-accent:#81bc97;
+}
+/* Mobile WebViews may use their built-in checkbox foreground, which follows
+   accent-color; do not replace these with custom checkboxes. */
