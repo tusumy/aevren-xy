@@ -39,3 +39,26 @@ html[data-theme-mode="dark"] #panel .xy-mem-pane button{
 html[data-theme-mode="dark"] #panel .xy-mem-pane button:active{background:#446a54!important}
 html[data-theme-mode="dark"] #panel .xy-mem-pane textarea{background:#1b2620!important;color:#ecf2ed!important}
 html[data-theme-mode="dark"] #panel .xy-mem-pane input[type="checkbox"]{accent-color:#7fb699!important}
+
+/* The backup-vision panel has light backgrounds and dark-green inline text. */
+html[data-theme-mode="dark"] #panel #xyFallbackPanel{
+ color:#ecf2ed!important;
+ background:linear-gradient(135deg,#2b372f,#222d26)!important;
+ border:1px solid var(--xy-night-border)!important;
+}
+html[data-theme-mode="dark"] #panel #xyFallbackPanel :is(strong,label){color:#ecf2ed!important}
+html[data-theme-mode="dark"] #panel #xyFallbackPanel p{color:#b4c4b9!important}
+html[data-theme-mode="dark"] #panel #xyFallbackPanel :is(select,input:not([type="checkbox"])){
+ background:#1b2620!important;color:#ecf2ed!important;border:1px solid var(--xy-night-border)!important
+}
+html[data-theme-mode="dark"] #panel #xyFallbackSave{
+ background:#365644!important;color:#f4faf5!important;border:1px solid #739784!important
+}
+html[data-theme-mode="dark"] #panel #xyVisionSetting{color:#ecf2ed!important}
+/* Call preferences were also given a pale daytime status card. */
+html[data-theme-mode="dark"] #panel #xyProactiveSettings{color:#ecf2ed!important}
+html[data-theme-mode="dark"] #panel #xyProactiveSettings :is(.xy-proactive-label,.xy-proactive-label strong){color:#ecf2ed!important}
+html[data-theme-mode="dark"] #panel #xyProactiveSettings :is(.xy-proactive-label small,.xy-proactive-info){color:#b4c4b9!important}
+html[data-theme-mode="dark"] #panel #xyProactiveStatus{
+ background:#2b4032!important;color:#e6f0e8!important;border:1px solid var(--xy-night-border)
+}
