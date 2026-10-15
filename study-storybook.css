@@ -655,3 +655,166 @@
 @media(prefers-reduced-motion:reduce){
   #panel #xyStudy .study-chapter-chevron{transition:none}
 }
+
+/* 2026-10: the app has a global header{height:72px; padding:...}.
+ * Study sections use their own elements; keep their heights content-driven. */
+#panel #xyStudy .study-cover,
+#panel #xyStudy .study-auto-head{
+  height:auto;
+  min-height:0;
+  max-height:none;
+}
+#panel #xyStudy .study-cover{
+  grid-auto-rows:max-content;
+  align-content:start;
+  overflow:hidden;
+}
+#panel #xyStudy .study-cover strong{
+  display:block;
+  line-height:1.52;
+  overflow-wrap:anywhere;
+  padding-block:1px;
+}
+#panel #xyStudy .study-auto-panel{
+  grid-auto-rows:max-content;
+  align-content:start;
+  min-height:0;
+  height:auto;
+  overflow:visible;
+}
+#panel #xyStudy .study-auto-head{
+  padding:0;
+  border:0;
+  min-width:0;
+  align-items:flex-start;
+}
+#panel #xyStudy .study-auto-title{
+  flex:1 1 0;
+  min-width:0;
+  align-content:start;
+  grid-auto-rows:max-content;
+  gap:7px;
+}
+#panel #xyStudy .study-auto-title h3{
+  display:block;
+  height:auto;
+  line-height:1.52;
+  overflow:visible;
+  overflow-wrap:anywhere;
+  margin:0;
+}
+#panel #xyStudy .study-auto-title p{
+  display:block;
+  line-height:1.7;
+  margin:0;
+  overflow-wrap:anywhere;
+}
+#panel #xyStudy .study-progress-num{
+  flex:0 0 66px;
+  margin:0;
+}
+#panel #xyStudy .study-progress-bar{
+  height:7px;
+  min-height:7px;
+  margin:0;
+}
+#panel #xyStudy .study-progress-note{
+  margin:0;
+  line-height:1.7;
+}
+/* A digest is a single-line teaser until the reader opens the card. */
+#panel #xyStudy details.study-memory-digest{
+  display:block;
+  padding:0;
+  min-width:0;
+  overflow:hidden;
+  background:var(--story-paper);
+}
+#panel #xyStudy .study-digest-toggle{
+  display:grid;
+  gap:10px;
+  padding:17px 16px 15px;
+  min-width:0;
+  cursor:pointer;
+  list-style:none;
+  color:var(--story-ink);
+  outline-offset:3px;
+}
+#panel #xyStudy .study-digest-toggle::-webkit-details-marker{display:none}
+#panel #xyStudy .study-digest-toggle::marker{content:""}
+#panel #xyStudy .study-digest-toggle:focus-visible{
+  outline:2px solid var(--story-accent);
+}
+#panel #xyStudy .study-digest-heading{
+  font-size:16px;
+  font-weight:650;
+  line-height:1.45;
+  color:var(--story-ink);
+}
+#panel #xyStudy .study-digest-one-line{
+  display:block;
+  min-width:0;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:12px;
+  line-height:1.7;
+  color:var(--story-muted);
+}
+#panel #xyStudy .study-digest-hint{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  padding-top:9px;
+  border-top:1px dashed var(--story-line);
+  font-size:11px;
+  font-weight:600;
+  color:var(--story-accent);
+}
+#panel #xyStudy .study-digest-close{display:none}
+#panel #xyStudy .study-digest-arrow{
+  display:grid;
+  place-items:center;
+  width:27px;height:27px;
+  border-radius:50%;
+  background:var(--story-cover);
+  transition:transform .16s ease;
+}
+#panel #xyStudy .study-memory-digest[open] .study-digest-close{display:inline}
+#panel #xyStudy .study-memory-digest[open] .study-digest-read,
+#panel #xyStudy .study-memory-digest[open] .study-digest-one-line{display:none}
+#panel #xyStudy .study-memory-digest[open] .study-digest-arrow{transform:rotate(180deg)}
+#panel #xyStudy .study-digest-full{
+  padding:16px;
+  border-top:1px solid var(--story-line);
+}
+#panel #xyStudy .study-digest-full p{
+  margin:0;
+  white-space:pre-wrap;
+  line-height:1.9;
+  font-size:13px;
+  color:var(--story-ink);
+  overflow-wrap:anywhere;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-memory-digest{
+  background:var(--story-paper)!important;
+  border-color:var(--story-line)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy :is(.study-digest-toggle,.study-digest-heading,.study-digest-full p){
+  color:var(--story-ink)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy :is(.study-digest-one-line,.study-digest-hint){
+  color:var(--story-muted)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-digest-arrow{
+  background:var(--story-cover)!important;
+}
+@media(max-width:420px){
+  #panel #xyStudy .study-auto-head{gap:10px}
+  #panel #xyStudy .study-auto-title h3{font-size:16px}
+}
+@media(prefers-reduced-motion:reduce){
+  #panel #xyStudy .study-digest-arrow{transition:none}
+}

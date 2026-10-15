@@ -51,7 +51,9 @@ function draw(){
     lore:b.lore.filter(x=>x.enabled!==false).length,
     chapters:b.chapters.length
   };
-  const hero='<header class="study-cover">'+
+  // Avoid the app-wide header{height:72px} used for the chat title bar.
+  // A book cover must grow with its title and overview stats.
+  const hero='<section class="study-cover">'+
     '<span class="study-cover-kicker">THE STORY ARCHIVE <i>✦</i></span>'+
     '<strong>'+escape(charName())+'的故事档案</strong>'+
     '<p>'+escape(bindingNote)+'</p>'+
@@ -59,7 +61,7 @@ function draw(){
       '<span><b>'+counts.greetings+'</b><small>种开场</small></span>'+
       '<span><b>'+counts.lore+'</b><small>条设定</small></span>'+
       '<span><b>'+counts.chapters+'</b><small>篇章节</small></span>'+
-    '</div></header>';
+    '</div></section>';
   let html='<div id="xyStudy">'+hero+
     '<nav class="study-tabs" aria-label="书房页面">'+[["card","人物"],["preset","预设"],["lore","世界书"],["chapter","故事线"]].map(x=>btn("tab",x[1],x[0],x[0]===tab?"selected":"")).join("")+'</nav>'+
     (status?'<p class="study-status" role="status">'+escape(status)+'</p>':"")+
