@@ -1,1 +1,41 @@
 /* Night-mode compatibility for runtime panels. */
+
+html[data-theme-mode="dark"] #panel{
+  --xy-night-text:#ecf2ed;
+  --xy-night-muted:#b4c4b9;
+  --xy-night-field:#1b2620;
+  --xy-night-border:rgba(183,216,190,.19);
+  color:#ecf2ed;
+  color-scheme:dark;
+}
+html[data-theme-mode="dark"] #panel input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="file"]),
+html[data-theme-mode="dark"] #panel textarea,
+html[data-theme-mode="dark"] #panel select{
+  background:var(--xy-night-field)!important;
+  background-color:var(--xy-night-field)!important;
+  color:var(--xy-night-text)!important;
+  border:1px solid var(--xy-night-border)!important;
+  caret-color:var(--xy-night-text);
+  color-scheme:dark;
+}
+html[data-theme-mode="dark"] #panel :is(input,textarea)::placeholder{color:#98aea0!important;opacity:1}
+html[data-theme-mode="dark"] #panel :is(select,select option){color:#ecf2ed!important;background-color:#1b2620!important}
+html[data-theme-mode="dark"] #panel :is(input,textarea,select):focus-visible{outline:2px solid #94bca2!important;outline-offset:1px}
+html[data-theme-mode="dark"] #panel input[type="checkbox"]{accent-color:#78b391}
+html[data-theme-mode="dark"] #panel .xy-mem-pane{color:#ecf2ed!important}
+html[data-theme-mode="dark"] #panel .xy-mem-pane section{
+  background:linear-gradient(135deg,#2b372f,#263029)!important;
+  border:1px solid var(--xy-night-border)!important;
+  color:#ecf2ed!important;
+}
+html[data-theme-mode="dark"] #panel .xy-mem-pane :is(h3,.row,.item){color:#ecf2ed!important}
+html[data-theme-mode="dark"] #panel .xy-mem-pane :is(.subtle,p){color:#b4c4b9!important}
+html[data-theme-mode="dark"] #panel .xy-mem-pane .item{border-top-color:var(--xy-night-border)!important}
+html[data-theme-mode="dark"] #panel .xy-mem-pane button{
+  background:#365343!important;
+  color:#eef6ef!important;
+  border:1px solid #648873!important;
+}
+html[data-theme-mode="dark"] #panel .xy-mem-pane button:active{background:#446a54!important}
+html[data-theme-mode="dark"] #panel .xy-mem-pane textarea{background:#1b2620!important;color:#ecf2ed!important}
+html[data-theme-mode="dark"] #panel .xy-mem-pane input[type="checkbox"]{accent-color:#7fb699!important}
