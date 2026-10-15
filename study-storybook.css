@@ -818,3 +818,6 @@
 @media(prefers-reduced-motion:reduce){
   #panel #xyStudy .study-digest-arrow{transition:none}
 }
+
+#panel #xyStudy details.study-memory-board{background:#edf3eb}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy details.study-memory-board{background:#2a4435!important}
