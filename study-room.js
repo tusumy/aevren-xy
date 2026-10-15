@@ -17,9 +17,9 @@ function book(db,who=id()){
   const b=db.byCharacter[who];b.lore=arr(b.lore);b.chapters=arr(b.chapters);b.preset=b.preset||blank().preset;
   return b;
 }
-const current=()=>book(load());
+const currentBook=()=>book(load());
 let tab="card",editLore="",editChapter="",status="",greetingChoice=0;
-function save(edit,message="已保存到本机"){
+function saveStudy(edit,message="已保存到本机"){
   try{const db=load();edit(book(db));localStorage.setItem(KEY,JSON.stringify(db));status=message;draw()}
   catch(e){status="保存失败："+String(e?.message||e);draw()}
 }
@@ -37,7 +37,7 @@ function btn(action,text,key="",cls=""){
 }
 function draw(){
   const panel=document.querySelector("#panel"),host=document.querySelector("#panelBody");if(!panel||!host)return;
-  const b=current(),c=b.card||{},p=b.preset||{};
+  const b=currentBook(),c=b.card||{},p=b.preset||{};
   document.querySelector("#sidebar")?.classList.remove("open");
   document.querySelector("#panelEyebrow").textContent="AEVREN · STUDY";
   document.querySelector("#panelTitle").textContent="书房";
@@ -142,12 +142,12 @@ async function importFile(file,kind){
     const raw=JSON.parse(await file.text());
     if(kind==="card"){
       const card=parseCard(raw);let extra=[];try{extra=parseLore(raw)}catch{}
-      greetingChoice=0;save(b=>{b.card=card;appendLore(b,extra)},"角色卡已导入 · "+(1+card.alternate_greetings.length)+" 条开场白"+(extra.length?"，含世界书":""));
-    }else if(kind==="preset")save(b=>{b.preset=parsePreset(raw)},"预设已导入，检查后再启用");
-    else{const entries=parseLore(raw);if(!entries.length)throw Error("没有有效世界书条目");save(b=>appendLore(b,entries),"世界书已导入 "+entries.length+" 条（重复条目跳过）")}
+      greetingChoice=0;saveStudy(b=>{b.card=card;appendLore(b,extra)},"角色卡已导入 · "+(1+card.alternate_greetings.length)+" 条开场白"+(extra.length?"，含世界书":""));
+    }else if(kind==="preset")saveStudy(b=>{b.preset=parsePreset(raw)},"预设已导入，检查后再启用");
+    else{const entries=parseLore(raw);if(!entries.length)throw Error("没有有效世界书条目");saveStudy(b=>appendLore(b,entries),"世界书已导入 "+entries.length+" 条（重复条目跳过）")}
   }catch(e){status="导入失败："+String(e?.message||e);draw()}
 }
-function bundle(){return JSON.stringify({format:"AevrenXYStudy",version:1,characterId:id(),characterName:charName(),at:new Date().toISOString(),data:current()},null,2)}
+function bundle(){return JSON.stringify({format:"AevrenXYStudy",version:1,characterId:id(),characterName:charName(),at:new Date().toISOString(),data:currentBook()},null,2)}
 function context(options={}){
   const b=book(load(),String(options.characterId||id()));
   const q=String(options.query||"").toLowerCase();
@@ -200,6 +200,13 @@ function context(options={}){
 const host=document.querySelector("#panelBody");
 host?.addEventListener("change",event=>{
   const t=event.target;if(!t.closest("#xyStudy"))return;
+  if(t.id==="studyGreetingChoice"){
+    greetingChoice=Number(t.value)||0;
+    const options=[currentBook().card?.first_mes,...arr(currentBook().card?.alternate_greetings)].filter(Boolean);
+    const preview=document.getElementById("studyGreetingPreview");
+    if(preview)preview.value=String(options[greetingChoice]||"");
+    return
+  }
   if(t.id==="studyCardImport")importFile(t.files?.[0],"card");
   if(t.id==="studyPresetImport")importFile(t.files?.[0],"preset");
   if(t.id==="studyLoreImport")importFile(t.files?.[0],"lore");
@@ -210,12 +217,12 @@ host?.addEventListener("click",event=>{
   const action=t.dataset.study,key=t.dataset.key;
   if(action==="tab"){tab=key;editLore="";editChapter="";status="";draw();return}
   if(action==="saveCard"){
-    const saved=arr(current().card?.alternate_greetings);
+    const saved=arr(currentBook().card?.alternate_greetings);
     const c={name:cap(val("studyCardName"),120),description:cap(val("studyCardDesc"),10000),personality:cap(val("studyCardPersonality"),5000),scenario:cap(val("studyCardScenario"),5000),system_prompt:cap(val("studyCardSystem"),5000),first_mes:cap(val("studyCardGreeting"),8000),alternate_greetings:saved.map((v,i)=>cap(document.getElementById("studyAlt"+i)?.value??v,8000)),enabled:on("studyCardActive")};
-    save(b=>{b.card=c});return
+    saveStudy(b=>{b.card=c});return
   }
   if(action==="startGreetingChat"){
-    const greetings=[current().card?.first_mes,...arr(current().card?.alternate_greetings)].filter(Boolean);
+    const greetings=[currentBook().card?.first_mes,...arr(currentBook().card?.alternate_greetings)].filter(Boolean);
     const selection=Number(document.getElementById("studyGreetingChoice")?.value||0);
     const intro=greetings[selection];
     if(!intro){status="没有可用的开场白";draw();return}
@@ -228,23 +235,23 @@ host?.addEventListener("click",event=>{
     document.querySelector("#sidebar")?.classList.remove("open");
     document.querySelector("#scrim")?.classList.remove("show");return
   }
-  if(action==="savePreset"){const p={name:cap(val("studyPresetName"),100),content:cap(val("studyPresetContent"),30000),enabled:on("studyPresetActive")};save(b=>{b.preset=p});return}
+  if(action==="savePreset"){const p={name:cap(val("studyPresetName"),100),content:cap(val("studyPresetContent"),30000),enabled:on("studyPresetActive")};saveStudy(b=>{b.preset=p});return}
   if(action==="saveLore"){
     const e={id:editLore||uuid(),name:cap(val("studyLoreName")||"设定",90),keys:words(val("studyLoreKeys")),content:cap(val("studyLoreContent"),7000),constant:on("studyLoreConstant"),enabled:on("studyLoreActive")};
     if(!e.content||(!e.keys.length&&!e.constant)){status="请填写正文与关键词，或开启常驻";draw();return}
-    save(b=>{const i=b.lore.findIndex(x=>x.id===editLore);if(i>=0)b.lore[i]=e;else b.lore.push(e);editLore=""});return;
+    saveStudy(b=>{const i=b.lore.findIndex(x=>x.id===editLore);if(i>=0)b.lore[i]=e;else b.lore.push(e);editLore=""});return;
   }
   if(action==="editLore"){editLore=key;status="";draw();return}
   if(action==="cancelLore"){editLore="";draw();return}
-  if(action==="deleteLore"){if(!confirm("删除这条世界书设定？"))return;save(b=>{b.lore=b.lore.filter(x=>x.id!==key);editLore=""},"已删除条目");return}
+  if(action==="deleteLore"){if(!confirm("删除这条世界书设定？"))return;saveStudy(b=>{b.lore=b.lore.filter(x=>x.id!==key);editLore=""},"已删除条目");return}
   if(action==="saveChapter"){
     const e={id:editChapter||uuid(),name:cap(val("studyChapterName")||"未命名章节",100),text:cap(val("studyChapterText"),150000),summary:cap(val("studyChapterSummary"),3000),updated:Date.now()};
     if(!e.text){status="章节正文不能为空";draw();return}
-    save(b=>{const i=b.chapters.findIndex(x=>x.id===editChapter);if(i>=0)b.chapters[i]=e;else b.chapters.push(e);b.useSummary=on("studyChapterActive");editChapter=""});return;
+    saveStudy(b=>{const i=b.chapters.findIndex(x=>x.id===editChapter);if(i>=0)b.chapters[i]=e;else b.chapters.push(e);b.useSummary=on("studyChapterActive");editChapter=""});return;
   }
   if(action==="editChapter"){editChapter=key;status="";draw();return}
   if(action==="cancelChapter"){editChapter="";draw();return}
-  if(action==="deleteChapter"){if(!confirm("删除这一章？"))return;save(b=>{b.chapters=b.chapters.filter(x=>x.id!==key);editChapter=""},"已删除章节");return}
+  if(action==="deleteChapter"){if(!confirm("删除这一章？"))return;saveStudy(b=>{b.chapters=b.chapters.filter(x=>x.id!==key);editChapter=""},"已删除章节");return}
   if(action==="export"){
     const blob=new Blob([bundle()],{type:"application/json;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
     a.href=url;a.download="xy-study-"+id()+".json";document.body.appendChild(a);a.click();a.remove();
@@ -284,6 +291,7 @@ style.textContent=String.raw`
 #xyStudy .study-alts summary{cursor:pointer;color:#46634f}
 #xyStudy .study-alts .study-field{margin-top:10px}
 #xyStudy select{max-width:100%;padding:10px;border:1px solid #d2ded2;border-radius:9px;background:#fff;color:#3d5244}
+#xyStudy .study-card #studyGreetingPreview{width:100%;min-height:100px;padding:10px;border:1px solid #d2ded2;border-radius:9px;background:#fff;color:#3d5244;font:inherit;resize:vertical;white-space:pre-wrap}
 #xyStudy .study-check{display:flex;gap:8px;align-items:center;font-size:12px}#xyStudy .study-check input{accent-color:#365b49;width:16px;height:16px;flex:none}
 #xyStudy button.primary{padding:12px;background:#365b49;color:#fff;border:0;border-radius:10px;flex:1}
 #xyStudy .study-actions{display:flex;gap:8px;flex-wrap:wrap}
