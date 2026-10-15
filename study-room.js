@@ -163,7 +163,7 @@ function draw(){
               '<span class="study-chapter-type">'+type+'</span><time>'+escape(day)+'</time></span>'+
             '<strong>'+escape(entry.name||"无标题")+'</strong>'+
             '<span class="study-chapter-excerpt">'+escape(excerpt||"点开查看章节内容")+'</span>'+
-            '<span class="study-chapter-open-hint"><span class="study-chapter-open-label">点击阅读整章</span>'+
+            '<span class="study-chapter-open-hint"><span class="study-chapter-open-label">点击阅读整章</span><span class="study-chapter-close-label">收起章节</span>'+
               '<span class="study-chapter-chevron" aria-hidden="true">⌄</span></span>'+
           '</summary>'+
           '<div class="study-chapter-reading">'+
