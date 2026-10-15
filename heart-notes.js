@@ -80,14 +80,24 @@
       }
       const short=clip(m.heartShort,16)||"心音",full=m.heartFull||m.heartShort;
       const open=expanded.has(m);
-      wrap.innerHTML='<button type="button" class="xy-heart-pill" aria-expanded="'+open+'" aria-label="展开或收起心音"><span class="xy-heart-dot">♡</span><span class="xy-heart-brief">'+escHtml(short)+'</span><span class="xy-heart-angle">'+(open?"⌃":"⌄")+'</span></button><div class="xy-heart-detail" '+(open?"":"hidden")+'>'+escHtml(full)+'</div>';
+      // The entire pill is the disclosure control: no tiny chevron target.
+      // Keep the expanded note itself tappable to close it on mobile.
+      const detailId="xy-heart-detail-"+String(c.id||"chat").replace(/[^a-zA-Z0-9_-]/g,"-")+"-"+index;
+      wrap.innerHTML='<button type="button" class="xy-heart-pill" aria-expanded="'+open+'" aria-controls="'+detailId+'" aria-label="'+(open?"收起":"展开")+'心音"><span class="xy-heart-dot" aria-hidden="true">♡</span><span class="xy-heart-brief">'+escHtml(short)+'</span></button><div class="xy-heart-detail" id="'+detailId+'" role="button" tabindex="'+(open?"0":"-1")+'" aria-label="收起心音" '+(open?"":"hidden")+'>'+escHtml(full)+'</div>';
       stack.insertBefore(wrap,stack.querySelector(".bubble")||stack.firstChild);
-      wrap.querySelector("button").addEventListener("click",()=>{
+      const button=wrap.querySelector(".xy-heart-pill"),detail=wrap.querySelector(".xy-heart-detail");
+      const toggle=()=>{
         if(expanded.has(m))expanded.delete(m);else expanded.add(m);
         const show=expanded.has(m);
-        wrap.querySelector(".xy-heart-detail").hidden=!show;
-        wrap.querySelector("button").setAttribute("aria-expanded",String(show));
-        wrap.querySelector(".xy-heart-angle").textContent=show?"⌃":"⌄";
+        detail.hidden=!show;
+        detail.tabIndex=show?0:-1;
+        button.setAttribute("aria-expanded",String(show));
+        button.setAttribute("aria-label",show?"收起心音":"展开心音");
+      };
+      button.addEventListener("click",toggle);
+      detail.addEventListener("click",toggle);
+      detail.addEventListener("keydown",event=>{
+        if(event.key==="Enter"||event.key===" "){event.preventDefault();toggle();button.focus()}
       });
     });
   }
