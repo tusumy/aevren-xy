@@ -95,3 +95,14 @@ html[data-theme-mode="dark"] #panel #xyStudy :is(.study-tabs button,.study-actio
 html[data-theme-mode="dark"] #panel #xyStudy .study-tabs .selected{
  background:#40634d!important;color:#fff!important;border-color:#83a58d!important
 }
+
+html[data-theme-mode="dark"] #panel #xyStudy button.primary{
+ background:#40634d!important;color:#f7fff7!important;border:1px solid #75997f!important
+}
+html[data-theme-mode="dark"] #panel #xyStudy .study-import{
+ background:#2e4033!important;color:#ecf5ed!important;border-color:#668c73!important
+}
+html[data-theme-mode="dark"] #panel #xyStudy :is(.study-status,.study-auto-result){
+ background:#2d4233!important;color:#e7f2e9!important;border:1px solid var(--xy-night-border)!important
+}
+html[data-theme-mode="dark"] #panel #xyStudy .study-footer{border-top-color:var(--xy-night-border)!important}
