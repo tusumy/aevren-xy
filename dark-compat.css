@@ -1,6 +1,6 @@
 /* Night-mode compatibility for runtime panels. */
 
-html[data-theme-mode="dark"] #panel{
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel{
   --xy-night-text:#ecf2ed;
   --xy-night-muted:#b4c4b9;
   --xy-night-field:#1b2620;
@@ -8,9 +8,9 @@ html[data-theme-mode="dark"] #panel{
   color:#ecf2ed;
   color-scheme:dark;
 }
-html[data-theme-mode="dark"] #panel input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="file"]),
-html[data-theme-mode="dark"] #panel textarea,
-html[data-theme-mode="dark"] #panel select{
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="file"]),
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel textarea,
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel select{
   background:var(--xy-night-field)!important;
   background-color:var(--xy-night-field)!important;
   color:var(--xy-night-text)!important;
@@ -18,91 +18,159 @@ html[data-theme-mode="dark"] #panel select{
   caret-color:var(--xy-night-text);
   color-scheme:dark;
 }
-html[data-theme-mode="dark"] #panel :is(input,textarea)::placeholder{color:#98aea0!important;opacity:1}
-html[data-theme-mode="dark"] #panel :is(select,select option){color:#ecf2ed!important;background-color:#1b2620!important}
-html[data-theme-mode="dark"] #panel :is(input,textarea,select):focus-visible{outline:2px solid #94bca2!important;outline-offset:1px}
-html[data-theme-mode="dark"] #panel input[type="checkbox"]{accent-color:#78b391}
-html[data-theme-mode="dark"] #panel .xy-mem-pane{color:#ecf2ed!important}
-html[data-theme-mode="dark"] #panel .xy-mem-pane section{
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel :is(input,textarea)::placeholder{color:#98aea0!important;opacity:1}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel :is(select,select option){color:#ecf2ed!important;background-color:#1b2620!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel :is(input,textarea,select):focus-visible{outline:2px solid #94bca2!important;outline-offset:1px}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel input[type="checkbox"]{accent-color:#78b391}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel .xy-mem-pane{color:#ecf2ed!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel .xy-mem-pane section{
   background:linear-gradient(135deg,#2b372f,#263029)!important;
   border:1px solid var(--xy-night-border)!important;
   color:#ecf2ed!important;
 }
-html[data-theme-mode="dark"] #panel .xy-mem-pane :is(h3,.row,.item){color:#ecf2ed!important}
-html[data-theme-mode="dark"] #panel .xy-mem-pane :is(.subtle,p){color:#b4c4b9!important}
-html[data-theme-mode="dark"] #panel .xy-mem-pane .item{border-top-color:var(--xy-night-border)!important}
-html[data-theme-mode="dark"] #panel .xy-mem-pane button{
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel .xy-mem-pane :is(h3,.row,.item){color:#ecf2ed!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel .xy-mem-pane :is(.subtle,p){color:#b4c4b9!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel .xy-mem-pane .item{border-top-color:var(--xy-night-border)!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel .xy-mem-pane button{
   background:#365343!important;
   color:#eef6ef!important;
   border:1px solid #648873!important;
 }
-html[data-theme-mode="dark"] #panel .xy-mem-pane button:active{background:#446a54!important}
-html[data-theme-mode="dark"] #panel .xy-mem-pane textarea{background:#1b2620!important;color:#ecf2ed!important}
-html[data-theme-mode="dark"] #panel .xy-mem-pane input[type="checkbox"]{accent-color:#7fb699!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel .xy-mem-pane button:active{background:#446a54!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel .xy-mem-pane textarea{background:#1b2620!important;color:#ecf2ed!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel .xy-mem-pane input[type="checkbox"]{accent-color:#7fb699!important}
 
 /* The backup-vision panel has light backgrounds and dark-green inline text. */
-html[data-theme-mode="dark"] #panel #xyFallbackPanel{
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyFallbackPanel{
  color:#ecf2ed!important;
  background:linear-gradient(135deg,#2b372f,#222d26)!important;
  border:1px solid var(--xy-night-border)!important;
 }
-html[data-theme-mode="dark"] #panel #xyFallbackPanel :is(strong,label){color:#ecf2ed!important}
-html[data-theme-mode="dark"] #panel #xyFallbackPanel p{color:#b4c4b9!important}
-html[data-theme-mode="dark"] #panel #xyFallbackPanel :is(select,input:not([type="checkbox"])){
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyFallbackPanel :is(strong,label){color:#ecf2ed!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyFallbackPanel p{color:#b4c4b9!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyFallbackPanel :is(select,input:not([type="checkbox"])){
  background:#1b2620!important;color:#ecf2ed!important;border:1px solid var(--xy-night-border)!important
 }
-html[data-theme-mode="dark"] #panel #xyFallbackSave{
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyFallbackSave{
  background:#365644!important;color:#f4faf5!important;border:1px solid #739784!important
 }
-html[data-theme-mode="dark"] #panel #xyVisionSetting{color:#ecf2ed!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyVisionSetting{color:#ecf2ed!important}
 /* Call preferences were also given a pale daytime status card. */
-html[data-theme-mode="dark"] #panel #xyProactiveSettings{color:#ecf2ed!important}
-html[data-theme-mode="dark"] #panel #xyProactiveSettings :is(.xy-proactive-label,.xy-proactive-label strong){color:#ecf2ed!important}
-html[data-theme-mode="dark"] #panel #xyProactiveSettings :is(.xy-proactive-label small,.xy-proactive-info){color:#b4c4b9!important}
-html[data-theme-mode="dark"] #panel #xyProactiveStatus{
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyProactiveSettings{color:#ecf2ed!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyProactiveSettings :is(.xy-proactive-label,.xy-proactive-label strong){color:#ecf2ed!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyProactiveSettings :is(.xy-proactive-label small,.xy-proactive-info){color:#b4c4b9!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyProactiveStatus{
  background:#2b4032!important;color:#e6f0e8!important;border:1px solid var(--xy-night-border)
 }
 
 /* Tavern study draws its own light stylesheet after the page has loaded. */
-html[data-theme-mode="dark"] #panel #xyStudy{color:#ecf2ed!important}
-html[data-theme-mode="dark"] #panel #xyStudy :is(.study-cover,.study-preview){
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy{color:#ecf2ed!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy :is(.study-cover,.study-preview){
  background:linear-gradient(135deg,#2d3b32,#253129)!important;
  border:1px solid var(--xy-night-border)!important;
 }
-html[data-theme-mode="dark"] #panel #xyStudy :is(.study-cover strong,.study-cover small,.study-preview summary,.study-preview p){
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy :is(.study-cover strong,.study-cover small,.study-preview summary,.study-preview p){
  color:#ecf2ed!important
 }
-html[data-theme-mode="dark"] #panel #xyStudy .study-preview pre{
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy .study-preview pre{
  color:#ecf2ed!important;background:#1b2820!important;border:1px solid var(--xy-night-border)!important
 }
-html[data-theme-mode="dark"] #panel #xyStudy :is(.study-card,.study-alts,.study-greeting-all,.study-greeting-picker){
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy :is(.study-card,.study-alts,.study-greeting-all,.study-greeting-picker){
  background:linear-gradient(135deg,#2d392f,#263129)!important;
  border:1px solid var(--xy-night-border)!important;color:#ecf2ed!important
 }
-html[data-theme-mode="dark"] #panel #xyStudy :is(.study-card strong,.study-card h3,.study-alts summary,.study-greeting-all summary){color:#ecf2ed!important}
-html[data-theme-mode="dark"] #panel #xyStudy :is(.study-card p,.study-card small,.study-greeting-picker small,.study-tip,.study-field span,.study-footer small){
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy :is(.study-card strong,.study-card h3,.study-alts summary,.study-greeting-all summary){color:#ecf2ed!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy :is(.study-card p,.study-card small,.study-greeting-picker small,.study-tip,.study-field span,.study-footer small){
  color:#b4c4b9!important
 }
-html[data-theme-mode="dark"] #panel #xyStudy :is(input:not([type="checkbox"]),textarea,select){
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy :is(input:not([type="checkbox"]),textarea,select){
  background:#1b2620!important;color:#ecf2ed!important;border:1px solid var(--xy-night-border)!important
 }
-html[data-theme-mode="dark"] #panel #xyStudy :is(textarea[readonly],.study-greeting-picker textarea){
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy :is(textarea[readonly],.study-greeting-picker textarea){
  background:#202c24!important;color:#edf4ef!important
 }
-html[data-theme-mode="dark"] #panel #xyStudy :is(.study-tabs button,.study-actions button:not(.primary),.study-footer button){
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy :is(.study-tabs button,.study-actions button:not(.primary),.study-footer button){
  background:#2e3c32!important;color:#ecf2ed!important;border:1px solid var(--xy-night-border)!important
 }
-html[data-theme-mode="dark"] #panel #xyStudy .study-tabs .selected{
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy .study-tabs .selected{
  background:#40634d!important;color:#fff!important;border-color:#83a58d!important
 }
 
-html[data-theme-mode="dark"] #panel #xyStudy button.primary{
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy button.primary{
  background:#40634d!important;color:#f7fff7!important;border:1px solid #75997f!important
 }
-html[data-theme-mode="dark"] #panel #xyStudy .study-import{
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy .study-import{
  background:#2e4033!important;color:#ecf5ed!important;border-color:#668c73!important
 }
-html[data-theme-mode="dark"] #panel #xyStudy :is(.study-status,.study-auto-result){
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy :is(.study-status,.study-auto-result){
  background:#2d4233!important;color:#e7f2e9!important;border:1px solid var(--xy-night-border)!important
 }
-html[data-theme-mode="dark"] #panel #xyStudy .study-footer{border-top-color:var(--xy-night-border)!important}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy .study-footer{border-top-color:var(--xy-night-border)!important}
+
+/* Night-mode contrast pass: card labels, controls and custom plugin panels.
+ * All rules scoped to the panel so chat colors and role bubble skins remain
+ * user-customizable. body.theme-dark also supports restored/custom presets. */
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #panelBody{
+  color:#e5f0e8!important;
+  --xy-night-title:#e7f3ea;
+  --xy-night-help:#c1d0c4;
+}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel :is(.setting-card,.memory-card,.journal-card,.xy-mem-pane section){
+  border-color:rgba(189,217,196,.2)!important;
+}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel .xy-mem-pane :is(h3,label,.row,.item,strong){
+  color:var(--xy-night-title)!important;
+}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel .xy-mem-pane :is(.subtle,p,small){
+  color:var(--xy-night-help)!important;
+}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel .xy-mem-pane textarea{
+  background:#1b2620!important;
+  color:#eff6f0!important;
+  -webkit-text-fill-color:#eff6f0;
+}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel .xy-mem-pane textarea::placeholder{
+  color:#a6bdac!important;
+}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel :is(.xy-mem-pane button,#xyFallbackSave,#xyStudy button.primary){
+  background:#416a50!important;
+  border-color:#86b092!important;
+  color:#f8fff8!important;
+  -webkit-text-fill-color:#f8fff8;
+}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyFallbackPanel :is(label,strong,small),
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyProactiveSettings :is(.xy-proactive-label strong,.xy-proactive-label span,.xy-proactive-label label){
+  color:#eaf5ec!important;
+}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyFallbackPanel :is(select,option,input:not([type="checkbox"])),
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy :is(select,option,input:not([type="checkbox"]),textarea){
+  color:#e9f5ec!important;
+  -webkit-text-fill-color:#e9f5ec;
+  background:#1b2721!important;
+  border:1px solid rgba(189,217,196,.35)!important;
+  color-scheme:dark;
+}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy #studyGreetingPreview{
+  color:#e7f2e8!important;
+  -webkit-text-fill-color:#e7f2e8;
+  background:#202e25!important;
+  opacity:1;
+}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy :is(.study-field span,.study-tip,.study-card small,.study-card p,.study-footer small),
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyProactiveSettings :is(.xy-proactive-info,.xy-proactive-label small){
+  color:#c1d0c4!important;
+}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel :is(#xyStudy .study-alts summary,#xyStudy .study-card strong,#xyStudy .study-greeting-picker strong,#xyStudy .study-tabs button){
+  color:#eaf3ea!important;
+}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy :is(.study-tabs button.selected,button.primary){
+  background:#416a50!important;
+  color:#fff!important;
+}
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyStudy .study-card #studyGreetingPreview,
+:is(html[data-theme-mode="dark"], body.theme-dark) #panel #xyFallbackPanel :is(select,input){
+  box-shadow:0 0 0 1px rgba(150,193,162,.08) inset;
+}
+@media (prefers-reduced-motion: reduce){
+  :is(html[data-theme-mode="dark"], body.theme-dark) #panel button{transition:none}
+}
