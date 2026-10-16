@@ -7,7 +7,7 @@
   --xy-ui-accent-border:#ccdacc;
 }
 #panel #xyStudy{
-  --story-accent:var(--xy-ui-accent);
+  --story-accent:var(--xy-ui-accent-ink,var(--xy-ui-accent));
   --story-cover:var(--xy-ui-accent-soft);
   --story-line:var(--xy-ui-accent-border);
 }
@@ -106,7 +106,7 @@
 }
 #panel .xy-user-identity p{min-height:14px;font-size:11px;margin:0;line-height:1.6}
 :is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy{
-  --story-accent:var(--xy-ui-accent);
+  --story-accent:var(--xy-ui-accent-ink,var(--xy-ui-accent));
   --story-cover:var(--xy-ui-accent-soft);
   --story-line:var(--xy-ui-accent-border);
 }
