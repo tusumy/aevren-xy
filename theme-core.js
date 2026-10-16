@@ -67,6 +67,7 @@
     const activeAccent=mode==="dark"?blend(accent,"#ffffff",.3):accent;
     root.style.setProperty('--theme-accent-text',textFor(accent));
     root.style.setProperty('--xy-ui-accent',activeAccent);
+    root.style.setProperty('--xy-ui-accent-ink',mode==="dark"?blend(accent,"#ffffff",.62):blend(accent,"#171e19",.53));
     root.style.setProperty('--xy-ui-accent-on',textFor(activeAccent));
     root.style.setProperty('--xy-ui-accent-soft',mode==="dark"?blend(accent,"#222b25",.76):blend(accent,"#ffffff",.86));
     root.style.setProperty('--xy-ui-accent-border',mode==="dark"?blend(accent,"#8fada0",.5):blend(accent,"#ffffff",.57));
