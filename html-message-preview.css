@@ -107,3 +107,16 @@
   .xy-html-bar button{padding:5px 7px}
   .xy-html-overlay{padding:5px}
 }
+
+/* Imported Tavern character cards: show a compact, immediately usable
+   status panel without leaving 420px of blank space around closed <details>.
+   "放大" is available for reading long expanded status entries. */
+.xy-html-widget.xy-html-tavern{width:min(100%,520px);max-width:100%}
+.xy-html-tavern .xy-html-bar{background:#fbeaf0;border-color:#e8bccc}
+.xy-html-tavern .xy-html-tag{color:#b95376}
+.xy-html-tavern .xy-html-preview{background:#fffbfd;border-color:#e8bccc}
+.xy-html-tavern .xy-html-frame{height:210px;min-height:210px}
+:is(html[data-theme-mode="dark"],body.theme-dark) .xy-html-tavern .xy-html-bar{background:#402c37;border-color:#9a687c}
+:is(html[data-theme-mode="dark"],body.theme-dark) .xy-html-tavern .xy-html-tag{color:#ffcadb}
+:is(html[data-theme-mode="dark"],body.theme-dark) .xy-html-tavern .xy-html-preview{border-color:#9a687c;background:#342a30}
+@media(max-width:420px){.xy-html-tavern .xy-html-frame{height:190px;min-height:190px}}
