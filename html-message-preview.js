@@ -46,7 +46,7 @@ function frame(code){
 // The original role template is untrusted; never inject it into the parent DOM.
 function buildTavernStatus(source){
   const values=Array.isArray(source.fields)?source.fields:[];
-  const v=i=>String(values[i-1]||"").trim().slice(0,7500);
+  const v=i=>(window.xyTavernMacros?.replace?.(String(values[i-1]||""),window.xyCurrentCharacter?.()?.name)??String(values[i-1]||"")).trim().slice(0,7500);
   const root=document.createElement("section");
   root.className="xy-tavern-status-widget";
   root.innerHTML='<details class="xy-jn-card">'+
