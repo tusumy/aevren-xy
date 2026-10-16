@@ -42,6 +42,63 @@ function frame(code){
   node.srcdoc=safeDoc(code);
   return node;
 }
+// First-party rendering for the known twelve-field Tavern <jn_status> format.
+// The original role template is untrusted; never inject it into the parent DOM.
+function buildTavernStatus(source){
+  const values=Array.isArray(source.fields)?source.fields:[];
+  const v=i=>String(values[i-1]||"").trim().slice(0,7500);
+  const root=document.createElement("section");
+  root.className="xy-tavern-status-widget";
+  root.innerHTML='<details class="xy-jn-card">'+
+    '<summary class="xy-jn-cover">'+
+      '<span class="xy-jn-avatar" aria-hidden="true">🐶</span>'+
+      '<span class="xy-jn-cover-text"><strong>窝是一只可怜的狗儿</strong>'+
+        '<span class="xy-jn-cover-mood"></span></span>'+
+      '<span class="xy-jn-chevron" aria-hidden="true">⌄</span>'+
+    '</summary>'+
+    '<div class="xy-jn-paper">'+
+      '<div class="xy-jn-tabs" role="tablist" aria-label="角色状态">'+
+        '<button type="button" role="tab" data-jn-tab="1" aria-selected="true">汪汪日常</button>'+
+        '<button type="button" role="tab" data-jn-tab="2" aria-selected="false">小秘密</button>'+
+        '<button type="button" role="tab" data-jn-tab="3" aria-selected="false">假如狗狗</button>'+
+      '</div>'+
+      '<div class="xy-jn-tab-panel" data-jn-panel="1" role="tabpanel">'+
+        '<div class="xy-jn-facts">'+
+          '<div><small>日期</small><span data-jn-value="1"></span></div>'+
+          '<div><small>时间</small><span data-jn-value="2"></span></div>'+
+          '<div><small>位置</small><span data-jn-value="3"></span></div>'+
+          '<div><small>天气</small><span data-jn-value="4"></span></div>'+
+        '</div>'+
+        '<div class="xy-jn-field"><small>穿搭</small><p data-jn-value="7"></p></div>'+
+        '<div class="xy-jn-field"><small>正在</small><p data-jn-value="9"></p></div>'+
+        '<div class="xy-jn-field"><small>狗语</small><p data-jn-value="10"></p></div>'+
+      '</div>'+
+      '<div class="xy-jn-tab-panel" data-jn-panel="2" role="tabpanel" hidden>'+
+        '<div class="xy-jn-field"><small>狗狗想要涩涩</small><p data-jn-value="11"></p></div>'+
+        '<div class="xy-jn-field"><small>假老婆的耐久度</small><p data-jn-value="8"></p></div>'+
+      '</div>'+
+      '<div class="xy-jn-tab-panel" data-jn-panel="3" role="tabpanel" hidden>'+
+        '<div class="xy-jn-field"><small>✨ 假如小剧场 ✨</small><p data-jn-value="12"></p></div>'+
+      '</div>'+
+      '<p class="xy-jn-footnote">狗狗状态 · 来自角色卡</p>'+
+    '</div></details>'+
+    '<details class="xy-jn-source"><summary>HTML 源代码</summary><pre></pre></details>';
+  root.querySelector(".xy-jn-cover-mood").textContent="汪：" + (v(5)||"……");
+  const all=root.querySelectorAll("[data-jn-value]");
+  all.forEach(el=>{
+    const value=v(Number(el.getAttribute("data-jn-value")));
+    el.textContent=value||"暂无记录";
+  });
+  const tabs=root.querySelectorAll("[data-jn-tab]");
+  const panels=root.querySelectorAll("[data-jn-panel]");
+  tabs.forEach(button=>button.addEventListener("click",()=>{
+    const chosen=button.getAttribute("data-jn-tab");
+    tabs.forEach(item=>item.setAttribute("aria-selected",String(item===button)));
+    panels.forEach(item=>{item.hidden=item.getAttribute("data-jn-panel")!==chosen});
+  }));
+  root.querySelector(".xy-jn-source pre").textContent=source.code||"";
+  return root;
+}
 function buildWidget(source){
   const root=document.createElement("section");
   root.className="xy-html-widget";
@@ -126,7 +183,7 @@ function decorate(){
     const targets=box.querySelectorAll('.message.assistant[data-message="'+index+'"] .message-stack');
     const target=targets?.[targets.length-1];
     if(!target||target.querySelector(".xy-html-widget"))return;
-    const widget=buildWidget(source);
+    const widget=source.kind==="tavern-status"&&Array.isArray(source.fields)?buildTavernStatus(source):buildWidget(source);
     const bubble=target.querySelector(".bubble");
     if(bubble)bubble.insertAdjacentElement("afterend",widget);
     else target.appendChild(widget);
