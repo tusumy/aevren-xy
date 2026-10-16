@@ -15,12 +15,24 @@
   if(norm(savedBubbles.userBubble))theme.userBubble=norm(savedBubbles.userBubble);
   if(norm(savedBubbles.assistantBubble))theme.assistantBubble=norm(savedBubbles.assistantBubble);
   const systemScheme=window.matchMedia?.('(prefers-color-scheme: dark)');
+  function nativeSystemDark(){
+    try{
+      const value=window.AevrenAppearanceNative?.isDarkMode?.();
+      if(value===true||value===false)return value;
+      if(value==="true"||value==="false")return value==="true";
+    }catch(e){console.warn("[砚屿] 外观读取失败，使用媒体查询",e)}
+    return null;
+  }
+  function systemDark(){
+    const os=nativeSystemDark();
+    return os===null?!!systemScheme?.matches:os;
+  }
 
   function persist(){
     localStorage.setItem('xy.theme',JSON.stringify(theme));
     localStorage.setItem('xy.bubbleColors',JSON.stringify({userBubble:theme.userBubble,assistantBubble:theme.assistantBubble}));
   }
-  function resolvedMode(){return theme.mode==='system'?(systemScheme?.matches?'dark':'light'):theme.mode}
+  function resolvedMode(){return theme.mode==='system'?(systemDark()?'dark':'light'):theme.mode}
   function backdrop(){let el=document.querySelector('#themeBackdrop');if(!el){el=document.createElement('div');el.id='themeBackdrop';document.body.prepend(el)}return el}
   function rgbaColor(hex,alpha){
     const v=norm(hex)||'#ffffff';
