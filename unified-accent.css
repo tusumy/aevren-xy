@@ -1,0 +1,158 @@
+/* Shared interactive colors — driven by Theme > 强调色.
+   Preserve paper/ink legibility and author-specific Tavern character designs. */
+:root{
+  --xy-ui-accent:var(--theme-accent,#365d4a);
+  --xy-ui-accent-on:var(--theme-accent-text,#fff);
+  --xy-ui-accent-soft:#edf3ed;
+  --xy-ui-accent-border:#ccdacc;
+}
+#panel #xyStudy{
+  --story-accent:var(--xy-ui-accent);
+  --story-cover:var(--xy-ui-accent-soft);
+  --story-line:var(--xy-ui-accent-border);
+}
+/* The book has neutral paper and typography but follows the chosen accent. */
+#panel #xyStudy .study-cover{
+  background:linear-gradient(135deg,var(--xy-ui-accent-soft),var(--story-paper))!important;
+  border-color:var(--xy-ui-accent-border)!important;
+}
+#panel #xyStudy .study-cover::after,
+#panel #xyStudy .study-cover-kicker,
+#panel #xyStudy .study-cover-kicker i{
+  color:var(--story-accent)!important;
+}
+#panel #xyStudy :is(.study-cover strong,.study-section-heading h3,.study-shelf-head h3){
+  color:var(--story-ink)!important;
+}
+#panel #xyStudy .study-tabs{
+  background:var(--xy-ui-accent-soft)!important;
+  border-color:var(--xy-ui-accent-border)!important;
+}
+#panel #xyStudy .study-tabs button.selected,
+#panel #xyStudy :is(button.primary,.study-auto-trigger){
+  background:var(--xy-ui-accent)!important;
+  border-color:var(--xy-ui-accent)!important;
+  color:var(--xy-ui-accent-on)!important;
+  -webkit-text-fill-color:var(--xy-ui-accent-on);
+}
+#panel #xyStudy .study-progress-bar span{background:var(--xy-ui-accent)!important}
+#panel #xyStudy .study-progress-num{
+  background:var(--xy-ui-accent-soft)!important;
+  border-color:var(--xy-ui-accent-border)!important;
+  color:var(--story-accent)!important;
+}
+#panel #xyStudy :is(.study-chapter-entry::before,.study-chapter-chevron,.study-digest-arrow){
+  background:var(--xy-ui-accent-soft)!important;
+}
+#panel #xyStudy .study-chapter-entry::before{
+  background:var(--xy-ui-accent)!important;
+}
+#panel #xyStudy :is(.study-page-kicker span,.study-chapter-type,.study-chapter-chevron,.study-digest-arrow){
+  background:var(--xy-ui-accent-soft)!important;
+  color:var(--story-accent)!important;
+}
+#panel #xyStudy :is(.study-greeting-option.chosen,.study-import){
+  background:var(--xy-ui-accent-soft)!important;
+  border-color:var(--xy-ui-accent-border)!important;
+}
+#panel #xyStudy .study-import,
+#panel #xyStudy :is(.study-greeting-tick,.study-greeting-no,.study-greeting-chevron){
+  color:var(--story-accent)!important;
+  -webkit-text-fill-color:var(--story-accent);
+}
+#panel #xyStudy :is(.study-tabs button,.study-greeting-option,.study-auto-trigger,button.primary):focus-visible,
+#panel :is(button,input,select,textarea):focus-visible{
+  outline:2px solid var(--xy-ui-accent)!important;
+  outline-offset:2px;
+}
+#panel .panel-action,
+#panel .character-actions button,
+#panel .use-character{
+  border-color:var(--xy-ui-accent-border);
+}
+#panel .panel-action:hover,
+#panel .character-card.active{
+  border-color:var(--xy-ui-accent)!important;
+}
+/* User display name belongs to the existing character settings, not a role. */
+#panel .xy-user-identity{
+  display:grid;
+  gap:9px;
+  padding:15px 14px;
+  border:1px solid var(--xy-ui-accent-border);
+  border-radius:15px;
+  background:var(--xy-ui-accent-soft);
+  margin:10px 0 18px;
+}
+#panel .xy-user-identity label{display:grid;gap:5px;color:inherit}
+#panel .xy-user-identity strong{font-size:13px;font-weight:650}
+#panel .xy-user-identity small{font-size:11px;line-height:1.6;opacity:.85}
+#panel .xy-user-identity-row{display:flex;gap:8px;align-items:center;min-width:0}
+#panel .xy-user-identity-row input{
+  min-width:0;flex:1;width:auto;
+  padding:11px 12px;
+  border:1px solid var(--xy-ui-accent-border);
+  border-radius:10px;
+  color:inherit;
+  background:var(--story-paper,#fff);
+}
+#panel .xy-user-identity-row button{
+  flex:none;
+  min-height:42px;
+  padding:9px 13px;
+  border-radius:10px;
+  border:0;
+  background:var(--xy-ui-accent);
+  color:var(--xy-ui-accent-on);
+  font-size:12px;
+  cursor:pointer;
+}
+#panel .xy-user-identity p{min-height:14px;font-size:11px;margin:0;line-height:1.6}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy{
+  --story-accent:var(--xy-ui-accent);
+  --story-cover:var(--xy-ui-accent-soft);
+  --story-line:var(--xy-ui-accent-border);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover{
+  background:linear-gradient(130deg,var(--xy-ui-accent-soft),#243029)!important;
+  border-color:var(--xy-ui-accent-border)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-tabs{
+  background:var(--xy-ui-accent-soft)!important;
+  border-color:var(--xy-ui-accent-border)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy :is(.study-tabs button.selected,button.primary,.study-auto-trigger){
+  background:var(--xy-ui-accent)!important;
+  color:var(--xy-ui-accent-on)!important;
+  -webkit-text-fill-color:var(--xy-ui-accent-on);
+  border-color:var(--xy-ui-accent)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy :is(.study-progress-num,.study-page-kicker span,.study-chapter-type,.study-chapter-chevron,.study-digest-arrow){
+  background:var(--xy-ui-accent-soft)!important;
+  border-color:var(--xy-ui-accent-border)!important;
+  color:var(--story-accent)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-greeting-option.chosen{
+  background:var(--xy-ui-accent-soft)!important;
+  border-color:var(--xy-ui-accent)!important;
+  color:var(--story-ink)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-import{
+  background:var(--xy-ui-accent-soft)!important;
+  border-color:var(--xy-ui-accent)!important;
+  color:var(--story-accent)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel .xy-user-identity{
+  background:var(--xy-ui-accent-soft)!important;
+  border-color:var(--xy-ui-accent-border)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel .xy-user-identity-row input{
+  background:#212d25!important;
+  color:#e9f3ed!important;
+  -webkit-text-fill-color:#e9f3ed;
+  border-color:var(--xy-ui-accent-border)!important;
+}
+@media(max-width:420px){
+  #panel .xy-user-identity-row{flex-wrap:wrap}
+  #panel .xy-user-identity-row button{min-width:96px}
+}
