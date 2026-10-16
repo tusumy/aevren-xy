@@ -102,7 +102,7 @@
     const eyebrow=document.querySelector('#panelEyebrow'),title=document.querySelector('#panelTitle'),body=document.querySelector('#panelBody');
     if(eyebrow)eyebrow.textContent='THEME';if(title)title.textContent='主题';if(!body)return;
     body.innerHTML=`<p class="setting-note">气泡颜色以你的设置为基准，并会随浅色/深色模式自动调整明暗；背景图会一直保留。</p>
-      <div class="theme-mode-switch"><button data-theme-mode="light" class="${theme.mode==='light'?'active':''}">☀ 浅色</button><button data-theme-mode="dark" class="${theme.mode==='dark'?'active':''}">☾ 深色</button><button data-theme-mode="system" class="${theme.mode==='system'?'active':''}">◐ 跟随系统</button></div>
+      <div class="theme-mode-switch"><button data-theme-mode="light" class="${theme.mode==='light'?'active':''}">☀ 浅色</button><button data-theme-mode="dark" class="${theme.mode==='dark'?'active':''}">☾ 深色</button><button data-theme-mode="system" class="${theme.mode==='system'?'active':''}">◐ 跟随系统 · <span id="xySystemModeNow">${systemDark()?'深色':'浅色'}</span></button></div>
       <div class="theme-presets"><button data-theme-preset="mint">薄荷</button><button data-theme-preset="cream">奶油</button><button data-theme-preset="dusk">雾紫</button><button data-theme-preset="ink">青墨</button></div>
       <div class="theme-setting-card">${colorField('背景颜色','bgColor')}${colorField('你的气泡','userBubble')}${colorField('我的气泡','assistantBubble')}${colorField('强调色','accent')}</div>
       <div class="theme-setting-card"><label class="theme-stack"><span>气泡磨砂玻璃 <b id="themeBubbleGlassValue">${theme.bubbleGlass?'已开启':'已关闭'}</b></span><input id="themeBubbleGlass" type="checkbox" ${theme.bubbleGlass?'checked':''}></label><label class="theme-stack"><span>聊天字号 <b id="themeFontValue">${Math.round(Number(theme.fontScale||.95)*100)}%</b></span><input class="xy-theme-range" id="themeFontScale" type="range" min="0.8" max="1.2" step="0.05" value="${Number(theme.fontScale||.95)}"></label><label class="theme-stack"><span>气泡间距 <b id="themeBubbleGapValue">${Math.round(Number(theme.bubbleGap??18))}px</b></span><input class="xy-theme-range" id="themeBubbleGap" type="range" min="8" max="48" step="1" value="${Number(theme.bubbleGap??18)}"></label></div>
@@ -140,6 +140,18 @@
 
   const previousOpenPanel=openPanel;
   openPanel=function(type){if(type==='theme'){themePanel();return}return previousOpenPanel(type)};
-  systemScheme?.addEventListener?.('change',()=>{if(theme.mode==='system')applyTheme()});
+  function refreshSystemTheme(){
+    if(theme.mode!=="system")return;
+    applyTheme();
+    const label=document.querySelector("#xySystemModeNow");
+    if(label)label.textContent=systemDark()?"深色":"浅色";
+  }
+  const onSystemChange=()=>refreshSystemTheme();
+  if(systemScheme?.addEventListener)systemScheme.addEventListener('change',onSystemChange);
+  else systemScheme?.addListener?.(onSystemChange);
+  window.addEventListener('xy-system-appearance-change',onSystemChange);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshSystemTheme()});
+  window.addEventListener('focus',refreshSystemTheme);
+  window.addEventListener('pageshow',refreshSystemTheme);
   persist();applyTheme();
 })();
