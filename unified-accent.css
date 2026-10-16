@@ -41,9 +41,6 @@
   border-color:var(--xy-ui-accent-border)!important;
   color:var(--story-accent)!important;
 }
-#panel #xyStudy :is(.study-chapter-entry::before,.study-chapter-chevron,.study-digest-arrow){
-  background:var(--xy-ui-accent-soft)!important;
-}
 #panel #xyStudy .study-chapter-entry::before{
   background:var(--xy-ui-accent)!important;
 }
