@@ -153,3 +153,38 @@
   #panel .xy-user-identity-row{flex-wrap:wrap}
   #panel .xy-user-identity-row button{min-width:96px}
 }
+
+/* App chrome accents follow the same live palette; surfaces stay neutral. */
+.sidebar .new-chat{border-color:var(--xy-ui-accent-border)!important}
+.sidebar .chat-item.active{
+  box-shadow:inset 3px 0 0 var(--xy-ui-accent);
+}
+.sidebar .sidebar-toolbox-label:focus-visible,
+.sidebar .nav-btn:focus-visible,
+.sidebar .new-chat:focus-visible{
+  outline:2px solid var(--xy-ui-accent)!important;
+  outline-offset:2px;
+}
+#panel :is(#xyFallbackSave,.study-auto-trigger):focus-visible{
+  outline:2px solid var(--xy-ui-accent)!important;
+}
+#panel .xy-mem-pane button:focus-visible{
+  outline:2px solid var(--xy-ui-accent)!important;
+  outline-offset:2px;
+}
+.message.assistant .xy-heart-note .xy-heart-dot{
+  color:var(--xy-ui-accent)!important;
+  -webkit-text-fill-color:var(--xy-ui-accent)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .chat-item.active{
+  box-shadow:inset 3px 0 0 var(--xy-ui-accent)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .sidebar-bottom>.nav-btn:hover,
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .sidebar-bottom>.nav-btn:focus-visible{
+  background:var(--xy-ui-accent-soft)!important;
+  color:#f3f7f5!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .message.assistant .xy-heart-note .xy-heart-dot{
+  color:var(--xy-ui-accent)!important;
+  -webkit-text-fill-color:var(--xy-ui-accent)!important;
+}
