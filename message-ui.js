@@ -75,7 +75,8 @@
       return `<div class="message xy-call-record"><details class="xy-call-history"><summary><span class="xy-call-history-icon">☎</span><span>与${esc(name)}通话 · ${esc(m.duration||"00:00")}</span><small>${esc(when)}</small></summary><div class="xy-call-history-content">${content}</div></details></div>`;
     }
     const isAssistant=m.role==="assistant";
-    const rawParts=isAssistant?splitReply(m.text):[String(m.text??"")];
+    const visualText=isAssistant?(window.xyTavernDisplay?.strip?.(m.text,chat()?.characterId)??m.text):m.text;
+    const rawParts=isAssistant?splitReply(visualText):[String(visualText??"")];
     const parts=isAssistant?rawParts.map(trimPlainEnding):rawParts;
     const stamp=timeText(m.createdAt),title=timeTitle(m.createdAt),media=attachmentHtml(m.attachments);
     return parts.map((part,i)=>{
