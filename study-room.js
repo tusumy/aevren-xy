@@ -73,6 +73,7 @@ function draw(){
     '<pre>'+escape(preview||"本轮暂无可注入的书房内容。")+'</pre></div></details>';
   if(tab==="card"){
     const openings=[c.first_mes,...arr(c.alternate_greetings)].filter(Boolean);
+    const showOpening=value=>window.xyTavernMacros?.replace?.(String(value),charName())??String(value);
     const first=Math.min(greetingChoice,Math.max(0,openings.length-1));
     html+='<section class="study-section-heading"><span class="study-eyebrow">CHARACTER / 人物手记</span>'+
       '<h3>和谁一起写故事</h3><p>先选择相遇的方式。角色的详细设定，藏在下面的编辑页里。</p></section>'+
@@ -84,17 +85,17 @@ function draw(){
         '<input type="hidden" id="studyGreetingChoice" value="'+first+'">'+
         '<details class="study-greeting-menu" id="studyGreetingMenu">'+
           '<summary aria-label="选择角色开场白"><span class="study-greeting-current" id="studyGreetingCurrent">'+
-            escape('第 '+(first+1)+' 条 · '+cap(String(openings[first]).replace(/\s+/g," "),42))+
+            escape('第 '+(first+1)+' 条 · '+cap(showOpening(openings[first]).replace(/\s+/g," "),42))+
           '</span><span aria-hidden="true" class="study-greeting-chevron">⌄</span></summary>'+
           '<div class="study-greeting-options" role="group" aria-label="开场白选项">'+
             openings.map((text,i)=>'<button type="button" class="study-greeting-option '+(i===first?"chosen":"")+
               '" data-study="pickGreeting" data-key="'+i+'" aria-pressed="'+(i===first)+'">'+
               '<span class="study-greeting-no">'+String(i+1).padStart(2,"0")+'</span>'+
-              '<span class="study-greeting-title">'+escape(cap(String(text).replace(/\s+/g," "),90))+'</span>'+
+              '<span class="study-greeting-title">'+escape(cap(showOpening(text).replace(/\s+/g," "),90))+'</span>'+
               (i===first?'<span class="study-greeting-tick" aria-hidden="true">✓</span>':"")+
               '</button>').join("")+
           '</div></details>'+
-        '<textarea id="studyGreetingPreview" readonly rows="6" aria-label="完整开场白预览">'+escape(openings[first])+'</textarea>'+
+        '<textarea id="studyGreetingPreview" readonly rows="6" aria-label="完整开场白预览">'+escape(showOpening(openings[first]))+'</textarea>'+
         '<small>选中的开场会开启一条新对话，原来的聊天不会改变。</small>'+
         btn("startGreetingChat","用这一条开场 · 开始聊天","","primary")+'</section>':
         '<div class="study-empty">暂时没有开场白，先导入酒馆角色卡吧。</div>')+
@@ -332,9 +333,9 @@ host?.addEventListener("click",event=>{
     const hidden=document.getElementById("studyGreetingChoice");
     if(hidden)hidden.value=String(choice);
     const preview=document.getElementById("studyGreetingPreview");
-    if(preview)preview.value=String(all[choice]);
+    if(preview)preview.value=window.xyTavernMacros?.replace?.(String(all[choice]),charName())??String(all[choice]);
     const shown=document.getElementById("studyGreetingCurrent");
-    if(shown)shown.textContent="第 "+(choice+1)+" 条 · "+cap(String(all[choice]).replace(/\s+/g," "),42);
+    if(shown)shown.textContent="第 "+(choice+1)+" 条 · "+cap((window.xyTavernMacros?.replace?.(String(all[choice]),charName())??String(all[choice])).replace(/\s+/g," "),42);
     document.querySelectorAll("#xyStudy .study-greeting-option").forEach(btn=>{
       const chosen=Number(btn.dataset.key)===choice;
       btn.classList.toggle("chosen",chosen);
