@@ -76,7 +76,8 @@
     }
     const isAssistant=m.role==="assistant";
     const visualText=isAssistant?(window.xyTavernDisplay?.strip?.(m.text,chat()?.characterId)??m.text):m.text;
-    const rawParts=isAssistant?splitReply(visualText):[String(visualText??"")];
+    const namedText=isAssistant?(window.xyTavernMacros?.replace?.(visualText,currentCharacterName())??visualText):visualText;
+    const rawParts=isAssistant?splitReply(namedText):[String(namedText??"")];
     const parts=isAssistant?rawParts.map(trimPlainEnding):rawParts;
     const stamp=timeText(m.createdAt),title=timeTitle(m.createdAt),media=attachmentHtml(m.attachments);
     return parts.map((part,i)=>{
