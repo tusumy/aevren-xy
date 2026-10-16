@@ -1,0 +1,62 @@
+/* Opaque night sidebar. Glass styling made the toolbox a muddy grey panel
+   and made low-contrast tool labels blend into the wallpaper beneath it. */
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar{
+  background:#202b25!important;
+  background-image:linear-gradient(175deg,#26362c 0%,#202b25 74%)!important;
+  border-right:1px solid rgba(171,211,184,.24)!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  box-shadow:12px 0 33px rgba(0,0,0,.38)!important;
+  color:#e8f1ea!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .sidebar-bottom{
+  background:#2a3b30!important;
+  background-image:none!important;
+  border:1px solid rgba(161,203,173,.38)!important;
+  border-radius:18px!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  box-shadow:0 6px 21px rgba(0,0,0,.16)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .sidebar-toolbox-label{
+  color:#e2eee5!important;
+  background:transparent!important;
+  font-weight:600;
+  text-shadow:none!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .sidebar-toolbox-chevron{color:#bbdac2!important}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .sidebar-bottom>.nav-btn{
+  color:#d8e9dd!important;
+  background:transparent!important;
+  text-shadow:none!important;
+  border-radius:11px;
+  opacity:1!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .sidebar-bottom>.nav-btn:hover,
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .sidebar-bottom>.nav-btn:focus-visible{
+  color:#f5fff7!important;
+  background:#3a5542!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .sidebar-bottom>.nav-btn b{
+  color:#e6f5e9!important;
+  background:#46634e!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar :is(.chat-item,.section-label,.brand span,.presence span){
+  color:#c1d2c6!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .brand strong{color:#e9f3eb!important}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .chat-item.active{
+  color:#f1faf3!important;
+  background:#355142!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .sidebar-close{
+  background:#344b3a!important;
+  border-color:#5b7963!important;
+  box-shadow:none!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .sidebar-close span{background:#e8f0ea!important}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar .new-chat{
+  color:#e8f3eb!important;
+  background:#35493b!important;
+  border-color:#597361!important;
+}
