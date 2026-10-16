@@ -63,14 +63,16 @@ function buildStatus(rule,text){
   if(!tpl||tpl.length>40000)return null;
   // Escape captures BEFORE inserting them into HTML, so status data can't
   // escape the CSS-only preview or create scripts, tags or event handlers.
-  let result=tpl.replace(/\$(1[0-2]|[1-9])(?!\d)/g,(_full,index)=>enc(captures[Number(index)]||""));
+  // Rewrite trusted template structure BEFORE filling in escaped model
+  // values. Otherwise an escaped quoted phrase like "onerror=..." could be
+  // mistaken for an HTML event attribute and stripped from the story.
+  let result=styleStatusWithoutScripts(tpl);
   result=result.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi,"");
   result=result.replace(/<audio\b[^>]*>[\s\S]*?<\/audio\s*>/gi,"");
   result=result.replace(/<video\b[^>]*>[\s\S]*?<\/video\s*>/gi,"");
-  result=styleStatusWithoutScripts(result);
-  // Remove unsupported direct event hooks. Remaining markup still loads
-  // in iframe[sandbox=""] with CSP script-src 'none'.
+  // Remove any remaining inline events from the original template.
   result=result.replace(/\s+on[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,"");
+  result=result.replace(/\$(1[0-2]|[1-9])(?!\d)/g,(_full,index)=>enc(captures[Number(index)]||""));
   result=result.replace(/<!doctype[^>]*>/gi,"")
     .replace(/<\/?(?:html|head|body)\b[^>]*>/gi,"");
   if(result.length>120000)return null;
