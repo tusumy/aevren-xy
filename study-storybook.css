@@ -821,3 +821,104 @@
 
 #panel #xyStudy details.study-memory-board{background:#edf3eb}
 :is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy details.study-memory-board{background:#2a4435!important}
+
+/* Character opening chooser uses our own accessible buttons: Android WebView's
+   native <select>/<option> popup may always draw white under a Light Activity. */
+#panel #xyStudy .study-greeting-menu{
+  width:100%;
+  position:relative;
+  border:1px solid var(--story-line);
+  border-radius:12px;
+  background:var(--story-card);
+  color:var(--story-ink);
+  min-width:0;
+}
+#panel #xyStudy .study-greeting-menu > summary{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:13px 12px;
+  gap:9px;
+  list-style:none;
+  cursor:pointer;
+  color:var(--story-ink);
+  font-size:12px;
+  min-height:48px;
+}
+#panel #xyStudy .study-greeting-menu > summary::-webkit-details-marker{display:none}
+#panel #xyStudy .study-greeting-current{
+  flex:1;
+  min-width:0;
+  color:var(--story-ink);
+  line-height:1.55;
+  overflow-wrap:anywhere;
+}
+#panel #xyStudy .study-greeting-chevron{
+  flex:none;
+  font-size:18px;
+  color:var(--story-accent);
+  transition:transform .15s ease;
+}
+#panel #xyStudy .study-greeting-menu[open] .study-greeting-chevron{transform:rotate(180deg)}
+#panel #xyStudy .study-greeting-options{
+  max-height:min(46vh,350px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  display:grid;
+  gap:5px;
+  padding:7px;
+  border-top:1px solid var(--story-line);
+}
+#panel #xyStudy .study-greeting-option{
+  width:100%;
+  min-height:42px;
+  padding:9px 11px;
+  border:1px solid transparent;
+  border-radius:9px;
+  background:var(--story-paper);
+  color:var(--story-ink);
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  text-align:left;
+  font-size:12px;
+  line-height:1.55;
+  cursor:pointer;
+  overflow-wrap:anywhere;
+  -webkit-tap-highlight-color:transparent;
+}
+#panel #xyStudy .study-greeting-option.chosen{
+  background:var(--story-cover);
+  color:var(--story-ink);
+  border-color:var(--story-accent);
+}
+#panel #xyStudy .study-greeting-no{font-weight:700;color:var(--story-accent);flex:none}
+#panel #xyStudy .study-greeting-title{min-width:0;flex:1;color:inherit}
+#panel #xyStudy .study-greeting-tick{flex:none;font-weight:700;color:var(--story-accent)}
+#panel #xyStudy .study-greeting-menu :is(summary,button):focus-visible{
+  outline:2px solid var(--story-accent);
+  outline-offset:2px;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-greeting-menu{
+  color:var(--story-ink)!important;
+  background:var(--story-card)!important;
+  border-color:var(--story-line)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-greeting-menu :is(summary,.study-greeting-current){
+  color:var(--story-ink)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-greeting-option{
+  color:#eaf4ec!important;
+  background:#23392d!important;
+  border-color:rgba(166,208,177,.1)!important;
+  -webkit-text-fill-color:#eaf4ec;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-greeting-option.chosen{
+  background:#3b5e47!important;
+  border-color:#90c49d!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy :is(.study-greeting-no,.study-greeting-tick,.study-greeting-chevron){
+  color:#bce3c3!important;
+  -webkit-text-fill-color:#bce3c3;
+}
+@media(prefers-reduced-motion:reduce){#panel #xyStudy .study-greeting-chevron{transition:none}}

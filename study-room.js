@@ -18,7 +18,7 @@ function book(db,who=id()){
   return b;
 }
 const currentBook=()=>book(load());
-let tab="card",editLore="",editChapter="",status="",greetingChoice=0;
+let tab="card",editLore="",editChapter="",status="",greetingChoice=0,greetingRole="";
 function saveStudy(edit,message="已保存到本机"){
   try{const db=load();edit(book(db));localStorage.setItem(KEY,JSON.stringify(db));status=message;draw()}
   catch(e){status="保存失败："+String(e?.message||e);draw()}
@@ -37,6 +37,7 @@ function btn(action,text,key="",cls=""){
 }
 function draw(){
   const panel=document.querySelector("#panel"),host=document.querySelector("#panelBody");if(!panel||!host)return;
+  if(greetingRole!==id()){greetingRole=id();greetingChoice=0}
   const b=currentBook(),c=b.card||{},p=b.preset||{};
   document.querySelector("#sidebar")?.classList.remove("open");
   document.querySelector("#panelEyebrow").textContent="AEVREN · STUDY";
@@ -78,8 +79,21 @@ function draw(){
       '<label class="study-import">＋ 导入酒馆角色卡 JSON<input type="file" id="studyCardImport" accept=".json,application/json" hidden></label>'+
       (openings.length?'<section class="study-card study-greeting-picker">'+
         '<span class="study-eyebrow">FIRST MEETING / 开场</span><strong>选择一场相遇 · '+openings.length+' 种开场</strong>'+
-        '<select id="studyGreetingChoice" aria-label="选择开场白">'+openings.map((text,i)=>
-          '<option value="'+i+'" '+(i===first?"selected":"")+'>'+(i+1)+' · '+escape(cap(String(text).replace(/\s+/g," "),40))+'</option>').join("")+'</select>'+
+        // Android's native <select> popup ignores WebView's night palette
+        // on some phones. A details menu keeps all 36 choices legible.
+        '<input type="hidden" id="studyGreetingChoice" value="'+first+'">'+
+        '<details class="study-greeting-menu" id="studyGreetingMenu">'+
+          '<summary aria-label="选择角色开场白"><span class="study-greeting-current" id="studyGreetingCurrent">'+
+            escape('第 '+(first+1)+' 条 · '+cap(String(openings[first]).replace(/\s+/g," "),42))+
+          '</span><span aria-hidden="true" class="study-greeting-chevron">⌄</span></summary>'+
+          '<div class="study-greeting-options" role="group" aria-label="开场白选项">'+
+            openings.map((text,i)=>'<button type="button" class="study-greeting-option '+(i===first?"chosen":"")+
+              '" data-study="pickGreeting" data-key="'+i+'" aria-pressed="'+(i===first)+'">'+
+              '<span class="study-greeting-no">'+String(i+1).padStart(2,"0")+'</span>'+
+              '<span class="study-greeting-title">'+escape(cap(String(text).replace(/\s+/g," "),90))+'</span>'+
+              (i===first?'<span class="study-greeting-tick" aria-hidden="true">✓</span>':"")+
+              '</button>').join("")+
+          '</div></details>'+
         '<textarea id="studyGreetingPreview" readonly rows="6" aria-label="完整开场白预览">'+escape(openings[first])+'</textarea>'+
         '<small>选中的开场会开启一条新对话，原来的聊天不会改变。</small>'+
         btn("startGreetingChat","用这一条开场 · 开始聊天","","primary")+'</section>':
@@ -310,6 +324,33 @@ host?.addEventListener("click",event=>{
   if(!event.target.closest("#xyStudy"))return;
   const t=event.target.closest("[data-study]");if(!t)return;
   const action=t.dataset.study,key=t.dataset.key;
+  if(action==="pickGreeting"){
+    const all=[currentBook().card?.first_mes,...arr(currentBook().card?.alternate_greetings)].filter(Boolean);
+    const choice=Number(key);
+    if(!Number.isInteger(choice)||choice<0||choice>=all.length)return;
+    greetingChoice=choice;
+    const hidden=document.getElementById("studyGreetingChoice");
+    if(hidden)hidden.value=String(choice);
+    const preview=document.getElementById("studyGreetingPreview");
+    if(preview)preview.value=String(all[choice]);
+    const shown=document.getElementById("studyGreetingCurrent");
+    if(shown)shown.textContent="第 "+(choice+1)+" 条 · "+cap(String(all[choice]).replace(/\s+/g," "),42);
+    document.querySelectorAll("#xyStudy .study-greeting-option").forEach(btn=>{
+      const chosen=Number(btn.dataset.key)===choice;
+      btn.classList.toggle("chosen",chosen);
+      btn.setAttribute("aria-pressed",String(chosen));
+      const tick=btn.querySelector(".study-greeting-tick");
+      if(tick&&!chosen)tick.remove();
+      if(!tick&&chosen){
+        const mark=document.createElement("span");
+        mark.className="study-greeting-tick";mark.setAttribute("aria-hidden","true");mark.textContent="✓";
+        btn.appendChild(mark);
+      }
+    });
+    const menu=document.getElementById("studyGreetingMenu");
+    if(menu)menu.open=false;
+    return;
+  }
   if(action==="tab"){tab=key;editLore="";editChapter="";status="";draw();return}
   if(action==="saveCard"){
     const saved=arr(currentBook().card?.alternate_greetings);
