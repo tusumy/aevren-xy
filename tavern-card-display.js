@@ -76,7 +76,10 @@ function buildStatus(rule,text){
   result=result.replace(/<!doctype[^>]*>/gi,"")
     .replace(/<\/?(?:html|head|body)\b[^>]*>/gi,"");
   if(result.length>120000)return null;
-  return {code:result,kind:"tavern-status",autoOpen:true};
+  // The native card reads only the twelve captured plain-text fields.
+  // Its first-party markup is isolated from the imported HTML template.
+  const fields=Array.from({length:12},(_,i)=>String(captures[i+1]||"").slice(0,7500));
+  return {code:result,kind:"tavern-status",fields,autoOpen:false};
 }
 function findStatus(text,role){
   const t=String(text??"");
