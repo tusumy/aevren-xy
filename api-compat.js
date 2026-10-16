@@ -293,7 +293,9 @@
     const studyContext=window.xyStudyRoom?.context?.({characterId:c.characterId||currentRole?.id,chatId:c.id,query:text,recent:studyRecent})||'';
     const studyAutoContext=window.xyStudyAuto?.context?.({characterId:c.characterId||currentRole?.id,chatId:c.id})||'';
     const immediateCallInstruction=!fromCall?window.xyProactiveCalls?.instruction?.()||'':'';
-    const system=[roleSystem,studyContext,studyAutoContext,callEndedContext,timeContext,memorySummary?"角色的长期记忆摘要:\n"+memorySummary:"",memoryContext,phoneStyle,fromCall?'':(window.xyStickerShelf?.context?.(c.characterId||window.xyCurrentCharacter?.()?.id)||''),heartInstruction,immediateCallInstruction].filter(Boolean).join('\n\n');
+    const userIdentity=window.xyTavernMacros?.name?.()||"你";
+    const characterIdentity="【角色卡称呼】用户名字："+userIdentity+"；角色名字："+(currentRole?.name||"角色")+"。酒馆 {{user}} 和 {{char}} 宏在发送前由砚屿替换；请直接称呼用户名字。";
+    const system=[roleSystem,characterIdentity,studyContext,studyAutoContext,callEndedContext,timeContext,memorySummary?"角色的长期记忆摘要:\n"+memorySummary:"",memoryContext,phoneStyle,fromCall?'':(window.xyStickerShelf?.context?.(c.characterId||window.xyCurrentCharacter?.()?.id)||''),heartInstruction,immediateCallInstruction].filter(Boolean).join('\n\n');
     // Keep only the requested number of recent chat turns in model context.
     // The 0 setting means unlimited history, not no history. System prompts
     // and explicit character/memory context are independent of this window.
@@ -317,6 +319,11 @@
     }
     const history=normalizedHistory(historySource);
     window.xyStickerShelf?.expandHistory?.(history);
+    // Resolve SillyTavern macros only in outgoing API data, never in saved messages.
+    const macros=window.xyTavernMacros;
+    if(macros?.mapContent){
+      for(const item of history)item.content=macros.mapContent(item.content,currentRole?.name);
+    }
     // Reinforce an explicit "what time is it now" question close to the latest
     // outgoing user turn. Do not change the saved or displayed conversation.
     if(asksCurrentTime(text)){
@@ -334,7 +341,8 @@
       }
     }
     window.xyNextVisualFallback=false;
-    const messages=[...(system?[{role:'system',content:system}]:[]),...history];
+    const resolvedSystem=window.xyTavernMacros?.replace?.(system,currentRole?.name)??system;
+    const messages=[...(resolvedSystem?[{role:'system',content:resolvedSystem}]:[]),...history];
     try{await window.xyEnsureMcpTools?.()}catch{}
     const mt=mcpTools();
     const target=completeChatEndpoint(ep.base);

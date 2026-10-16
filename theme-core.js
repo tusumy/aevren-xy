@@ -56,6 +56,21 @@
     root.style.setProperty('--theme-user-glass',rgbaColor(theme.userBubble,.58));
     root.style.setProperty('--theme-assistant-glass',rgbaColor(theme.assistantBubble,.54));
     root.style.setProperty('--theme-accent',theme.accent);
+    // One live accent palette for the entire app. Keep dark-mode accents
+    // legible without changing the color the user actually saved.
+    const accent=norm(theme.accent)||DEFAULT_THEME.accent;
+    const hexToRgb=hex=>[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
+    const blend=(a,b,portion)=>{
+      const v1=hexToRgb(a),v2=hexToRgb(b);
+      return '#'+v1.map((v,i)=>Math.round(v*(1-portion)+v2[i]*portion).toString(16).padStart(2,'0')).join('');
+    };
+    const activeAccent=mode==="dark"?blend(accent,"#ffffff",.3):accent;
+    root.style.setProperty('--theme-accent-text',textFor(accent));
+    root.style.setProperty('--xy-ui-accent',activeAccent);
+    root.style.setProperty('--xy-ui-accent-ink',mode==="dark"?blend(accent,"#ffffff",.62):blend(accent,"#171e19",.53));
+    root.style.setProperty('--xy-ui-accent-on',textFor(activeAccent));
+    root.style.setProperty('--xy-ui-accent-soft',mode==="dark"?blend(accent,"#222b25",.76):blend(accent,"#ffffff",.86));
+    root.style.setProperty('--xy-ui-accent-border',mode==="dark"?blend(accent,"#8fada0",.5):blend(accent,"#ffffff",.57));
     root.style.setProperty('--theme-overlay',String(theme.overlay));
     root.style.setProperty('--theme-blur',Number(theme.blur||0)+'px');
     const fontScale=Math.max(.8,Math.min(1.2,Number(theme.fontScale||.95)));
