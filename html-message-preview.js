@@ -58,6 +58,10 @@ function buildWidget(source){
   const buttons={};
   root.querySelectorAll("[data-html-action]").forEach(el=>buttons[el.dataset.htmlAction]=el);
   let mode="closed";
+  if(source.kind==="tavern-status"){
+    root.classList.add("xy-html-tavern");
+    root.querySelector(".xy-html-tag").textContent="♡ 酒馆状态栏";
+  }
   function toggle(next){
     if(source.error&&next==="preview"){showError();return}
     if(next===mode)next="closed";
@@ -106,6 +110,7 @@ function buildWidget(source){
     document.body.appendChild(overlay);
     exit.focus();
   });
+  if(source.autoOpen)toggle("preview");
   return root;
 }
 function decorate(){
@@ -114,9 +119,12 @@ function decorate(){
   if(!c||!box)return;
   (c.messages||[]).forEach((m,index)=>{
     if(m?.role!=="assistant"||!m.text||m.localOnly)return;
-    const source=extract(m.text);
+    const source=window.xyTavernDisplay?.findStatus?.(m.text,c.characterId)||extract(m.text);
     if(!source)return;
-    const target=box.querySelector('.message.assistant[data-message="'+index+'"] .message-stack');
+    // Attach after the LAST visible segment, since Tavern's status marker
+    // normally lives at the end of a long split assistant message.
+    const targets=box.querySelectorAll('.message.assistant[data-message="'+index+'"] .message-stack');
+    const target=targets?.[targets.length-1];
     if(!target||target.querySelector(".xy-html-widget"))return;
     const widget=buildWidget(source);
     const bubble=target.querySelector(".bubble");
