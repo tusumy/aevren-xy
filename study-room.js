@@ -95,6 +95,7 @@ function draw(){
       textField("studyCardGreeting","默认开场白",c.first_mes)+
       (arr(c.alternate_greetings).length?'<details class="study-alts"><summary>编辑其它 '+arr(c.alternate_greetings).length+' 条开场</summary>'+
         arr(c.alternate_greetings).map((txt,i)=>textField("studyAlt"+i,"备选 "+(i+2),txt,4)).join("")+'</details>':"")+
+      (arr(c.displayRules).length?'<p class="study-tip">已保存 '+arr(c.displayRules).length+' 条酒馆 HTML 显示规则：'+escape(arr(c.displayRules).map(r=>r.name).join(" / "))+'. 仅预览 HTML/CSS，不运行原酒馆助手脚本。</p>':"")+
       check("studyCardActive","启用角色卡上下文",c.enabled)+
       btn("saveCard","保存人物设定","","primary")+'</div></details>';
   }
@@ -197,11 +198,25 @@ function parseLore(raw){
   if(!x?.entries||typeof x.entries!=="object")throw Error("JSON 中找不到世界书 entries");
   return (Array.isArray(x.entries)?x.entries:Object.values(x.entries)).map(loreEntry).filter(Boolean).slice(0,300);
 }
+// Import only small, known display rules. Full Tavern Helper scripts can
+// exceed 300 KB and require its privileged JS API; never run them here.
+function importDisplayRules(raw){
+  const x=raw?.data&&typeof raw.data==="object"?raw.data:raw;
+  const list=arr(x?.extensions?.regex_scripts);
+  return list.filter(item=>item&&item.disabled!==true&&item.promptOnly!==true)
+    .map(item=>{
+      const find=String(item.findRegex||"");
+      const kind=/<jn_status>/i.test(find)?"status":/【主页】/.test(find)?"homepage":"";
+      const template=String(item.replaceString||"");
+      if(!kind||!template||template.length>40000||find.length>2000)return null;
+      return {kind,name:cap(item.scriptName||"酒馆渲染",100),findRegex:find,replaceString:template};
+    }).filter(Boolean).slice(0,8);
+}
 function parseCard(raw){
   const x=raw?.data&&typeof raw.data==="object"?raw.data:raw;
   if(!x||typeof x!=="object"||(!x.name&&!x.description&&!x.personality))throw Error("不是可识别的角色卡");
   const alts=arr(x.alternate_greetings??raw.alternate_greetings).filter(t=>typeof t==="string"&&t.trim()).map(t=>cap(t,8000));
-  return {name:cap(x.name,120),description:cap(x.description,10000),personality:cap(x.personality,5000),scenario:cap(x.scenario,5000),system_prompt:cap(x.system_prompt,5000),first_mes:cap(x.first_mes,8000),alternate_greetings:alts,enabled:true};
+  return {name:cap(x.name,120),description:cap(x.description,10000),personality:cap(x.personality,5000),scenario:cap(x.scenario,5000),system_prompt:cap(x.system_prompt,5000),first_mes:cap(x.first_mes,8000),alternate_greetings:alts,displayRules:importDisplayRules(raw),enabled:true};
 }
 function parsePreset(x){
   if(typeof x==="string")return {name:"导入的预设",content:cap(x,30000),enabled:false};
@@ -222,7 +237,7 @@ async function importFile(file,kind){
     const raw=JSON.parse(await file.text());
     if(kind==="card"){
       const card=parseCard(raw);let extra=[];try{extra=parseLore(raw)}catch{}
-      greetingChoice=0;saveStudy(b=>{b.card=card;appendLore(b,extra)},"角色卡已导入 · "+([card.first_mes,...card.alternate_greetings].filter(Boolean).length)+" 条开场白"+(extra.length?"，含世界书":""));
+      greetingChoice=0;saveStudy(b=>{b.card=card;appendLore(b,extra)},"角色卡已导入 · "+([card.first_mes,...card.alternate_greetings].filter(Boolean).length)+" 条开场白 · "+card.displayRules.length+" 条 HTML 显示规则"+(extra.length?"，含世界书":""));
     }else if(kind==="preset")saveStudy(b=>{b.preset=parsePreset(raw)},"预设已导入，检查后再启用");
     else{const entries=parseLore(raw);if(!entries.length)throw Error("没有有效世界书条目");saveStudy(b=>appendLore(b,entries),"世界书已导入 "+entries.length+" 条（重复条目跳过）")}
   }catch(e){status="导入失败："+String(e?.message||e);draw()}
@@ -298,7 +313,7 @@ host?.addEventListener("click",event=>{
   if(action==="tab"){tab=key;editLore="";editChapter="";status="";draw();return}
   if(action==="saveCard"){
     const saved=arr(currentBook().card?.alternate_greetings);
-    const c={name:cap(val("studyCardName"),120),description:cap(val("studyCardDesc"),10000),personality:cap(val("studyCardPersonality"),5000),scenario:cap(val("studyCardScenario"),5000),system_prompt:cap(val("studyCardSystem"),5000),first_mes:cap(val("studyCardGreeting"),8000),alternate_greetings:saved.map((v,i)=>cap(document.getElementById("studyAlt"+i)?.value??v,8000)),enabled:on("studyCardActive")};
+    const c={name:cap(val("studyCardName"),120),description:cap(val("studyCardDesc"),10000),personality:cap(val("studyCardPersonality"),5000),scenario:cap(val("studyCardScenario"),5000),system_prompt:cap(val("studyCardSystem"),5000),first_mes:cap(val("studyCardGreeting"),8000),alternate_greetings:saved.map((v,i)=>cap(document.getElementById("studyAlt"+i)?.value??v,8000)),displayRules:arr(currentBook().card?.displayRules),enabled:on("studyCardActive")};
     saveStudy(b=>{b.card=c});return
   }
   if(action==="startGreetingChat"){
