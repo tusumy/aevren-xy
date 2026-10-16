@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.content.res.Configuration
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -119,6 +120,9 @@ class MainActivity : Activity() {
         installImeInsetBridge()
 
         webView.addJavascriptInterface(NativeHttpBridge(webView, http), "AevrenNative")
+        // WebView runs under a Light Android Activity theme. Read the actual
+        // OS night mode, rather than trusting prefers-color-scheme inside it.
+        webView.addJavascriptInterface(NativeAppearanceBridge(this), "AevrenAppearanceNative")
         nativeVoiceBridge = NativeVoiceBridge(this, webView)
         webView.addJavascriptInterface(nativeVoiceBridge!!, "AevrenVoiceNative")
         nativeCallBridge = NativeCallBridge(this)
@@ -255,6 +259,28 @@ class MainActivity : Activity() {
                 )
             }
             insets
+        }
+    }
+
+    // uiMode changes are handled by this Activity (manifest configChanges),
+    // so notify the running WebView without recreating and losing its chat.
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        dispatchAppearanceChanged()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::webView.isInitialized) dispatchAppearanceChanged()
+    }
+
+    private fun dispatchAppearanceChanged() {
+        if (!::webView.isInitialized) return
+        webView.post {
+            webView.evaluateJavascript(
+                "window.dispatchEvent(new Event('xy-system-appearance-change'));",
+                null
+            )
         }
     }
 
@@ -800,6 +826,13 @@ private class NativeVoiceBridge(
         }
         webView.post { webView.evaluateJavascript(js, null) }
     }
+}
+
+private class NativeAppearanceBridge(private val activity: Activity) {
+    @JavascriptInterface
+    fun isDarkMode(): Boolean =
+        (activity.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
 }
 
 private class NativeHttpBridge(
