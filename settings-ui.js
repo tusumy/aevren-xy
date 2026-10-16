@@ -58,6 +58,11 @@
     if(!body)return;if(eyebrow)eyebrow.textContent="CHARACTER";if(title)title.textContent="角色";
     const active=currentCharacter()?.id;
     body.innerHTML=`
+      <section class="xy-user-identity">
+        <label for="xyUserDisplayName"><strong>你的名字</strong><small>酒馆角色卡里的 {{user}} 会自动使用这个名字；支持已有开场白和之后的聊天。</small></label>
+        <div class="xy-user-identity-row"><input id="xyUserDisplayName" maxlength="40" autocomplete="nickname" placeholder="例如：阿毛" value="${esc(window.xyTavernMacros?.name?.()||"你")}"><button type="button" id="xySaveUserName">保存名字</button></div>
+        <p id="xyUserNameStatus" role="status" aria-live="polite"></p>
+      </section>
       <p class="setting-note">角色提示词完全由你自己填写；默认角色不再内置玄砚提示词。</p>
       <div id="xyCharacterList">${characters.map((x,i)=>`
         <div class="character-card ${x.id===active?"active":""}" data-character-card="${esc(x.id)}">
@@ -77,6 +82,17 @@
       </div>`;
     document.querySelector("#panel")?.classList.add("open");document.querySelector("#scrim")?.classList.add("show");
 
+    body.querySelector("#xySaveUserName")?.addEventListener("click",()=>{
+      const label=body.querySelector("#xyUserNameStatus");
+      try{
+        const value=window.xyTavernMacros.setName(body.querySelector("#xyUserDisplayName")?.value);
+        if(label)label.textContent="已保存："+value+" · 聊天和酒馆开场白会自动显示新名字";
+        renderMessages();
+      }catch(error){if(label)label.textContent=String(error?.message||error)}
+    });
+    body.querySelector("#xyUserDisplayName")?.addEventListener("keydown",event=>{
+      if(event.key==="Enter"){event.preventDefault();body.querySelector("#xySaveUserName")?.click()}
+    });
     const form=body.querySelector("#xyCharacterForm");
     if(editId){
       const x=findCharacter(editId);
