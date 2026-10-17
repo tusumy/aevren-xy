@@ -1,0 +1,65 @@
+/* Chat bubble polish. Loaded last, after theme and accent styles.
+   Respect custom theme colors and the optional glass setting. */
+.messages .message .message-stack{min-width:0}
+.messages .message .bubble{overflow-wrap:anywhere}
+.messages .message.assistant .bubble{
+  background:var(--theme-assistant-bubble,#f3f1eb)!important;
+  border:1px solid rgba(70,90,77,.075)!important;
+  box-shadow:0 3px 12px rgba(39,55,44,.04)!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  border-radius:18px 18px 18px 7px!important;
+}
+.messages .message.user .bubble{
+  background:var(--theme-user-bubble,#d9e7dd)!important;
+  border:1px solid rgba(55,83,65,.09)!important;
+  box-shadow:0 3px 12px rgba(39,55,44,.045)!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  border-radius:18px 18px 7px 18px!important;
+}
+/* Adjacent paragraphs should still read like grouped speech. */
+.messages .message.assistant.split-first .bubble{border-radius:18px 18px 18px 7px!important}
+.messages .message.assistant.split-mid .bubble{border-radius:7px 18px 18px 7px!important}
+.messages .message.assistant.split-last .bubble{border-radius:7px 18px 18px 18px!important}
+/* Explicit glass mode remains translucent, without the thick frosting. */
+html[data-bubble-glass="1"] .messages .message.assistant .bubble{
+  background:var(--theme-assistant-glass,rgba(243,241,235,.68))!important;
+  border-color:rgba(255,255,255,.24)!important;
+  box-shadow:0 3px 12px rgba(39,55,44,.055)!important;
+  backdrop-filter:blur(6px) saturate(1.05)!important;
+  -webkit-backdrop-filter:blur(6px) saturate(1.05)!important;
+}
+html[data-bubble-glass="1"] .messages .message.user .bubble{
+  background:var(--theme-user-glass,rgba(217,231,221,.7))!important;
+  border-color:rgba(255,255,255,.26)!important;
+  box-shadow:0 3px 12px rgba(39,55,44,.06)!important;
+  backdrop-filter:blur(6px) saturate(1.05)!important;
+  -webkit-backdrop-filter:blur(6px) saturate(1.05)!important;
+}
+/* Preserve readable light-on-dark bubble contrast and themed hues. */
+html[data-theme-mode="dark"] .messages .message.assistant .bubble{
+  background:linear-gradient(rgba(17,21,19,.76),rgba(17,21,19,.76)),var(--theme-assistant-bubble,#f3f1eb)!important;
+  border-color:rgba(255,255,255,.065)!important;
+  box-shadow:0 3px 12px rgba(0,0,0,.13)!important;
+}
+html[data-theme-mode="dark"] .messages .message.user .bubble{
+  background:linear-gradient(rgba(12,18,15,.60),rgba(12,18,15,.60)),var(--theme-user-bubble,#d9e7dd)!important;
+  border-color:rgba(255,255,255,.08)!important;
+  box-shadow:0 3px 12px rgba(0,0,0,.14)!important;
+}
+html[data-theme-mode="dark"][data-bubble-glass="1"] .messages .message.assistant .bubble{
+  background:linear-gradient(rgba(17,21,19,.72),rgba(17,21,19,.72)),var(--theme-assistant-glass,rgba(243,241,235,.54))!important;
+  border-color:rgba(255,255,255,.075)!important;
+}
+html[data-theme-mode="dark"][data-bubble-glass="1"] .messages .message.user .bubble{
+  background:linear-gradient(rgba(12,18,15,.57),rgba(12,18,15,.57)),var(--theme-user-glass,rgba(217,231,221,.58))!important;
+  border-color:rgba(255,255,255,.09)!important;
+}
+@media(max-width:760px){
+  .messages .message.assistant .bubble{border-radius:17px 17px 17px 7px!important}
+  .messages .message.user .bubble{border-radius:17px 17px 7px 17px!important}
+  .messages .message.assistant.split-first .bubble{border-radius:17px 17px 17px 7px!important}
+  .messages .message.assistant.split-mid .bubble{border-radius:7px 17px 17px 7px!important}
+  .messages .message.assistant.split-last .bubble{border-radius:7px 17px 17px 17px!important}
+}
