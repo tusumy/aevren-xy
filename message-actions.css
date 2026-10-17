@@ -1,11 +1,48 @@
 .bubble[data-longpress-message]{touch-action:pan-y;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
 .bubble.xy-context-active{outline:2px solid color-mix(in srgb,var(--theme-accent,#365d4a) 26%,transparent);outline-offset:2px}
-.xy-branch-pager{display:flex;align-items:center;gap:2px;margin:2px 4px 0;font:500 11px/1 system-ui;opacity:.62}
-.xy-branch-pager span{min-width:28px;text-align:center;font-variant-numeric:tabular-nums}
-.xy-branch-pager button{border:0;background:transparent;color:inherit;font:600 13px/1 system-ui;padding:5px 7px;border-radius:9px;cursor:pointer}
-.xy-branch-pager button:active{background:rgba(54,93,74,.09)}
-.xy-branch-pager button:disabled{opacity:.25;cursor:default}
-
+/* The version switcher belongs to the timestamp's quiet footer row. */
+.xy-message-meta{
+  align-self:flex-end;
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:nowrap;
+  gap:2px;
+  max-width:100%;
+  margin:5px 1px 0;
+  color:var(--muted,#8c8881);
+  font:500 10px/1.2 system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.xy-message-meta .message-time{
+  display:inline-block;
+  margin:0;
+  padding:0;
+  color:inherit;
+  font:inherit;
+  opacity:.75;
+}
+.xy-branch-pager{display:inline-flex;align-items:center;gap:1px;margin:0;color:inherit;font:inherit;opacity:.92}
+.xy-message-meta.has-time .xy-branch-pager::before{content:"·";padding:0 4px 0 5px;font-size:11px;opacity:.55}
+.xy-branch-pager span{min-width:25px;padding:0 1px;text-align:center;letter-spacing:.01em;font:inherit}
+.xy-branch-pager button{
+  display:inline-grid;place-items:center;flex:0 0 auto;
+  width:27px;height:27px;min-width:27px;min-height:27px;
+  margin:0;padding:0;border:0;border-radius:9px;
+  background:transparent;color:inherit;
+  font:500 18px/1 system-ui;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.xy-branch-pager button:active{background:color-mix(in srgb,var(--theme-accent,#365d4a) 11%,transparent)}
+.xy-branch-pager button:disabled{opacity:.24;cursor:default}
+.xy-branch-pager button:focus-visible{outline:2px solid var(--theme-accent,#365d4a);outline-offset:-2px}
+html[data-theme-mode="dark"] .xy-message-meta{color:#aab7ae}
+html[data-theme-mode="dark"] .xy-branch-pager button:active{background:rgba(255,255,255,.09)}
+@media(max-width:760px){
+  .xy-message-meta{font-size:9.5px;margin-top:4px}
+  .xy-branch-pager button{width:28px;height:28px;min-width:28px;min-height:28px}
+}
 .xy-context-backdrop{position:fixed;inset:0;z-index:12000;background:transparent}
 .xy-context-menu{position:fixed;box-sizing:border-box;width:146px;display:flex;flex-direction:column;gap:2px;padding:6px;border-radius:16px;background:color-mix(in srgb,var(--theme-bg,#edf2ed) 86%,white 14%);border:1px solid color-mix(in srgb,var(--theme-accent,#365d4a) 15%,white 85%);box-shadow:0 14px 38px rgba(30,38,34,.18);backdrop-filter:blur(18px) saturate(1.15);-webkit-backdrop-filter:blur(18px) saturate(1.15);color:var(--ink,#292725)}
 .xy-context-menu button{border:0;background:transparent;color:inherit;border-radius:10px;min-height:38px;padding:0 11px;text-align:left;font:500 13px/1.2 system-ui;cursor:pointer}
