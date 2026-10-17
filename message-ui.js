@@ -82,7 +82,9 @@
     const stamp=timeText(m.createdAt),title=timeTitle(m.createdAt),media=attachmentHtml(m.attachments);
     return parts.map((part,i)=>{
       const first=i===0,last=i===parts.length-1;
-      const split=parts.length>1?` split-piece ${first?"split-first":""} ${last?"split-last":"split-mid"}`:"";
+      // Each paragraph has exactly one position class. Previously the first
+      // paragraph was also marked split-mid, which hid its bear/cat decoration.
+      const split=parts.length>1?` split-piece ${first?"split-first":last?"split-last":"split-mid"}`:"";
       const ts=last&&stamp?`<span class="message-time" title="${esc(title)}">${esc(stamp)}</span>`:"";
       const attachments=first?media:"";
       const text=part?`<span class="bubble-text">${window.xyChatMarkdown?.render?.(part)??(window.xyStickerShelf?.renderText?.(part)??esc(part))}</span>`:"";
