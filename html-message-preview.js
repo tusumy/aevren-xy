@@ -110,7 +110,8 @@ function buildTavernStatus(source){
     tabs.forEach(item=>item.setAttribute("aria-selected",String(item===button)));
     panels.forEach(item=>{item.hidden=item.getAttribute("data-jn-panel")!==chosen});
   }));
-  root.querySelector(".xy-jn-source pre").textContent=source.code||"";
+  root.querySelector(".xy-jn-source summary").textContent=source.fallback?"状态数据":"HTML 源代码";
+  root.querySelector(".xy-jn-source pre").textContent=source.code||source.raw||"";
   return root;
 }
 function buildWidget(source){
