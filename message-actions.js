@@ -270,15 +270,17 @@
       const stack=host.querySelector('.message-stack');if(!stack)return;
       if(Array.isArray(m.variants)&&m.variants.length>1&&!stack.querySelector('.xy-branch-pager')){
         const ai=activeVariant(m);
-        // Keep the pager next to the timestamp beneath the final bubble,
-        // rather than creating a separate centered row in the conversation.
+        // Replace the timestamp IN PLACE: its original horizontal position
+        // belongs to the message layout and must not shift to the middle.
         const time=stack.querySelector('.message-time');
         let footer=stack.querySelector('.xy-message-meta');
         if(!footer){
           footer=document.createElement('div');
           footer.className='xy-message-meta'+(time?' has-time':'');
-          if(time)footer.appendChild(time);
-          stack.appendChild(footer);
+          if(time){
+            time.replaceWith(footer);
+            footer.appendChild(time);
+          }else stack.appendChild(footer);
         }
         const pager=document.createElement('div');
         pager.className='xy-branch-pager';
