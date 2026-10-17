@@ -5,20 +5,34 @@
 // Android bridges. The iframe intentionally does NOT allow JavaScript.
 const MAX_HTML=120000;
 const SCRIPT_BLOCKED="default-src 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; connect-src 'none'; form-action 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src data: blob:; font-src data:; media-src data: blob:";
+function seemsHtml(value){
+  const s=String(value||"").trim();
+  // Prose containing literal markup is not itself an HTML document.
+  if(!/^(?:<!doctype\s+html\b|<(?:html|head|body|div|section|article|main|header|footer|style|svg|table|form|canvas|details|aside|figure|p|span|ul|ol|li|blockquote|h[1-6]|button|img)\b)/i.test(s))return false;
+  return /<\/[a-z][\w:-]*\s*>|<(?:img|br|hr|input)\b[^>]*\/?>/i.test(s);
+}
 function extract(raw){
-  const text=String(raw??"");
-  // A common SillyTavern/AI response contains a fenced html document.
-  const fence=/(?:^|\n)[ \t]*```(?:html|htm)[ \t]*\r?\n([\s\S]*?)\r?\n?[ \t]*```/i.exec(text);
-  if(fence&&fence[1].trim()){
-    const code=fence[1].trim();
-    return code.length>MAX_HTML?{error:"HTML 内容超过 120 KB，请缩短后预览"}:{code};
+  const text=String(raw??"").replace(/\r\n?/g,"\n");
+  const result=code=>code.length>MAX_HTML?{error:"HTML 内容超过 120 KB，请缩短后预览"}:{code};
+  // Models may fence HTML with or without a language, or use ~~~ instead.
+  // Never interpret JavaScript/CSS/other fenced source as an HTML document.
+  const fences=/(?:^|\n)[ \t]*(`{3,}|~{3,})[ \t]*([\w-]*)[ \t]*\n([\s\S]*?)\n[ \t]*\1[ \t]*(?=\n|$)/g;
+  let match;
+  while((match=fences.exec(text))){
+    const lang=match[2].toLowerCase();
+    const code=match[3].trim();
+    if((!lang||lang==="html"||lang==="htm")&&seemsHtml(code))return result(code);
   }
-  // Full HTML or standalone layout fragments also qualify, but prose,
-  // plain Markdown and non-HTML code blocks must never be auto-interpreted.
   const candidate=text.trim();
-  if(/^(?:<!doctype\s+html\b|<html\b|<body\b|<(?:div|section|article|main|header|footer|style|svg|table|form|canvas|details|aside|figure)\b)/i.test(candidate)&&
-      /<\/?[a-z][^>]*>/i.test(candidate)){
-    return candidate.length>MAX_HTML?{error:"HTML 内容超过 120 KB，请缩短后预览"}:{code:candidate};
+  if(seemsHtml(candidate))return result(candidate);
+  // Ordinary explanatory prose sometimes precedes a standalone HTML block.
+  // Inspect line starts only, so inline examples are not misread as layouts.
+  const outside=text.replace(/(?:^|\n)[ \t]*(`{3,}|~{3,})[^\n]*\n[\s\S]*?\n[ \t]*\1[ \t]*(?=\n|$)/g,"\n");
+  const lines=outside.split("\n");
+  for(let i=1;i<lines.length&&i<160;i++){
+    if(!/^\s*</.test(lines[i]))continue;
+    const block=lines.slice(i).join("\n").trim();
+    if(seemsHtml(block))return result(block);
   }
   return null;
 }
@@ -38,7 +52,7 @@ function frame(code){
   node.title="隔离的 HTML 消息预览";
   node.setAttribute("sandbox","");
   node.setAttribute("referrerpolicy","no-referrer");
-  node.setAttribute("loading","lazy");
+  // Created on demand after the user opens preview: load immediately.
   node.srcdoc=safeDoc(code);
   return node;
 }
