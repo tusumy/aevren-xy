@@ -81,23 +81,45 @@ function buildStatus(rule,text){
   const fields=Array.from({length:12},(_,i)=>String(captures[i+1]||"").slice(0,7500));
   return {code:result,kind:"tavern-status",fields,autoOpen:false};
 }
+// Native fallback for model-generated status when imported regex misses.
+const STATUS_BLOCK=/<jn_status\b[^>]*>[\s\S]*?<\/jn_status\s*>/i;
+function fallbackStatus(raw){
+  const block=STATUS_BLOCK.exec(String(raw??""))?.[0];
+  if(!block||block.length>20000)return null;
+  const body=block.replace(/^<jn_status\b[^>]*>/i,"").replace(/<\/jn_status\s*>$/i,"").trim();
+  const expected={base:4,avatar:2,info:2,mind:3,if:1};
+  const fieldsByType={};
+  const pattern=/\[\s*(Base|Avatar|Info|Mind|IF)\s*\|([\s\S]*?)\](?=\s*(?:\[\s*(?:Base|Avatar|Info|Mind|IF)\s*\||$))/gi;
+  let found;
+  while((found=pattern.exec(body))){
+    const type=found[1].toLowerCase();
+    if(fieldsByType[type])continue;
+    const parts=found[2].split("|");
+    const count=expected[type];
+    fieldsByType[type]=Array.from({length:count},(_,i)=>
+      String(i===count-1?parts.slice(i).join("|"):parts[i]||"").trim().slice(0,7500));
+  }
+  if(Object.keys(fieldsByType).length<3)return null;
+  const fields=["base","avatar","info","mind","if"].flatMap(k=>
+    fieldsByType[k]||Array(expected[k]).fill(""));
+  return {kind:"tavern-status",fields,raw:block,code:"",fallback:true,autoOpen:false};
+}
 function findStatus(text,role){
   const t=String(text??"");
-  if(!t.includes("<jn_status>")||!t.includes("</jn_status>"))return null;
+  if(!STATUS_BLOCK.test(t))return null;
   const rules=rulesFor(role);
   for(const rule of rules){
     if(rule?.kind!=="status")continue;
     const prepared=buildStatus(rule,t);
     if(prepared)return prepared;
   }
-  return null;
+  return fallbackStatus(t);
 }
 function strip(text,role){
   const raw=String(text??"");
-  if(!findStatus(raw,role))return raw;
-  // Raw markup is still saved intact as part of the chat history. Only the
-  // visible bubble omits this data so it won't duplicate the pretty card.
-  return raw.replace(/<jn_status>[\s\S]*?<\/jn_status>/i,"").trim();
+  // Preserve raw original message in storage; display ordinary prose only.
+  return raw.replace(/<jn_status\b[^>]*>[\s\S]*?<\/jn_status\s*>/gi,"")
+    .replace(/<\/?jn_status\s*>/gi,"").trim();
 }
 window.xyTavernDisplay={findStatus,strip,rulesFor};
 })();
