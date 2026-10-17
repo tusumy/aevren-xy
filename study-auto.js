@@ -178,25 +178,29 @@ function validSummary(value){
       typeof raw.name==="string"?raw.name:"自动整理";
     const board=typeof raw.board==="string"?raw.board:
       typeof raw.state==="string"?raw.state:"";
-    return {title:cap(title||"自动整理",70),summary:cap(summary,1600),board:cap(board,1300)};
+    const chapter=typeof raw.chapter==="string"?raw.chapter:
+      typeof raw.story==="string"?raw.story:
+      typeof raw.prose==="string"?raw.prose:"";
+    return {title:cap(title||"自动整理",70),summary:cap(summary,1600),board:cap(board,1300),chapter:cap(chapter,5000)};
   }
   return null;
 }
 function parsePlainSummary(text){
-  const fields={title:[],summary:[],board:[]};
+  const fields={title:[],summary:[],board:[],chapter:[]};
   let active="";
   for(const line of String(text||"").split(/\r?\n/)){
-    const m=line.match(/^\s*(?:#{1,4}\s*)?(?:\*\*)?\s*(章节标题|标题|title|剧情摘要|情节摘要|故事梗概|摘要|总结|summary|人物与场景|人物状态|角色状态|场景状态|当前状态|未解决事项|board|state)(?:\*\*)?\s*(?:[：:]|\s*[-—]\s*|\s*$)\s*(.*)$/i);
+    const m=line.match(/^\s*(?:#{1,4}\s*)?(?:\*\*)?\s*(章节标题|标题|title|章节正文|故事正文|正文|chapter|story|剧情摘要|情节摘要|故事梗概|摘要|总结|summary|人物与场景|人物状态|角色状态|场景状态|当前状态|未解决事项|board|state)(?:\*\*)?\s*(?:[：:]|\s*[-—]\s*|\s*$)\s*(.*)$/i);
     if(m){
       const name=m[1].toLowerCase();
       active=/^(?:标题|章节标题|title)$/.test(name)?"title":
+        /^(?:章节正文|故事正文|正文|chapter|story)$/.test(name)?"chapter":
         /^(?:剧情摘要|情节摘要|故事梗概|摘要|总结|summary)$/.test(name)?"summary":"board";
       if(m[2].trim())fields[active].push(m[2].trim());
     }else if(active&&line.trim()&&!/^```/.test(line))fields[active].push(line.trim());
   }
   if(!fields.summary.length)return null;
   return validSummary({title:fields.title.join(" ")||"自动整理",
-    summary:fields.summary.join("\n"),board:fields.board.join("\n")});
+    summary:fields.summary.join("\n"),board:fields.board.join("\n"),chapter:fields.chapter.join("\n")});
 }
 function parseResult(text){
   const raw=String(text||"").trim();
@@ -221,8 +225,8 @@ async function requestModel(ep,transcript,prior){
   const headers={"Content-Type":"application/json",Accept:"application/json"};
   if(ep.key)headers.Authorization="Bearer "+ep.key;
   const instructions="你是剧情记录员，只基于以下原始对话做事实提炼。不要续写、推测心理、发明事件或擅自修改既有角色设定。区分用户与 AI 的发言，保留尚未解决的剧情线。严格返回一个 JSON 对象，不要代码块："+
-    '{"title":"本段章节标题，不超过20字","summary":"本段发生了什么，以及衔接过往的剧情脉络，150-400字","board":"当前人物关系、地点、已知状态、未解决事项，简洁文字"}。'+
-    "如果没有真实的剧情发展，就只记录实际交流，不得编造故事。";
+    '{"title":"本段章节标题，不超过20字","summary":"本段发生了什么，以及衔接过往的剧情脉络，150-400字","board":"当前人物关系、地点、已知状态、未解决事项，简洁文字","chapter":"把已发生的情节写成250至600字的连贯故事正文，不要逐条罗列用户和角色原话"}。'+
+    "正文要有故事感但必须忠于原话，不得虚构事件、场景或内心。如果没有剧情推进，写已发生的日常互动，不要编造故事。";
   const prompt="之前的剧情摘要与状态（可能为空，仅供承接）：\n"+cap(prior.digest||"",1100)+"\n"+cap(prior.board||"",700)+
     "\n\n本次需要归档的真实聊天记录：\n"+transcript;
   const body={model:ep.model,stream:false,temperature:0.2,max_tokens:2400,
@@ -241,7 +245,7 @@ async function requestModel(ep,transcript,prior){
     // The second attempt requests headings rather than rigid JSON, which
     // works with providers that prepend commentary or truncate JSON.
     const easy="仅从以下真实对话整理已发生的事实，不续写、不推测。请输出普通文字而非 JSON，按以下三个标题，每项有实际内容：\n"+
-      "标题：不超过20字\n摘要：用100到250字概括真实交流\n人物与场景：已知人物关系、地点和未解决事项。\n不要解释、不要代码块。";
+      "标题：不超过20字\n摘要：用100到250字概括真实交流\n人物与场景：已知人物关系、地点和未解决事项\n章节正文：把真实发生的内容写为连贯故事段落，切勿编造事件。\n不要解释、不要代码块。";
     const retryBody={...body,max_tokens:2400,temperature:0.1,
       messages:[{role:"system",content:easy},{role:"user",content:prompt}]};
     const retryController=new AbortController();
@@ -292,8 +296,11 @@ async function run(c,{manual=false}={}){
     saveEdit(charId,(auto,s)=>{
       auto.byChat[chatId]={cursor:end,digest:result.summary,board:result.board,updated:Date.now(),error:"",failedAt:0};
       const title=result.title||"自动整理";
-      // Archive real conversation text, never generated fanfiction in the original chat.
-      s.chapters.push({id:uid(),name:title,text:transcript,summary:result.summary,updated:Date.now(),generated:true,originChatId:chatId,range:[start+1,end]});
+      // Show readable narrative in the chapter. Preserve source separately
+      // for fact-checking; never modify the original chat messages.
+      s.chapters.push({id:uid(),name:title,text:result.chapter||result.summary,
+        summary:result.summary,sourceTranscript:transcript,updated:Date.now(),
+        generated:true,originChatId:chatId,range:[start+1,end]});
     });
     return true;
   }catch(e){setError(charId,chatId,e);return false}
