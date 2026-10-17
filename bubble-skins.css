@@ -51,8 +51,8 @@ html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.u
 /* Only the final bubble in an assistant reply gets a tiny rounded notch.
    User messages always sit on the right and get the mirrored notch. No
    polygon triangles; leave glass blur, colors and message layout intact. */
-html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"],[data-bubble-skin="comic"]) .messages .message.assistant:not(.split-first):not(.split-mid) .bubble::after,
-html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"],[data-bubble-skin="comic"]) .messages .message.user .bubble::after{
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.assistant:not(.split-first):not(.split-mid) .bubble::after,
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.user .bubble::after{
   content:"";
   position:absolute;
   bottom:-4px;
@@ -67,12 +67,12 @@ html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"],[data-bubble-skin="co
 }
 /* Sender-side placement: AI on left, user on right. Explicitly declare
    the opposing edge as auto so a prior shape rule cannot pull it across. */
-html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"],[data-bubble-skin="comic"]) .messages .message.assistant:not(.split-first):not(.split-mid) .bubble::after{
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.assistant:not(.split-first):not(.split-mid) .bubble::after{
   left:19px;
   right:auto;
   transform:skewX(19deg) rotate(5deg);
 }
-html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"],[data-bubble-skin="comic"]) .messages .message.user .bubble::after{
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.user .bubble::after{
   right:19px;
   left:auto;
   transform:skewX(-19deg) rotate(-5deg);
@@ -120,6 +120,7 @@ html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.u
 }
 .xy-bubble-skin-choice[data-bubble-skin="glass"] .xy-skin-thumb{border-radius:19px 19px 19px 9px}
 .xy-bubble-skin-choice[data-bubble-skin="glass"] .xy-skin-thumb::after{display:none}
+.xy-bubble-skin-choice[data-bubble-skin="comic"] .xy-skin-thumb::after{display:none}
 .xy-bubble-skin-choice[data-bubble-skin="comic"] .xy-skin-thumb{border:1.5px solid var(--theme-accent,#365d4a);border-radius:9px}
 .xy-bubble-skin-choice[data-bubble-skin="bear"] .xy-skin-thumb::before,
 .xy-bubble-skin-choice[data-bubble-skin="cat"] .xy-skin-thumb::before{
