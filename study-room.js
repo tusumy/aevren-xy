@@ -160,7 +160,7 @@ function draw(){
       '<summary><span>'+(editChapter?"正在编辑章节":"＋ 手写一篇章节")+'</span><small>'+(editChapter?"保存后会返回故事书架":"点开后再填写")+'</small></summary>'+
       '<div class="study-editor-fields">'+
       inputField("studyChapterName","章节标题",x.name)+
-      textField("studyChapterText","章节正文",x.text,11)+
+      textField("studyChapterText","章节正文",x.generated&&!x.sourceTranscript?(x.summary||x.text):x.text,11)+
       textField("studyChapterSummary","章节摘要",x.summary,4)+
       check("studyChapterActive","引用最新章节摘要",b.useSummary)+
       '<div class="study-actions">'+btn("saveChapter",editChapter?"更新章节":"保存新章节","","primary")+
@@ -173,8 +173,14 @@ function draw(){
         const day=new Date(entry.updated||Date.now()).toLocaleDateString("zh-CN");
         const type=entry.generated?"自动归档":"手写章节";
         const excerpt=cap(entry.summary||entry.text,165);
-        const fullText=String(entry.text||entry.summary||"").trim();
-        const readingLabel=entry.generated?"本章原始聊天":"完整章节正文";
+        // Legacy archives put the raw transcript in text, so prefer
+        // their saved summary for reading and keep the transcript separately.
+        const sourceText=entry.generated?String(entry.sourceTranscript||entry.text||""):"";
+        const readable=entry.generated
+          ?(entry.sourceTranscript?(entry.text||entry.summary):(entry.summary||entry.text))
+          :(entry.text||entry.summary);
+        const fullText=String(readable||"").trim();
+        const readingLabel=entry.generated?"本章故事":"完整章节正文";
         return '<details class="study-card study-chapter-entry">'+
           '<summary class="study-chapter-cover" aria-label="展开或收起章节：'+escape(entry.name||"无标题")+'">'+
             '<span class="study-chapter-top"><span class="study-chapter-number">'+String(ordered.length-index).padStart(2,"0")+'</span>'+
@@ -187,6 +193,7 @@ function draw(){
           '<div class="study-chapter-reading">'+
             '<div class="study-chapter-reading-label">'+escape(readingLabel)+'</div>'+
             '<div class="study-chapter-full">'+escape(fullText||"这一章还没有正文。")+'</div>'+
+            (sourceText?'<details class="study-chapter-source"><summary>查看本章原始聊天记录</summary><pre>'+escape(sourceText)+'</pre></details>':"")+
             '<div class="study-actions">'+btn("editChapter","编辑章节",entry.id)+btn("deleteChapter","删除章节",entry.id,"danger")+'</div>'+
           '</div>'+
         '</details>';
@@ -384,7 +391,15 @@ host?.addEventListener("click",event=>{
   if(action==="saveChapter"){
     const e={id:editChapter||uuid(),name:cap(val("studyChapterName")||"未命名章节",100),text:cap(val("studyChapterText"),150000),summary:cap(val("studyChapterSummary"),3000),updated:Date.now()};
     if(!e.text){status="章节正文不能为空";draw();return}
-    saveStudy(b=>{const i=b.chapters.findIndex(x=>x.id===editChapter);if(i>=0)b.chapters[i]=e;else b.chapters.push(e);b.useSummary=on("studyChapterActive");editChapter=""});return;
+    saveStudy(b=>{
+      const i=b.chapters.findIndex(x=>x.id===editChapter);
+      if(i>=0){
+        const old=b.chapters[i];
+        const sourceTranscript=old.generated?(old.sourceTranscript||old.text||""):"";
+        b.chapters[i]={...old,...e,...(old.generated?{generated:true,sourceTranscript}:{})};
+      }else b.chapters.push(e);
+      b.useSummary=on("studyChapterActive");editChapter="";
+    });return;
   }
   if(action==="editChapter"){editChapter=key;status="";draw();document.querySelector("#xyStudy .study-editor")?.scrollIntoView?.({behavior:"smooth",block:"start"});return}
   if(action==="cancelChapter"){editChapter="";draw();return}
