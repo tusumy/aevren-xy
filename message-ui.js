@@ -17,6 +17,14 @@
     if(Number.isNaN(d.getTime()))return "";
     return d.toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit",hour12:false});
   };
+  // Keep short time for call history, but date + time for each chat bubble.
+  const messageStamp=ts=>{
+    if(!ts)return "";
+    const d=new Date(ts);
+    if(Number.isNaN(d.getTime()))return "";
+    const two=n=>String(n).padStart(2,"0");
+    return [two(d.getFullYear()%100),two(d.getMonth()+1),two(d.getDate())].join("-")+" "+two(d.getHours())+":"+two(d.getMinutes());
+  };
   const timeTitle=ts=>{
     if(!ts)return "";
     const d=new Date(ts);
@@ -79,7 +87,7 @@
     const namedText=isAssistant?(window.xyTavernMacros?.replace?.(visualText,currentCharacterName())??visualText):visualText;
     const rawParts=isAssistant?splitReply(namedText):[String(namedText??"")];
     const parts=isAssistant?rawParts.map(trimPlainEnding):rawParts;
-    const stamp=timeText(m.createdAt),title=timeTitle(m.createdAt),media=attachmentHtml(m.attachments);
+    const stamp=messageStamp(m.createdAt),title=timeTitle(m.createdAt),media=attachmentHtml(m.attachments);
     return parts.map((part,i)=>{
       const first=i===0,last=i===parts.length-1;
       // Each paragraph has exactly one position class. Previously the first
@@ -93,7 +101,7 @@
   }
 
   function pendingHtml(item){
-    const stamp=timeText(item.createdAt),title=timeTitle(item.createdAt);
+    const stamp=messageStamp(item.createdAt),title=timeTitle(item.createdAt);
     const ts=stamp?`<span class="message-time" title="${esc(title)}">${esc(stamp)}</span>`:"";
     const media=attachmentHtml(item.attachments),text=item.text?`<span class="bubble-text">${window.xyChatMarkdown?.render?.(item.text)??(window.xyStickerShelf?.renderText?.(item.text)??esc(item.text))}</span>`:"";
     return `<div class="message user xy-pending" data-pending="${item.id}"><div class="message-stack"><div class="bubble">${media}${text}</div>${ts}</div></div>`;
