@@ -294,7 +294,7 @@
     const studyAutoContext=window.xyStudyAuto?.context?.({characterId:c.characterId||currentRole?.id,chatId:c.id})||'';
     const immediateCallInstruction=!fromCall?window.xyProactiveCalls?.instruction?.()||'':'';
     const userIdentity=window.xyTavernMacros?.name?.()||"你";
-    const characterIdentity="【角色卡称呼】用户名字："+userIdentity+"；角色名字："+(currentRole?.name||"角色")+"。酒馆 {{user}} 和 {{char}} 宏在发送前由砚屿替换；请直接称呼用户名字。";
+    const characterIdentity="【角色卡称呼】用户名字："+userIdentity+"；角色名字："+(currentRole?.name||"角色")+"。酒馆 {{user}} 和 {{char}} 仅用于角色卡文本变量替换。普通单人聊天时，AI以“我”自称、以“你”称呼用户，不要因为保存了用户名字就反复直呼其名；只有多人对话或指代可能混淆时，才按需使用具体名字。";
     const system=[roleSystem,characterIdentity,studyContext,studyAutoContext,callEndedContext,timeContext,memorySummary?"角色的长期记忆摘要:\n"+memorySummary:"",memoryContext,phoneStyle,fromCall?'':(window.xyStickerShelf?.context?.(c.characterId||window.xyCurrentCharacter?.()?.id)||''),heartInstruction,immediateCallInstruction].filter(Boolean).join('\n\n');
     // Keep only the requested number of recent chat turns in model context.
     // The 0 setting means unlimited history, not no history. System prompts
