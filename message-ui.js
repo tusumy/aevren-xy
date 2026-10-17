@@ -45,7 +45,7 @@
   function splitReply(text){
     const raw=String(text??"").trim();
     if(!raw)return [""];
-    if(raw.includes("```"))return [raw];
+    if(raw.includes("```")||/(?:^|\n)[ \t]*<(?:!doctype\s+html\b|html\b|head\b|body\b|div\b|section\b|article\b|style\b|svg\b|table\b|details\b|p\b|span\b|jn_status\b)/i.test(raw))return [raw];
     const parts=raw.split(/\n{2,}|\n+/).map(x=>x.trim()).filter(Boolean);
     return parts.length?parts:[raw];
   }
