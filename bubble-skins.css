@@ -48,23 +48,34 @@ html[data-bubble-skin="cat"] .messages .message.user .bubble::before{
 html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.user .bubble::before{
   right:auto;left:-15px;transform:scaleX(-1);
 }
-/* Tiny, rounded speech notch. Inherits the current theme's glass surface
-   instead of replacing blur, alpha, colors or shadows for the main bubble. */
-html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"],[data-bubble-skin="comic"]) .messages .message:is(.assistant,.user):not(.split-first):not(.split-mid) .bubble::after{
+/* Only the final bubble in an assistant reply gets a tiny rounded notch.
+   User messages always sit on the right and get the mirrored notch. No
+   polygon triangles; leave glass blur, colors and message layout intact. */
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.assistant:not(.split-first):not(.split-mid) .bubble::after,
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.user .bubble::after{
   content:"";
   position:absolute;
-  bottom:-8px;left:25px;
-  width:16px;height:12px;
-  clip-path:polygon(5% 0,95% 0,50% 100%);
-  border-radius:0 0 5px 5px;
+  bottom:-4px;
+  width:10px;
+  height:9px;
+  border-radius:0 0 9px 8px;
   background:inherit;
   backdrop-filter:inherit;
   -webkit-backdrop-filter:inherit;
-  z-index:0;
   pointer-events:none;
+  z-index:0;
 }
-html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"],[data-bubble-skin="comic"]) .messages .message.user .bubble::after{
-  left:auto;right:25px;
+/* Sender-side placement: AI on left, user on right. Explicitly declare
+   the opposing edge as auto so a prior shape rule cannot pull it across. */
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.assistant:not(.split-first):not(.split-mid) .bubble::after{
+  left:19px;
+  right:auto;
+  transform:skewX(19deg) rotate(5deg);
+}
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.user .bubble::after{
+  right:19px;
+  left:auto;
+  transform:skewX(-19deg) rotate(-5deg);
 }
 html[data-bubble-skin="comic"] .messages .message .bubble{
   border-width:1.5px!important;
@@ -104,11 +115,12 @@ html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.u
   backdrop-filter:blur(9px);
   -webkit-backdrop-filter:blur(9px);
 }
-.xy-bubble-skin-choice .xy-skin-thumb::after{content:"";position:absolute;left:12px;bottom:-6px;width:12px;height:8px;
-  clip-path:polygon(0 0,100% 0,50% 100%);background:inherit;
+.xy-bubble-skin-choice .xy-skin-thumb::after{content:"";position:absolute;left:12px;bottom:-4px;width:10px;height:8px;
+  border-radius:0 0 8px 7px;transform:skewX(18deg);background:inherit;
 }
 .xy-bubble-skin-choice[data-bubble-skin="glass"] .xy-skin-thumb{border-radius:19px 19px 19px 9px}
 .xy-bubble-skin-choice[data-bubble-skin="glass"] .xy-skin-thumb::after{display:none}
+.xy-bubble-skin-choice[data-bubble-skin="comic"] .xy-skin-thumb::after{display:none}
 .xy-bubble-skin-choice[data-bubble-skin="comic"] .xy-skin-thumb{border:1.5px solid var(--theme-accent,#365d4a);border-radius:9px}
 .xy-bubble-skin-choice[data-bubble-skin="bear"] .xy-skin-thumb::before,
 .xy-bubble-skin-choice[data-bubble-skin="cat"] .xy-skin-thumb::before{
