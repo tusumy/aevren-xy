@@ -267,10 +267,25 @@
       rows.forEach(row=>row.querySelector('.bubble')?.setAttribute('data-longpress-message',String(index)));
       if(m?.role!=='assistant')return;
       const host=rows.at(-1);if(!host)return;
-      if(Array.isArray(m.variants)&&m.variants.length>1&&!host.querySelector('.xy-branch-pager')){
-        const ai=activeVariant(m),pager=document.createElement('div');pager.className='xy-branch-pager';
-        pager.innerHTML=`<button type="button" data-branch-prev="${index}" ${ai<=0?'disabled':''}>‹</button><span>${ai+1}/${m.variants.length}</span><button type="button" data-branch-next="${index}" ${ai>=m.variants.length-1?'disabled':''}>›</button>`;
-        host.appendChild(pager);
+      const stack=host.querySelector('.message-stack');if(!stack)return;
+      if(Array.isArray(m.variants)&&m.variants.length>1&&!stack.querySelector('.xy-branch-pager')){
+        const ai=activeVariant(m);
+        // Keep the pager next to the timestamp beneath the final bubble,
+        // rather than creating a separate centered row in the conversation.
+        const time=stack.querySelector('.message-time');
+        let footer=stack.querySelector('.xy-message-meta');
+        if(!footer){
+          footer=document.createElement('div');
+          footer.className='xy-message-meta'+(time?' has-time':'');
+          if(time)footer.appendChild(time);
+          stack.appendChild(footer);
+        }
+        const pager=document.createElement('div');
+        pager.className='xy-branch-pager';
+        pager.setAttribute('role','group');
+        pager.setAttribute('aria-label','回复版本 '+(ai+1)+' / '+m.variants.length);
+        pager.innerHTML=`<button type="button" data-branch-prev="${index}" aria-label="上一版本" title="上一版本" ${ai<=0?'disabled':''}>‹</button><span aria-live="polite">${ai+1}/${m.variants.length}</span><button type="button" data-branch-next="${index}" aria-label="下一版本" title="下一版本" ${ai>=m.variants.length-1?'disabled':''}>›</button>`;
+        footer.appendChild(pager);
       }
     });
   }
