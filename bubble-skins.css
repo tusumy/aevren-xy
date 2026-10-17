@@ -20,8 +20,10 @@ html[data-bubble-skin="cat"] .messages .message.user .bubble,
 html[data-bubble-skin="comic"] .messages .message.user .bubble{
   border-radius:17px 17px 10px 17px!important;
 }
-/* Do not add images to every paragraph in a split assistant message. */
-html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message:is(.assistant,.user):not(.split-mid):not(.split-last) .bubble::before{
+/* Exactly one animal per AI reply: the first bubble (data-part="0").
+   Subsequent bubbles, however many, receive no animal decoration. */
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.assistant[data-part="0"] .bubble::before,
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.user .bubble::before{
   content:"";
   display:block;
   position:absolute;
@@ -34,10 +36,12 @@ html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message:i
   background-size:contain;
   filter:drop-shadow(0 2px 2px rgba(45,40,38,.11));
 }
-html[data-bubble-skin="bear"] .messages .message:is(.assistant,.user):not(.split-mid):not(.split-last) .bubble::before{
+html[data-bubble-skin="bear"] .messages .message.assistant[data-part="0"] .bubble::before,
+html[data-bubble-skin="bear"] .messages .message.user .bubble::before{
   background-image:url("./bubble-bear.svg");
 }
-html[data-bubble-skin="cat"] .messages .message:is(.assistant,.user):not(.split-mid):not(.split-last) .bubble::before{
+html[data-bubble-skin="cat"] .messages .message.assistant[data-part="0"] .bubble::before,
+html[data-bubble-skin="cat"] .messages .message.user .bubble::before{
   background-image:url("./bubble-cat.svg");
 }
 /* On the right side of chat, the decoration hugs the left upper edge. */
@@ -71,7 +75,8 @@ html[data-theme-mode="dark"][data-bubble-skin="comic"] .messages .message .bubbl
   border-color:color-mix(in srgb,var(--theme-accent,#9cae9f) 44%,transparent)!important;
 }
 @media(max-width:760px){
-  html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message:is(.assistant,.user):not(.split-mid):not(.split-last) .bubble::before{
+  html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.assistant[data-part="0"] .bubble::before,
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.user .bubble::before{
     top:-24px;width:48px;height:40px;
   }
 }
