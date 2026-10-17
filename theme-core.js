@@ -1,5 +1,5 @@
 (()=>{
-  const DEFAULT_THEME={bgColor:'#edf2ed',userBubble:'#d9e7dd',assistantBubble:'#f3f1eb',accent:'#365d4a',bgImage:'',overlay:.22,blur:0,mode:'light',bubbleGlass:false,fontScale:.95,fontFamily:'system',bubbleGap:18};
+  const DEFAULT_THEME={bgColor:'#edf2ed',userBubble:'#d9e7dd',assistantBubble:'#f3f1eb',accent:'#365d4a',bgImage:'',overlay:.22,blur:0,mode:'light',bubbleGlass:false,bubbleSkin:'glass',fontScale:.95,fontFamily:'system',bubbleGap:18};
   const PRESETS={
     mint:{bgColor:'#edf2ed',userBubble:'#d9e7dd',assistantBubble:'#f3f1eb',accent:'#365d4a',bgImage:'',overlay:.22,blur:0},
     cream:{bgColor:'#f5efe6',userBubble:'#eee1d5',assistantBubble:'#faf5ee',accent:'#745c48',bgImage:'',overlay:.18,blur:0},
@@ -12,6 +12,9 @@
   const getJson=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
   const savedTheme=getJson('xy.theme',{}),savedBubbles=getJson('xy.bubbleColors',{});
   let theme={...DEFAULT_THEME,...savedTheme};
+  const BUBBLE_SKINS=['glass','bear','cat','comic'];
+  const skinOf=value=>BUBBLE_SKINS.includes(value)?value:'glass';
+  theme.bubbleSkin=skinOf(theme.bubbleSkin);
   if(norm(savedBubbles.userBubble))theme.userBubble=norm(savedBubbles.userBubble);
   if(norm(savedBubbles.assistantBubble))theme.assistantBubble=norm(savedBubbles.assistantBubble);
   const systemScheme=window.matchMedia?.('(prefers-color-scheme: dark)');
@@ -86,6 +89,7 @@
     document.body.classList.toggle('theme-has-image',!!theme.bgImage);
     document.body.classList.toggle('theme-dark',mode==='dark');
     root.dataset.bubbleGlass=theme.bubbleGlass?'1':'0';
+    root.dataset.bubbleSkin=skinOf(theme.bubbleSkin);
     const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=mode==='dark'?'#171b19':theme.bgColor;
   }
   const escHtml=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -120,6 +124,7 @@
       <div class="theme-mode-switch"><button data-theme-mode="light" class="${theme.mode==='light'?'active':''}">☀ 浅色</button><button data-theme-mode="dark" class="${theme.mode==='dark'?'active':''}">☾ 深色</button><button data-theme-mode="system" class="${theme.mode==='system'?'active':''}">◐ 跟随系统 · <span id="xySystemModeNow">${systemDark()?'深色':'浅色'}</span></button></div>
       <div class="theme-presets"><button data-theme-preset="mint">薄荷</button><button data-theme-preset="cream">奶油</button><button data-theme-preset="dusk">雾紫</button><button data-theme-preset="ink">青墨</button></div>
       <div class="theme-setting-card">${colorField('背景颜色','bgColor')}${colorField('你的气泡','userBubble')}${colorField('我的气泡','assistantBubble')}${colorField('强调色','accent')}</div>
+      <div class="theme-setting-card xy-bubble-skin-section"><p class="xy-bubble-skin-title">聊天气泡皮肤</p><p class="xy-bubble-skin-desc">只换轮廓和小装饰，保留你的气泡颜色、毛玻璃与壁纸。</p><div class="xy-bubble-skin-grid" role="group" aria-label="聊天气泡皮肤">${[['glass','原版玻璃'],['bear','小熊扒边'],['cat','小猫探头'],['comic','漫画对话框']].map(([id,label])=>`<button type="button" class="xy-bubble-skin-choice" data-bubble-skin="${id}" aria-pressed="${skinOf(theme.bubbleSkin)===id}"><span class="xy-skin-thumb" aria-hidden="true"></span><span class="xy-skin-label">${label}</span></button>`).join('')}</div></div>
       <div class="theme-setting-card"><label class="theme-stack"><span>气泡磨砂玻璃 <b id="themeBubbleGlassValue">${theme.bubbleGlass?'已开启':'已关闭'}</b></span><input id="themeBubbleGlass" type="checkbox" ${theme.bubbleGlass?'checked':''}></label><label class="theme-stack"><span>聊天字号 <b id="themeFontValue">${Math.round(Number(theme.fontScale||.95)*100)}%</b></span><input class="xy-theme-range" id="themeFontScale" type="range" min="0.8" max="1.2" step="0.05" value="${Number(theme.fontScale||.95)}"></label><label class="theme-stack"><span>气泡间距 <b id="themeBubbleGapValue">${Math.round(Number(theme.bubbleGap??18))}px</b></span><input class="xy-theme-range" id="themeBubbleGap" type="range" min="8" max="48" step="1" value="${Number(theme.bubbleGap??18)}"></label></div>
       <div class="theme-setting-card"><label class="theme-stack"><span>背景图片 URL</span><input id="themeBgUrl" type="url" placeholder="https://..." value="${theme.bgImage&&!theme.bgImage.startsWith('data:')?escHtml(theme.bgImage):''}"></label><div class="theme-upload-row"><label class="theme-upload-button">从相册选择<input id="themeBgFile" type="file" accept="image/*" hidden></label><button class="theme-small-btn" id="clearThemeImage">清除背景图</button></div><div class="fetch-status" id="themeImageStatus">${theme.bgImage?'已设置背景图':'当前没有背景图'}</div></div>
       <div class="theme-setting-card"><label class="theme-stack"><span>背景遮罩 <b id="themeOverlayValue">${Math.round(theme.overlay*100)}%</b></span><input class="xy-theme-range" id="themeOverlay" type="range" min="0" max="0.85" step="0.05" value="${theme.overlay}"></label><label class="theme-stack"><span>背景模糊 <b id="themeBlurValue">${Number(theme.blur||0)}px</b></span><input class="xy-theme-range" id="themeBlur" type="range" min="0" max="24" step="1" value="${Number(theme.blur||0)}"></label></div>
@@ -129,6 +134,11 @@
   }
 
   function bindThemePanel(body){
+    body.querySelectorAll('.xy-bubble-skin-choice').forEach(btn=>btn.addEventListener('click',()=>{
+      theme.bubbleSkin=skinOf(btn.dataset.bubbleSkin);
+      persist();applyTheme();
+      body.querySelectorAll('.xy-bubble-skin-choice').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.bubbleSkin===theme.bubbleSkin)));
+    }));
     body.querySelectorAll('[data-color-preview]').forEach(btn=>btn.addEventListener('click',()=>{const key=btn.dataset.colorPreview,p=body.querySelector(`[data-color-palette="${key}"]`);body.querySelectorAll('.xy-theme-palette').forEach(x=>{if(x!==p)x.hidden=true});if(p)p.hidden=!p.hidden}));
     body.querySelectorAll('[data-color-swatch]').forEach(btn=>btn.addEventListener('click',()=>{const key=btn.dataset.colorSwatch,value=btn.dataset.color;if(setColor(key,value)){const input=body.querySelector(`[data-color-input="${key}"]`),preview=body.querySelector(`[data-color-preview="${key}"]`),p=body.querySelector(`[data-color-palette="${key}"]`);if(input)input.value=theme[key];if(preview)preview.style.background=theme[key];if(p)p.hidden=true}}));
     body.querySelectorAll('[data-color-input]').forEach(input=>{const commit=()=>{const key=input.dataset.colorInput;if(setColor(key,input.value)){input.value=theme[key];const p=body.querySelector(`[data-color-preview="${key}"]`);if(p)p.style.background=theme[key]}else input.value=theme[key]};input.addEventListener('change',commit);input.addEventListener('blur',commit)});

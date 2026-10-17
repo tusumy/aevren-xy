@@ -1,0 +1,117 @@
+/* Bubble skins - visual only. Theme and conversation data remain untouched.
+   Classic "glass" deliberately receives no overrides: it is the fallback. */
+html[data-bubble-skin="bear"] .messages .message .bubble,
+html[data-bubble-skin="cat"] .messages .message .bubble,
+html[data-bubble-skin="comic"] .messages .message .bubble{
+  border-radius:17px!important;
+}
+html[data-bubble-skin="bear"] .messages .message.assistant.split-mid .bubble,
+html[data-bubble-skin="cat"] .messages .message.assistant.split-mid .bubble,
+html[data-bubble-skin="comic"] .messages .message.assistant.split-mid .bubble{
+  border-radius:10px 17px 17px 10px!important;
+}
+html[data-bubble-skin="bear"] .messages .message.assistant.split-last .bubble,
+html[data-bubble-skin="cat"] .messages .message.assistant.split-last .bubble,
+html[data-bubble-skin="comic"] .messages .message.assistant.split-last .bubble{
+  border-radius:10px 17px 17px 17px!important;
+}
+html[data-bubble-skin="bear"] .messages .message.user .bubble,
+html[data-bubble-skin="cat"] .messages .message.user .bubble,
+html[data-bubble-skin="comic"] .messages .message.user .bubble{
+  border-radius:17px 17px 10px 17px!important;
+}
+/* Do not add images to every paragraph in a split assistant message. */
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message:is(.assistant,.user):not(.split-mid):not(.split-last) .bubble::before{
+  content:"";
+  display:block;
+  position:absolute;
+  top:-27px;right:-15px;
+  width:55px;height:44px;
+  z-index:2;
+  pointer-events:none;
+  background-position:center;
+  background-repeat:no-repeat;
+  background-size:contain;
+  filter:drop-shadow(0 2px 2px rgba(45,40,38,.11));
+}
+html[data-bubble-skin="bear"] .messages .message:is(.assistant,.user):not(.split-mid):not(.split-last) .bubble::before{
+  background-image:url("./bubble-bear.svg");
+}
+html[data-bubble-skin="cat"] .messages .message:is(.assistant,.user):not(.split-mid):not(.split-last) .bubble::before{
+  background-image:url("./bubble-cat.svg");
+}
+/* On the right side of chat, the decoration hugs the left upper edge. */
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message.user .bubble::before{
+  right:auto;left:-15px;transform:scaleX(-1);
+}
+/* Tiny, rounded speech notch. Inherits the current theme's glass surface
+   instead of replacing blur, alpha, colors or shadows for the main bubble. */
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"],[data-bubble-skin="comic"]) .messages .message:is(.assistant,.user):not(.split-first):not(.split-mid) .bubble::after{
+  content:"";
+  position:absolute;
+  bottom:-8px;left:25px;
+  width:16px;height:12px;
+  clip-path:polygon(5% 0,95% 0,50% 100%);
+  border-radius:0 0 5px 5px;
+  background:inherit;
+  backdrop-filter:inherit;
+  -webkit-backdrop-filter:inherit;
+  z-index:0;
+  pointer-events:none;
+}
+html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"],[data-bubble-skin="comic"]) .messages .message.user .bubble::after{
+  left:auto;right:25px;
+}
+html[data-bubble-skin="comic"] .messages .message .bubble{
+  border-width:1.5px!important;
+  border-style:solid!important;
+  border-color:color-mix(in srgb,var(--theme-accent,#365d4a) 40%,transparent)!important;
+}
+html[data-theme-mode="dark"][data-bubble-skin="comic"] .messages .message .bubble{
+  border-color:color-mix(in srgb,var(--theme-accent,#9cae9f) 44%,transparent)!important;
+}
+@media(max-width:760px){
+  html:is([data-bubble-skin="bear"],[data-bubble-skin="cat"]) .messages .message:is(.assistant,.user):not(.split-mid):not(.split-last) .bubble::before{
+    top:-24px;width:48px;height:40px;
+  }
+}
+/* The skin picker lives inside Theme; controls are independent of the
+   user's glass switch and existing theme swatches. */
+.xy-bubble-skin-title{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;font-weight:650;color:var(--ink,#292725);margin:0 0 10px}
+.xy-bubble-skin-desc{font-size:10px;color:var(--muted,#8c8881);line-height:1.55;margin:0 0 12px}
+.xy-bubble-skin-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.xy-bubble-skin-choice{
+  position:relative;min-height:90px;border:1px solid rgba(80,91,82,.13);
+  border-radius:14px;padding:10px;background:rgba(255,255,255,.28);
+  color:var(--ink,#292725);text-align:left;cursor:pointer;
+  display:flex;flex-direction:column;justify-content:space-between;gap:12px;
+  -webkit-tap-highlight-color:transparent;
+}
+.xy-bubble-skin-choice[aria-pressed="true"]{
+  border-color:var(--theme-accent,#365d4a);
+  box-shadow:0 0 0 1px var(--theme-accent,#365d4a) inset;
+  background:color-mix(in srgb,var(--theme-accent,#365d4a) 9%,transparent);
+}
+.xy-bubble-skin-choice .xy-skin-thumb{position:relative;display:block;width:60px;height:29px;
+  border-radius:13px 13px 13px 5px;
+  border:1px solid rgba(98,110,101,.22);
+  background:var(--theme-assistant-glass,rgba(243,241,235,.58));
+  backdrop-filter:blur(9px);
+  -webkit-backdrop-filter:blur(9px);
+}
+.xy-bubble-skin-choice .xy-skin-thumb::after{content:"";position:absolute;left:12px;bottom:-6px;width:12px;height:8px;
+  clip-path:polygon(0 0,100% 0,50% 100%);background:inherit;
+}
+.xy-bubble-skin-choice[data-bubble-skin="glass"] .xy-skin-thumb{border-radius:19px 19px 19px 9px}
+.xy-bubble-skin-choice[data-bubble-skin="glass"] .xy-skin-thumb::after{display:none}
+.xy-bubble-skin-choice[data-bubble-skin="comic"] .xy-skin-thumb{border:1.5px solid var(--theme-accent,#365d4a);border-radius:9px}
+.xy-bubble-skin-choice[data-bubble-skin="bear"] .xy-skin-thumb::before,
+.xy-bubble-skin-choice[data-bubble-skin="cat"] .xy-skin-thumb::before{
+  content:"";position:absolute;z-index:2;right:-11px;top:-21px;width:43px;height:34px;
+  background-position:center;background-size:contain;background-repeat:no-repeat;
+}
+.xy-bubble-skin-choice[data-bubble-skin="bear"] .xy-skin-thumb::before{background-image:url("./bubble-bear.svg")}
+.xy-bubble-skin-choice[data-bubble-skin="cat"] .xy-skin-thumb::before{background-image:url("./bubble-cat.svg")}
+.xy-bubble-skin-choice .xy-skin-label{font-size:11px;font-weight:600}
+html[data-theme-mode="dark"] .xy-bubble-skin-choice{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.14);color:#e9efe9}
+html[data-theme-mode="dark"] .xy-bubble-skin-choice[aria-pressed="true"]{border-color:var(--theme-accent,#88ad91);background:rgba(255,255,255,.065)}
