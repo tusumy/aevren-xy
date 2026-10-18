@@ -23,7 +23,10 @@
    shell.append(heading,search,shelf,reader);
    function render(q=""){
      const found=list().filter(x=>!q||[title(x),x.text,day(x.createdAt)].some(v=>String(v||"").toLowerCase().includes(q.toLowerCase())));
-     if(!found.length){shelf.innerHTML="<p class='setting-note'>"+(q?"没有搜索结果":"书架还空着，写下第一篇吧。")+"</p>";return}
+     if(!found.length){
+       shelf.innerHTML=q?"<p class='setting-note'>没有搜索结果</p>":"<div class='xy-journal-empty'><div class='xy-journal-empty-art' aria-hidden='true'></div><strong>留一页给今天</strong><p>书架还空着，写下第一篇吧。</p></div>";
+       return;
+     }
      const groups=new Map();
      found.forEach(x=>{const m=month(x.createdAt);if(!groups.has(m))groups.set(m,[]);groups.get(m).push(x)});
      shelf.innerHTML=[...groups].map(([m,entries])=>"<section class='xy-journal-month'><h3>"+safe(m)+"</h3><div class='xy-journal-books'>"+entries.map(x=>"<button type='button' class='xy-journal-book' data-book='"+safe(x.id)+"'><span class='xy-journal-spine'></span><span class='xy-journal-book-main'><small>"+safe(day(x.createdAt))+(x.pinned?" · 置顶":"")+"</small><strong>"+safe(title(x))+"</strong><span>"+safe(excerpt(x))+"</span></span><span class='xy-journal-chevron'>›</span></button>").join("")+"</div></section>").join("");
