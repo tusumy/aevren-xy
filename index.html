@@ -40,6 +40,7 @@
   <link rel="stylesheet" href="./unified-accent.css?v=xy20261017accent1" />
   <link rel="stylesheet" href="./chat-bubble-polish.css?v=xy20261017shape2" />
   <link rel="stylesheet" href="./bubble-skins.css?v=xy20261017roundedtail1" />
+  <link rel="stylesheet" href="./tool-hub.css?v=xy20261019hub1" />
 </head>
 <body>
   <div class="app">
@@ -49,8 +50,9 @@
       <div class="section-label">最近</div>
       <nav class="chats" id="chatList"></nav>
       <div class="sidebar-bottom">
+        <button class="nav-btn xy-tools-entry" type="button" data-panel="toolhub"><span class="xy-tools-symbol" aria-hidden="true">✦</span><span class="xy-tools-copy">工具中心<small>整理所有功能</small></span><span class="xy-tools-chevron" aria-hidden="true">↗</span></button>
         <input class="sidebar-toolbox-toggle" id="sidebarToolboxToggle" type="checkbox" />
-        <label class="sidebar-toolbox-label" for="sidebarToolboxToggle"><span>工具</span><span class="sidebar-toolbox-chevron">⌄</span></label>
+        <label class="sidebar-toolbox-label" for="sidebarToolboxToggle"><span>快捷入口</span><span class="sidebar-toolbox-chevron">⌄</span></label>
         <button class="nav-btn" data-panel="memory">⌁ <span>记忆</span><b id="memoryCount">0</b></button>
         <button class="nav-btn" data-panel="characters">◇ <span>角色</span></button>
         <button class="nav-btn" data-panel="study">▧ <span>书房</span></button>
@@ -132,5 +134,6 @@
   <script src="./proactive-calls.js?v=xy20261015nativeonly"></script>
   <script src="./tavern-card-display.js?v=xy20261017jnfix"></script>
   <script src="./html-message-preview.js?v=xy20261017jnfix"></script>
+  <script src="./tool-hub.js?v=xy20261019hub1"></script>
 </body>
 </html>
