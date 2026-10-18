@@ -1,0 +1,106 @@
+/* Aevren XY · tool hub. The user's theme accent controls highlights. */
+.sidebar-bottom>.xy-tools-entry{
+  position:relative;display:flex;align-items:center;gap:11px;
+  min-height:54px;margin-bottom:4px;padding:11px 13px;border:1px solid var(--xy-ui-accent-border,#cfdcd1);
+  border-radius:14px;background:linear-gradient(125deg,var(--xy-ui-accent-soft,#edf3ed),rgba(255,255,255,.57));
+  color:var(--ink,#293b33);font-weight:650;box-shadow:0 5px 16px rgba(28,52,38,.04)
+}
+.sidebar-bottom>.xy-tools-entry .xy-tools-symbol{
+  display:grid;place-items:center;flex:none;width:30px;height:30px;border-radius:10px;
+  background:var(--xy-ui-accent,#365d4a);color:var(--xy-ui-accent-on,#fff);font-size:17px
+}
+.sidebar-bottom>.xy-tools-entry .xy-tools-copy{flex:1;text-align:left;display:grid;gap:2px;font-size:13px}
+.sidebar-bottom>.xy-tools-entry .xy-tools-copy small{font-size:10px;color:var(--muted,#758179);font-weight:400}
+.sidebar-bottom>.xy-tools-entry .xy-tools-chevron{font-size:18px;color:var(--xy-ui-accent,#365d4a)}
+.sidebar-bottom .sidebar-toolbox-label{min-height:30px;font-size:11px;padding:5px 11px}
+#panel:has(#xyToolHub){
+  width:min(540px,100vw);display:flex;flex-direction:column;
+  padding:22px 18px max(14px,env(safe-area-inset-bottom));
+}
+#panel:has(#xyToolHub) .panel-head{flex:none;margin-bottom:12px;padding:2px 5px 8px}
+#panel:has(#xyToolHub) #panelBody{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 5px 12px 3px}
+#xyToolHub{
+  --hub-paper:rgba(255,255,255,.68);--hub-ink:#29332e;--hub-muted:#69766e;
+  --hub-line:rgba(85,110,94,.16);--hub-elevation:0 7px 24px rgba(41,70,53,.055);
+  --hub-accent:var(--xy-ui-accent,#365d4a);--hub-accent-on:var(--xy-ui-accent-on,#fff);
+  --hub-soft:var(--xy-ui-accent-soft,#edf3ed);
+  color:var(--hub-ink);font-family:inherit;padding-bottom:14px;
+}
+#xyToolHub *{box-sizing:border-box}
+#xyToolHub .xy-hub-hero{
+  position:relative;overflow:hidden;padding:26px 24px 20px;
+  border-radius:24px;
+  background:radial-gradient(circle at 91% -17%,rgba(255,255,255,.92),transparent 46%),linear-gradient(135deg,var(--hub-soft),rgba(224,232,224,.8));
+  border:1px solid var(--xy-ui-accent-border,#d9e4da);
+}
+#xyToolHub .xy-hub-hero::after{
+  content:"";position:absolute;right:-35px;top:40px;width:138px;height:138px;
+  border:1px solid color-mix(in srgb,var(--hub-accent) 12%,transparent);
+  border-radius:50%;pointer-events:none;
+  box-shadow:0 0 0 25px color-mix(in srgb,var(--hub-accent) 5%,transparent),
+             0 0 0 57px color-mix(in srgb,var(--hub-accent) 3%,transparent);
+}
+#xyToolHub .xy-hub-hero-kicker{position:relative;z-index:1;font-size:10px;letter-spacing:.19em;font-weight:600;color:var(--hub-accent)}
+#xyToolHub .xy-hub-hero h2{position:relative;z-index:1;font-size:23px;line-height:1.44;letter-spacing:.015em;font-weight:650;margin:12px 0 8px}
+#xyToolHub .xy-hub-hero p{position:relative;z-index:1;font-size:11px;line-height:1.8;color:var(--hub-muted);margin:0 0 16px;max-width:270px}
+#xyToolHub .xy-hub-status{position:relative;z-index:1;display:inline-flex;align-items:center;gap:7px;max-width:100%;border-radius:999px;padding:7px 10px;background:var(--hub-paper);border:1px solid var(--hub-line);font-size:10px;color:var(--hub-muted)}
+#xyToolHub .xy-hub-status strong{color:var(--hub-ink);font-weight:600;display:inline-block;vertical-align:bottom;max-width:175px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#xyToolHub .xy-hub-status-dot{width:7px;height:7px;flex:none;border-radius:50%;background:var(--hub-accent);box-shadow:0 0 0 3px var(--hub-soft)}
+#xyToolHub .xy-hub-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:13px 0 20px}
+#xyToolHub .xy-hub-stats>div{display:grid;gap:4px;padding:13px 12px;background:var(--hub-paper);border:1px solid var(--hub-line);border-radius:16px}
+#xyToolHub .xy-hub-stats strong{font-size:20px;font-weight:650;color:var(--hub-ink);font-variant-numeric:tabular-nums}
+#xyToolHub .xy-hub-stats span{font-size:10px;color:var(--hub-muted)}
+#xyToolHub .xy-hub-search{display:flex;align-items:center;gap:8px;height:45px;padding:0 14px;border-radius:14px;border:1px solid var(--hub-line);background:var(--hub-paper);color:var(--hub-muted);transition:border-color .15s}
+#xyToolHub .xy-hub-search:focus-within{border-color:var(--hub-accent)}
+#xyToolHub .xy-hub-search>span{font-size:21px}
+#xyToolHub .xy-hub-search input{min-width:0;flex:1;outline:0;border:0;background:transparent;color:var(--hub-ink);font:inherit;font-size:13px}
+#xyToolHub .xy-hub-search input::placeholder{color:var(--hub-muted);opacity:.85}
+#xyToolHub .xy-hub-filters{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding:11px 0 8px}
+#xyToolHub .xy-hub-filters::-webkit-scrollbar{display:none}
+#xyToolHub .xy-hub-filters button{flex:none;min-height:33px;padding:0 12px;border-radius:999px;border:1px solid var(--hub-line);background:var(--hub-paper);font:inherit;font-size:11px;color:var(--hub-muted);cursor:pointer}
+#xyToolHub .xy-hub-filters button.is-active{background:var(--hub-accent);border-color:var(--hub-accent);color:var(--hub-accent-on)}
+#xyToolHub .xy-hub-result{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--hub-muted);padding:5px 2px 2px}
+#xyToolHub .xy-hub-result b{font-weight:600;color:var(--hub-ink)}
+#xyToolHub .xy-hub-group{margin-top:17px}
+#xyToolHub .xy-hub-group h3{font-size:12px;font-weight:650;letter-spacing:.03em;margin:0 2px 9px;color:var(--hub-ink)}
+#xyToolHub .xy-hub-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#xyToolHub .xy-hub-card{position:relative;display:flex;min-height:110px;background:var(--hub-paper);border:1px solid var(--hub-line);border-radius:17px;box-shadow:var(--hub-elevation);transition:transform .14s,border-color .14s}
+#xyToolHub .xy-hub-card:active{transform:scale(.99)}
+#xyToolHub .xy-hub-card:hover{border-color:var(--xy-ui-accent-border,#cedccf)}
+#xyToolHub .xy-hub-open{display:flex;flex:1;flex-direction:column;align-items:flex-start;text-align:left;min-width:0;padding:14px 15px;border:0;background:transparent;color:var(--hub-ink);font:inherit;cursor:pointer}
+#xyToolHub .xy-hub-glyph{display:grid;place-items:center;width:30px;height:30px;flex:none;border-radius:10px;background:var(--hub-soft);color:var(--hub-accent);font-size:17px}
+#xyToolHub .xy-hub-copy{display:grid;gap:5px;margin-top:9px;width:100%}
+#xyToolHub .xy-hub-copy strong{font-size:13px;line-height:1.3;font-weight:650}
+#xyToolHub .xy-hub-copy small{font-size:10px;line-height:1.5;color:var(--hub-muted);font-weight:400}
+#xyToolHub .xy-hub-arrow{position:absolute;right:14px;top:17px;font-size:14px;color:var(--hub-muted)}
+#xyToolHub .xy-hub-pin{position:absolute;right:8px;bottom:8px;display:grid;place-items:center;width:30px;height:30px;border:0;border-radius:10px;background:transparent;color:var(--hub-muted);font-size:17px;cursor:pointer}
+#xyToolHub .xy-hub-pin.is-pinned{color:var(--hub-accent)}
+#xyToolHub .xy-hub-pin:hover{background:var(--hub-soft)}
+#xyToolHub .xy-hub-card[hidden],#xyToolHub .xy-hub-group[hidden],#xyToolHub .xy-hub-empty[hidden]{display:none!important}
+#xyToolHub .xy-hub-empty{margin-top:25px;padding:26px 10px;text-align:center;font-size:12px;color:var(--hub-muted);border:1px dashed var(--hub-line);border-radius:14px}
+#xyToolHub .xy-hub-footer{text-align:center;font-size:10px;color:var(--hub-muted);margin:22px 0 0}
+html[data-theme-mode="dark"] #xyToolHub,body.theme-dark #xyToolHub{
+  --hub-paper:rgba(36,46,40,.85);--hub-ink:#e6efe9;--hub-muted:#a4b4aa;
+  --hub-line:rgba(187,213,194,.13);--hub-elevation:0 8px 25px rgba(0,0,0,.12);
+}
+html[data-theme-mode="dark"] #xyToolHub .xy-hub-hero,body.theme-dark #xyToolHub .xy-hub-hero{
+  background:radial-gradient(circle at 93% -14%,rgba(113,145,120,.12),transparent 52%),linear-gradient(135deg,rgba(31,47,38,.97),rgba(30,38,34,.95));
+  border-color:var(--hub-line)
+}
+html[data-theme-mode="dark"] .sidebar-bottom>.xy-tools-entry,body.theme-dark .sidebar-bottom>.xy-tools-entry{
+  background:linear-gradient(135deg,var(--xy-ui-accent-soft,rgba(45,71,53,.36)),rgba(255,255,255,.04));
+}
+@media(max-width:760px){
+  #panel:has(#xyToolHub){width:100vw;max-width:100vw;padding:17px 16px max(12px,env(safe-area-inset-bottom));border-left:0}
+  #panel:has(#xyToolHub) #panelBody{padding:0 2px 12px}
+}
+@media(max-width:380px){
+  #xyToolHub .xy-hub-hero{padding:21px 17px}
+  #xyToolHub .xy-hub-hero h2{font-size:21px}
+  #xyToolHub .xy-hub-card{min-height:118px}
+  #xyToolHub .xy-hub-open{padding:13px 11px}
+  #xyToolHub .xy-hub-copy small{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  #xyToolHub .xy-hub-card{transition:none}
+}
