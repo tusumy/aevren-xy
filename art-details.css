@@ -139,3 +139,9 @@
   #xyToolHub .xy-hub-hero::after,
   #panel #xyStudy .study-cover::after{transform:none}
 }
+
+/* Night-mode phone art remains faint, even though its desktop tint is brighter. */
+@media(max-width:460px){
+  :is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-hero::after{opacity:.17}
+  :is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover::after{opacity:.10}
+}
