@@ -104,3 +104,16 @@ html[data-theme-mode="dark"] .sidebar-bottom>.xy-tools-entry,body.theme-dark .si
 @media(prefers-reduced-motion:reduce){
   #xyToolHub .xy-hub-card{transition:none}
 }
+
+/* Keep MCP tool directories collapsed instead of rendering one giant name string. */
+#panel .xy-mcp-tool-list{margin:12px 0 3px;border:1px solid var(--xy-ui-accent-border,#ceded1);border-radius:13px;background:var(--xy-ui-accent-soft,rgba(230,241,232,.46));overflow:hidden}
+#panel .xy-mcp-tool-list summary{display:flex;align-items:center;gap:8px;min-height:43px;padding:9px 12px;list-style:none;cursor:pointer;font-size:12px;font-weight:600;color:inherit}
+#panel .xy-mcp-tool-list summary::-webkit-details-marker{display:none}
+#panel .xy-mcp-tool-list summary b{margin-left:auto;padding:4px 8px;border-radius:999px;background:var(--xy-ui-accent-border,rgba(100,150,115,.15));font-size:10px;font-weight:500;white-space:nowrap}
+#panel .xy-mcp-tool-list summary i{font-style:normal;font-size:12px;transition:transform .18s}
+#panel .xy-mcp-tool-list[open] summary i{transform:rotate(180deg)}
+#panel .xy-mcp-tool-items{max-height:260px;overflow-y:auto;overscroll-behavior:contain;padding:6px 9px 9px;display:grid;gap:6px}
+#panel .xy-mcp-tool-row{min-width:0;display:grid;gap:3px;padding:9px 10px;border:1px solid rgba(110,140,118,.12);border-radius:10px;background:rgba(255,255,255,.54)}
+#panel .xy-mcp-tool-row strong{font-size:11px;font-weight:600;overflow-wrap:anywhere;line-height:1.5;color:inherit}
+#panel .xy-mcp-tool-row small{display:block;overflow-wrap:anywhere;color:var(--muted,#718077);font-size:10px;line-height:1.55}
+html[data-theme-mode="dark"] #panel .xy-mcp-tool-row,body.theme-dark #panel .xy-mcp-tool-row{background:rgba(255,255,255,.045);border-color:rgba(200,230,200,.08)}
