@@ -9,6 +9,20 @@
     {id:"mcp",title:"MCP 工具",subtitle:"连接服务与查看状态",symbol:"⌘",group:"连接"},
     {id:"settings",title:"模型与设置",subtitle:"接口、模型及参数",symbol:"⚙",group:"连接"}
   ];
+  // Small hand-drawn outline icon family: neutral, scalable, follows theme color.
+  const strokes={
+    memory:'<circle cx="12" cy="12" r="3.5"/><circle cx="5" cy="6" r="1.5"/><circle cx="19" cy="6" r="1.5"/><circle cx="5" cy="19" r="1.5"/><circle cx="19" cy="19" r="1.5"/><path d="M7 7.4 9.5 10M17 7.4 14.5 10M7 17.8l2.5-3.4M17 17.8l-2.5-3.4"/>',
+    characters:'<path d="M12 2.8c-4.7 0-8.5 3.8-8.5 8.5s3.8 8.5 8.5 8.5 8.5-3.8 8.5-8.5S16.7 2.8 12 2.8Z"/><circle cx="12" cy="9.7" r="3"/><path d="M5.5 18c.9-3 3.4-4.5 6.5-4.5s5.6 1.5 6.5 4.5"/>',
+    study:'<path d="M12 20.2c-3.1-2.3-6-3-9.5-2V5c3.8-1.1 6.9-.4 9.5 1.9 2.5-2.3 5.7-3 9.5-1.9v13.2c-3.5-1-6.4-.3-9.5 2Z"/><path d="M12 7v13.2M5.5 9c1.6-.2 2.8 0 4.2.8m-4.2 2.6c1.6-.2 2.8 0 4.2.8m4.6-3.4c1.4-.8 2.7-1 4.2-.8"/>',
+    journal:'<path d="M7 3.3h9l3 3V20H7a2 2 0 0 1-2-2V5.3a2 2 0 0 1 2-2Z"/><path d="M16 3.3v4h3M8 11h7M8 14h6M8 17h4"/><path d="m14.5 20.7 6.2-7.3 1.2 1.3-6.3 7.3-2.4.6Z"/>',
+    theme:'<circle cx="12" cy="12" r="4.3"/><path d="M12 2v2.3M12 19.7V22M2 12h2.3M19.7 12H22M4.9 4.9l1.7 1.7m10.8 10.8 1.7 1.7m0-14.2-1.7 1.7M6.6 17.4l-1.7 1.7"/>',
+    data:'<rect x="6" y="4" width="14" height="16" rx="2"/><path d="M9.5 8h7M9.5 12h7M9.5 16H15M3 8v13h13"/>',
+    mcp:'<rect x="3" y="3" width="6" height="6" rx="1.7"/><rect x="15" y="3" width="6" height="6" rx="1.7"/><rect x="9" y="15" width="6" height="6" rx="1.7"/><path d="M9 6h6M6 9v3l4.3 3.5M18 9v3l-4.3 3.5"/>',
+    settings:'<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/><circle cx="16" cy="12" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/><circle cx="11" cy="18" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/>'
+  };
+  function drawnIcon(id){
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+(strokes[id]||strokes.theme)+'</svg>';
+  }
   const favKey="xy.toolhub.favorites.v1";
   let currentTab="all";
   let currentSearch="";
@@ -35,7 +49,7 @@
     const pinned=favs.includes(item.id);
     return '<div class="xy-hub-card" data-id="'+item.id+'" data-group="'+item.group+'">'+
       '<button type="button" class="xy-hub-open" data-open="'+item.id+'" aria-label="打开'+item.title+'">'+
-      '<span class="xy-hub-glyph" aria-hidden="true">'+item.symbol+'</span>'+
+      '<span class="xy-hub-glyph" aria-hidden="true">'+drawnIcon(item.id)+'</span>'+
       '<span class="xy-hub-copy"><strong>'+item.title+'</strong><small>'+item.subtitle+'</small></span>'+
       '<span class="xy-hub-arrow" aria-hidden="true">↗</span></button>'+
       '<button type="button" class="xy-hub-pin'+(pinned?' is-pinned':'')+'" data-pin="'+item.id+'" aria-pressed="'+pinned+'" aria-label="'+(pinned?'取消':'添加')+'收藏：'+item.title+'" title="收藏快捷入口">'+(pinned?'★':'☆')+'</button></div>';
