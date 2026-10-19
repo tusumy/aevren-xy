@@ -7,7 +7,8 @@
     {id:"theme",title:"主题",subtitle:"配色、气泡与外观",symbol:"◐",group:"外观与管理"},
     {id:"data",title:"数据管理",subtitle:"备份、导入与恢复",symbol:"▥",group:"外观与管理"},
     {id:"mcp",title:"MCP 工具",subtitle:"连接服务与查看状态",symbol:"⌘",group:"连接"},
-    {id:"settings",title:"模型与设置",subtitle:"接口、模型及参数",symbol:"⚙",group:"连接"}
+    {id:"settings",title:"模型与设置",subtitle:"接口、模型及参数",symbol:"⚙",group:"连接"},
+    {id:"voice",title:"语音",subtitle:"语音播放与识别设置",symbol:"♪",group:"连接"}
   ];
   // Small hand-drawn outline icon family: neutral, scalable, follows theme color.
   const strokes={
@@ -18,7 +19,8 @@
     theme:'<circle cx="12" cy="12" r="4.3"/><path d="M12 2v2.3M12 19.7V22M2 12h2.3M19.7 12H22M4.9 4.9l1.7 1.7m10.8 10.8 1.7 1.7m0-14.2-1.7 1.7M6.6 17.4l-1.7 1.7"/>',
     data:'<rect x="6" y="4" width="14" height="16" rx="2"/><path d="M9.5 8h7M9.5 12h7M9.5 16H15M3 8v13h13"/>',
     mcp:'<rect x="3" y="3" width="6" height="6" rx="1.7"/><rect x="15" y="3" width="6" height="6" rx="1.7"/><rect x="9" y="15" width="6" height="6" rx="1.7"/><path d="M9 6h6M6 9v3l4.3 3.5M18 9v3l-4.3 3.5"/>',
-    settings:'<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/><circle cx="16" cy="12" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/><circle cx="11" cy="18" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/>'
+    settings:'<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/><circle cx="16" cy="12" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/><circle cx="11" cy="18" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/>',
+    voice:'<path d="M10 17V4l10-2v12"/><circle cx="6.5" cy="18" r="3.5"/><circle cx="16.5" cy="15" r="3.5"/><path d="M10 7l10-2"/>'
   };
   function drawnIcon(id){
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+(strokes[id]||strokes.theme)+'</svg>';
@@ -147,7 +149,7 @@
       '<h2>把复杂的收起来。<br>想用时，一点就到。</h2>'+
       '<p>聊天留在外面，功能都放在这里。原来的设置和数据不会改变。</p>'+
       '<div class="xy-hub-status"><span class="xy-hub-status-dot" aria-hidden="true"></span><span>当前接口 <strong>'+escapeHtml(state.selected)+'</strong></span></div></div>'+
-      '<div class="xy-hub-stats"><div><strong>08</strong><span>个功能入口</span></div><div><strong>'+state.enabled+'</strong><span>已启用 MCP</span></div><div><strong id="xyHubFavCount">0</strong><span>收藏的入口</span></div></div>'+
+      '<div class="xy-hub-stats"><div><strong>'+String(tools.length).padStart(2,"0")+'</strong><span>个功能入口</span></div><div><strong>'+state.enabled+'</strong><span>已启用 MCP</span></div><div><strong id="xyHubFavCount">0</strong><span>收藏的入口</span></div></div>'+
       '<section class="xy-hub-recent" id="xyHubRecent" hidden><h3>最近打开</h3><div id="xyHubRecentLinks" class="xy-hub-recent-links"></div></section>'+ 
       '<label class="xy-hub-search"><span aria-hidden="true">⌕</span><input id="xyHubSearch" type="search" autocomplete="off" placeholder="搜索工具、功能…" aria-label="搜索工具"></label>'+
       '<div class="xy-hub-filters" role="group" aria-label="筛选工具">'+
@@ -184,6 +186,10 @@
   const previousOpen=openPanel;
   openPanel=function(type){
     if(type==="toolhub"){window.xyEnsureOverlayHistory?.();return openHub()}
+    if(type==="voice"){
+      noteUsed("voice");
+      return window.xyOpenVoicePanel?.();
+    }
     const result=previousOpen(type);
     noteUsed(type);
     return result;
@@ -196,4 +202,7 @@
   });
   window.addEventListener("storage",e=>{if(e.key===favKey)renderSidebarFavorites()});
   renderSidebarFavorites();
+  // Voice settings now live in Tool Hub and may be starred like other tools.
+  // The old injected sidebar button would otherwise be a duplicate.
+  document.querySelector(".sidebar-bottom > [data-panel='voice']")?.remove();
 })();
