@@ -117,3 +117,105 @@ html[data-theme-mode="dark"] .sidebar-bottom>.xy-tools-entry,body.theme-dark .si
 #panel .xy-mcp-tool-row strong{font-size:11px;font-weight:600;overflow-wrap:anywhere;line-height:1.5;color:inherit}
 #panel .xy-mcp-tool-row small{display:block;overflow-wrap:anywhere;color:var(--muted,#718077);font-size:10px;line-height:1.55}
 html[data-theme-mode="dark"] #panel .xy-mcp-tool-row,body.theme-dark #panel .xy-mcp-tool-row{background:rgba(255,255,255,.045);border-color:rgba(200,230,200,.08)}
+
+/* Sidebar now shows only starred items: one Tool Hub entry, one live pinned shelf. */
+.sidebar-bottom .xy-sidebar-fav-head{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:12px 9px 7px;
+  color:var(--muted,#758176);
+  font-size:11px;font-weight:600;letter-spacing:.03em;
+}
+.sidebar-bottom .xy-sidebar-fav-head>span{display:inline-flex;gap:7px;align-items:center}
+.sidebar-bottom .xy-sidebar-fav-head>span>span{
+  color:var(--xy-ui-accent,var(--theme-accent,#365d4a));
+  font-size:13px;
+}
+.sidebar-bottom .xy-sidebar-fav-head b{
+  border-radius:999px;
+  min-width:23px;padding:2px 6px;text-align:center;
+  background:var(--xy-ui-accent-soft,rgba(85,129,102,.10));
+  color:var(--xy-ui-accent,var(--theme-accent,#365d4a));
+  font-size:10px;font-weight:600;
+}
+#xySidebarFavorites{
+  display:grid;gap:3px;
+  max-height:min(39dvh,290px);
+  min-height:0;
+  overflow-y:auto;overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(105,125,108,.3) transparent;
+  padding:0 2px 3px;
+}
+#xySidebarFavorites .xy-sidebar-fav-link{
+  width:100%;min-width:0;min-height:42px;
+  border:1px solid transparent;border-radius:11px;
+  display:flex;align-items:center;gap:10px;
+  padding:7px 9px;background:rgba(255,255,255,.26);
+  color:var(--ink,#37443b);font:inherit;font-size:12px;
+  text-align:left;cursor:pointer;
+  transition:background .15s,border-color .15s,transform .15s;
+}
+#xySidebarFavorites .xy-sidebar-fav-link:hover,
+#xySidebarFavorites .xy-sidebar-fav-link:focus-visible{
+  background:var(--xy-ui-accent-soft,rgba(235,242,236,.88));
+  border-color:var(--xy-ui-accent-border,rgba(93,139,105,.24));
+}
+#xySidebarFavorites .xy-sidebar-fav-link:active{transform:scale(.985)}
+#xySidebarFavorites .xy-sidebar-fav-link:focus-visible,
+#xySidebarFavorites .xy-sidebar-fav-add:focus-visible{
+  outline:2px solid var(--xy-ui-accent,var(--theme-accent,#365d4a));
+  outline-offset:2px;
+}
+#xySidebarFavorites .xy-sidebar-fav-icon{
+  display:grid;place-items:center;
+  flex:0 0 29px;width:29px;height:29px;border-radius:9px;
+  background:var(--xy-ui-accent-soft,rgba(225,240,229,.85));
+  color:var(--xy-ui-accent,var(--theme-accent,#365d4a));
+}
+#xySidebarFavorites .xy-sidebar-fav-icon svg{width:18px;height:18px}
+#xySidebarFavorites .xy-sidebar-fav-name{
+  flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:500;
+}
+#xySidebarFavorites .xy-sidebar-fav-arrow{font-size:17px;color:var(--muted,#758176)}
+#xySidebarFavorites .xy-sidebar-fav-empty{
+  padding:9px 8px 2px;color:var(--muted,#758176);
+  font-size:11px;line-height:1.55;
+}
+#xySidebarFavorites .xy-sidebar-fav-add{
+  min-height:38px;margin-top:3px;padding:8px 10px;
+  border:1px dashed var(--xy-ui-accent-border,rgba(90,128,97,.3));
+  border-radius:10px;background:transparent;
+  color:var(--xy-ui-accent,var(--theme-accent,#365d4a));
+  font-size:11px;cursor:pointer;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar-bottom .xy-sidebar-fav-head{
+  color:#c7d7cb;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar-bottom .xy-sidebar-fav-head>span>span,
+:is(html[data-theme-mode="dark"],body.theme-dark) .sidebar-bottom .xy-sidebar-fav-head b{
+  color:#b7d6c1;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xySidebarFavorites .xy-sidebar-fav-link{
+  color:#e4f0e7;background:rgba(255,255,255,.035);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xySidebarFavorites .xy-sidebar-fav-link:hover,
+:is(html[data-theme-mode="dark"],body.theme-dark) #xySidebarFavorites .xy-sidebar-fav-link:focus-visible{
+  background:rgba(89,122,99,.24);
+  border-color:rgba(180,215,189,.22);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xySidebarFavorites .xy-sidebar-fav-icon{
+  color:#b8d5bf;background:rgba(136,181,147,.14);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xySidebarFavorites .xy-sidebar-fav-empty{
+  color:#c6d6cb;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xySidebarFavorites .xy-sidebar-fav-add{
+  color:#c1dac8;border-color:rgba(185,222,192,.3);
+}
+@media(max-width:760px){
+  #xySidebarFavorites{max-height:min(35dvh,254px)}
+}
+@media(prefers-reduced-motion:reduce){
+  #xySidebarFavorites .xy-sidebar-fav-link{transition:none}
+}
