@@ -54,6 +54,32 @@
       '<button type="button" class="xy-sidebar-fav-add" data-xy-open-hub>＋ 添加常用工具</button>';
   }
 
+  const recentKey="xy.toolhub.recent.v1";
+  function recentlyUsed(){
+    try{
+      const value=JSON.parse(localStorage.getItem(recentKey));
+      return Array.isArray(value)?value.filter(id=>tools.some(x=>x.id===id)).slice(0,4):[];
+    }catch{return []}
+  }
+  function noteUsed(id){
+    if(!tools.some(x=>x.id===id))return;
+    try{
+      const rest=recentlyUsed().filter(x=>x!==id);
+      localStorage.setItem(recentKey,JSON.stringify([id,...rest].slice(0,4)));
+    }catch{}
+  }
+  function renderRecent(root){
+    const section=root.querySelector("#xyHubRecent");
+    if(!section)return;
+    const recents=recentlyUsed().map(id=>tools.find(x=>x.id===id)).filter(Boolean);
+    section.hidden=!recents.length;
+    const host=section.querySelector("#xyHubRecentLinks");
+    host.innerHTML=recents.map(x=>
+      '<button type="button" class="xy-hub-recent-link" data-open="'+x.id+'" aria-label="打开最近使用的'+escapeHtml(x.title)+'">'+
+      '<span class="xy-hub-recent-icon">'+drawnIcon(x.id)+'</span>'+
+      '<span>'+escapeHtml(x.title)+'</span></button>'
+    ).join("");
+  }
   const groups=["日常","创作","外观与管理","连接"];
   function status(){
     const e=typeof endpoints!=="undefined"&&Array.isArray(endpoints)?endpoints:[];
@@ -122,6 +148,7 @@
       '<p>聊天留在外面，功能都放在这里。原来的设置和数据不会改变。</p>'+
       '<div class="xy-hub-status"><span class="xy-hub-status-dot" aria-hidden="true"></span><span>当前接口 <strong>'+escapeHtml(state.selected)+'</strong></span></div></div>'+
       '<div class="xy-hub-stats"><div><strong>08</strong><span>个功能入口</span></div><div><strong>'+state.enabled+'</strong><span>已启用 MCP</span></div><div><strong id="xyHubFavCount">0</strong><span>收藏的入口</span></div></div>'+
+      '<section class="xy-hub-recent" id="xyHubRecent" hidden><h3>最近打开</h3><div id="xyHubRecentLinks" class="xy-hub-recent-links"></div></section>'+ 
       '<label class="xy-hub-search"><span aria-hidden="true">⌕</span><input id="xyHubSearch" type="search" autocomplete="off" placeholder="搜索工具、功能…" aria-label="搜索工具"></label>'+
       '<div class="xy-hub-filters" role="group" aria-label="筛选工具">'+
       '<button type="button" data-hub-filter="all">全部</button><button type="button" data-hub-filter="favorite">★ 收藏</button>'+
@@ -150,13 +177,16 @@
       if(open)openPanel(open.dataset.open);
     });
     drawCards(root);
+    renderRecent(root);
     panel.classList.add("open");
     document.querySelector("#scrim")?.classList.add("show");
   }
   const previousOpen=openPanel;
   openPanel=function(type){
     if(type==="toolhub"){window.xyEnsureOverlayHistory?.();return openHub()}
-    return previousOpen(type);
+    const result=previousOpen(type);
+    noteUsed(type);
+    return result;
   };
   const shortcutHost=document.querySelector("#xySidebarFavorites");
   shortcutHost?.addEventListener("click",e=>{

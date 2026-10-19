@@ -40,17 +40,28 @@
   <link rel="stylesheet" href="./unified-accent.css?v=xy20261017accent1" />
   <link rel="stylesheet" href="./chat-bubble-polish.css?v=xy20261017shape2" />
   <link rel="stylesheet" href="./bubble-skins.css?v=xy20261017roundedtail1" />
-  <link rel="stylesheet" href="./tool-hub.css?v=xy20261019fav2" />
+  <link rel="stylesheet" href="./tool-hub.css?v=xy20261019recent1" />
   <link rel="stylesheet" href="./chat-surface.css?v=xy20261019surface1" />
   <link rel="stylesheet" href="./art-details.css?v=xy20261019art1" />
+  <link rel="stylesheet" href="./conversation-finder.css?v=xy20261019a" />
 </head>
 <body>
   <div class="app">
     <aside class="sidebar" id="sidebar"><button class="sidebar-close" id="sidebarClose" type="button" aria-label="关闭菜单"><span></span><span></span></button>
       <div class="brand"><div class="brand-mark">砚</div><div><strong>砚屿</strong><span>Aevren · XY</span></div></div>
       <button class="new-chat" id="newChat">＋ 新对话</button>
-      <div class="section-label">最近</div>
+      <div class="xy-conv-search" role="search" aria-label="搜索对话标题">
+        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.6" cy="10.6" r="6.7"/><path d="m15.8 15.8 4.9 4.9"/></svg>
+        <input type="search" id="xyConversationSearch" autocomplete="off" placeholder="寻找一段对话…" aria-label="按标题搜索对话">
+        <button type="button" id="xyConversationSearchClear" aria-label="清除搜索" title="清除搜索" hidden>×</button>
+      </div>
+      <div class="section-label xy-chat-section-label"><span>最近</span><small id="xyChatSearchSummary" role="status"></small></div>
       <nav class="chats" id="chatList"></nav>
+      <div class="xy-conv-empty" id="xyConversationSearchEmpty" hidden>
+        <span class="xy-conv-empty-art" aria-hidden="true"></span>
+        <strong>还没找到这段对话</strong>
+        <p>换个标题关键词试试。</p>
+      </div>
       <div class="sidebar-bottom">
         <button class="nav-btn xy-tools-entry" type="button" data-panel="toolhub"><span class="xy-tools-symbol" aria-hidden="true">✦</span><span class="xy-tools-copy">工具中心<small>整理所有功能</small></span><span class="xy-tools-chevron" aria-hidden="true">↗</span></button>
         <div class="xy-sidebar-fav-head"><span><span aria-hidden="true">★</span> 已收藏</span><b id="xySidebarFavCount" aria-label="收藏数量">0</b></div>
@@ -130,6 +141,7 @@
   <script src="./proactive-calls.js?v=xy20261015nativeonly"></script>
   <script src="./tavern-card-display.js?v=xy20261017jnfix"></script>
   <script src="./html-message-preview.js?v=xy20261017jnfix"></script>
-  <script src="./tool-hub.js?v=xy20261019fav2"></script>
+  <script src="./tool-hub.js?v=xy20261019recent1"></script>
+  <script src="./conversation-finder.js?v=xy20261019a"></script>
 </body>
 </html>
