@@ -29,6 +29,7 @@ function selectedConfig(root){
     key:$("#xyImagineKey",root).value.trim(),model:$("#xyImagineModel",root).value.trim(),size:$("#xyImagineSize",root).value};
   const ep=openEndpoints().find(x=>String(x.id)===cfg.endpointId);
   if(mode==="existing"&&!ep)throw new Error("先选择一个已经配置的接口");
+  if(mode==="existing"&&String(ep?.protocol||"openai")!=="openai")throw new Error("这个接口不是 OpenAI 兼容模式。请在自定义图像接口填写支持生图的地址。");
   const base=mode==="existing"?String(ep.base||""):cfg.base;
   const key=mode==="existing"?String(ep.key||""):cfg.key;
   if(!base)throw new Error("请填写接口地址");
