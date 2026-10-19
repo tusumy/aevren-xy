@@ -200,3 +200,5 @@
 }
 @media(max-width:340px){#xyImageStudio .xy-imagine-row{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){#xyImageStudio .xy-imagine-config>summary i{transition:none}}
+
+#xyImageStudio .xy-imagine-gallery-note{margin:0;color:var(--im-muted);font-size:10px;line-height:1.7}
