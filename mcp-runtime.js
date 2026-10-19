@@ -112,9 +112,15 @@
 
   function decoratePanel(){
     const body=document.querySelector("#panelBody");
-    if(!body||document.querySelector("#xyMcpRuntimeStatus"))return;
+    if(!body||!body.querySelector("#mcpList"))return;
     const state=buildTools();
     const enabled=(Array.isArray(mcps)?mcps:[]).filter(x=>x?.enabled).length;
+    const existing=body.querySelector("#xyMcpRuntimeStatus");
+    if(existing){
+      const line=existing.querySelector(".setting-note");
+      if(line)line.textContent="已启用 "+enabled+" 个 MCP · 当前向模型暴露 "+state.out.length+" 个工具";
+      return;
+    }
     const note=document.createElement("div");
     note.id="xyMcpRuntimeStatus";
     note.className="setting-card";
@@ -138,8 +144,7 @@
           await ensure(false);
           const panel=document.querySelector("#panel");
           if(panel?.classList.contains("open")){
-            previousOpenPanel("mcp");
-            requestAnimationFrame(decoratePanel);
+            decoratePanel();
           }
         }
       });
