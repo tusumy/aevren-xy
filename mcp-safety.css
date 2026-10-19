@@ -1,0 +1,166 @@
+/* Destructive actions need an explicit choice, not a tiny instant-delete X. */
+#panel #mcpList .delete-mcp{
+  min-width:36px;min-height:36px;
+  border:1px solid color-mix(in srgb,#a85959 18%,transparent);
+  border-radius:11px;
+  color:#a34d4d;
+  background:rgba(171,82,82,.055);
+}
+#panel #mcpList .delete-mcp:focus-visible{
+  outline:2px solid #b66161;outline-offset:2px
+}
+.xy-mcp-backdrop{
+  position:fixed;inset:0;
+  z-index:25000;
+  display:grid;place-items:center;
+  padding:18px max(16px,env(safe-area-inset-left)) max(18px,env(safe-area-inset-bottom));
+  background:rgba(21,30,24,.43);
+  backdrop-filter:blur(9px);
+  -webkit-backdrop-filter:blur(9px);
+}
+.xy-mcp-dialog{
+  width:min(100%,400px);
+  border-radius:23px;
+  padding:23px 20px 19px;
+  border:1px solid rgba(255,255,255,.85);
+  background:#f9faf6;
+  color:#293b30;
+  box-shadow:0 20px 65px rgba(18,38,25,.25);
+  text-align:center;
+}
+.xy-mcp-warning-icon{
+  display:grid;place-items:center;
+  margin:0 auto 12px;
+  width:42px;height:42px;border-radius:14px;
+  font-size:23px;font-weight:600;
+  color:#b65a54;background:rgba(198,92,86,.09);
+}
+.xy-mcp-dialog h3{margin:0;font-size:18px;line-height:1.4;font-weight:690}
+.xy-mcp-dialog .xy-mcp-target{
+  margin:11px 0 10px;
+  overflow-wrap:anywhere;
+  font-size:14px;font-weight:620;color:#47624f;
+}
+.xy-mcp-dialog #xyMcpDeleteHint{
+  margin:0 auto 19px;max-width:310px;
+  color:#708076;font-size:12px;line-height:1.8;
+}
+.xy-mcp-dialog-actions{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+}
+.xy-mcp-dialog-actions button{
+  min-height:45px;
+  padding:10px;border-radius:13px;
+  border:1px solid rgba(102,130,108,.18);
+  font:inherit;font-size:13px;cursor:pointer;
+}
+.xy-mcp-dialog-actions .xy-mcp-cancel{
+  background:#eff4ed;color:#335342;font-weight:650;
+}
+.xy-mcp-dialog-actions .xy-mcp-danger{
+  background:rgba(172,68,66,.11);
+  color:#ac4f4a;
+  border-color:rgba(183,78,71,.25);
+}
+.xy-mcp-dialog-actions button:focus-visible{
+  outline:2px solid currentColor;outline-offset:2px;
+}
+.xy-mcp-dialog-error{margin:12px 0 0;color:#ab5150;font-size:11px;line-height:1.6}
+.xy-mcp-dialog-error[hidden]{display:none}
+#panel .xy-mcp-recovery{
+  margin:12px 0 17px;
+  border:1px solid color-mix(in srgb,var(--theme-accent,#365d4a) 19%,transparent);
+  border-radius:16px;
+  background:rgba(252,255,251,.42);
+  overflow:hidden;
+}
+#panel .xy-mcp-recovery-details>summary{
+  min-height:58px;display:flex;align-items:center;gap:11px;
+  list-style:none;cursor:pointer;
+  padding:11px 13px;
+  color:var(--ink,#324738);
+}
+#panel .xy-mcp-recovery-details>summary::-webkit-details-marker{display:none}
+#panel .xy-mcp-recovery-details>summary:focus-visible{
+  outline:2px solid var(--theme-accent,#365d4a);outline-offset:-3px;border-radius:14px
+}
+#panel .xy-mcp-recovery-icon{
+  display:grid;place-items:center;width:34px;height:34px;flex:none;border-radius:11px;
+  background:color-mix(in srgb,var(--theme-accent,#365d4a) 10%,transparent);
+  color:var(--theme-accent,#365d4a);font-size:20px
+}
+#panel .xy-mcp-recovery-summary{display:grid;gap:4px;min-width:0;flex:1}
+#panel .xy-mcp-recovery-summary strong{font-size:12px;font-weight:640}
+#panel .xy-mcp-recovery-summary small{font-size:10px;color:var(--muted,#768278)}
+#panel .xy-mcp-recovery-chevron{font-style:normal;color:var(--muted,#768278);transition:transform .15s}
+#panel .xy-mcp-recovery-details[open] .xy-mcp-recovery-chevron{transform:rotate(180deg)}
+#panel .xy-mcp-recovery-body{
+  border-top:1px solid rgba(98,130,106,.15);
+  padding:12px 14px 16px;
+  display:grid;gap:10px;
+}
+#panel .xy-mcp-recovery-body>p{
+  margin:0;font-size:11px;line-height:1.7;color:var(--muted,#748378)
+}
+#panel .xy-mcp-recovery-row{
+  display:flex;gap:10px;align-items:center;
+  padding:10px 9px;min-height:51px;
+  background:rgba(255,255,255,.53);
+  border:1px solid rgba(109,135,112,.12);
+  border-radius:12px;margin:5px 0;
+}
+#panel .xy-mcp-recovery-row>div{min-width:0;flex:1;display:grid;gap:5px}
+#panel .xy-mcp-recovery-row strong{
+  font-size:12px;overflow-wrap:anywhere;color:var(--ink,#354638)
+}
+#panel .xy-mcp-recovery-row small{font-size:10px;color:var(--muted,#748378)}
+#panel .xy-mcp-recovery-body button{
+  min-height:34px;flex:none;
+  padding:7px 11px;border-radius:10px;
+  border:1px solid color-mix(in srgb,var(--theme-accent,#365d4a) 27%,transparent);
+  background:color-mix(in srgb,var(--theme-accent,#365d4a) 10%,rgba(255,255,255,.7));
+  color:var(--theme-accent,#365d4a);font:inherit;font-size:11px;cursor:pointer;
+}
+#panel .xy-mcp-recovery-body button:disabled{opacity:.57;cursor:wait}
+#panel .xy-mcp-recovery-body button:focus-visible{
+  outline:2px solid var(--theme-accent,#365d4a);outline-offset:2px
+}
+#panel .xy-mcp-recovery-import{
+  display:grid;gap:6px;padding-top:12px;
+  border-top:1px solid rgba(103,131,110,.12);
+}
+#panel .xy-mcp-recovery-import label{font-size:11px;font-weight:600}
+#panel .xy-mcp-recovery-import input{max-width:100%;font-size:11px;color:var(--ink,#354638)}
+#panel .xy-mcp-recovery-import small{font-size:10px;line-height:1.5;color:var(--muted,#748378)}
+#panel #xyMcpRecoveryStatus{
+  margin-top:2px;overflow-wrap:anywhere;
+  font-size:11px;line-height:1.7;color:var(--ink,#354638)
+}
+#panel #xyMcpRecoveryStatus[data-error="1"]{color:#b44e4a}
+:is(html[data-theme-mode="dark"],body.theme-dark) .xy-mcp-dialog{
+  color:#f0f6ef;background:#28392d;border-color:rgba(202,224,207,.14);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .xy-mcp-dialog .xy-mcp-target{color:#d0ead5}
+:is(html[data-theme-mode="dark"],body.theme-dark) .xy-mcp-dialog #xyMcpDeleteHint{color:#b4c9b7}
+:is(html[data-theme-mode="dark"],body.theme-dark) .xy-mcp-dialog-actions .xy-mcp-cancel{
+  background:#38513e;color:#f0f7ef;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel .xy-mcp-recovery{
+  background:rgba(35,49,40,.78);border-color:rgba(188,215,195,.17)
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel .xy-mcp-recovery-details>summary{
+  color:#ecf4ed
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel .xy-mcp-recovery-row{
+  background:rgba(255,255,255,.035);border-color:rgba(184,216,192,.11)
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel .xy-mcp-recovery-row strong,
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyMcpRecoveryStatus{
+  color:#ecf5ed
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel .xy-mcp-recovery-body button{
+  background:rgba(107,147,117,.25);color:#d5ead8;border-color:rgba(198,224,205,.19)
+}
+@media(prefers-reduced-motion:reduce){
+  #panel .xy-mcp-recovery-chevron{transition:none}
+}
