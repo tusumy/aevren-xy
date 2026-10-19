@@ -4,7 +4,7 @@ const CONFIG_KEY="xy.imageStudio.config.v1";
 const HISTORY_KEY="xy.imageStudio.history.v1";
 const $=(sel,root=document)=>root.querySelector(sel);
 const defaultConfig={mode:"existing",endpointId:"",base:"",key:"",model:"",size:"1024x1024"};
-let promptDraft="",working=false,lastImage=null,referenceFile=null,referenceUrl="";
+let promptDraft="",working=false,lastImage=null,referenceFile=null;
 const loadConfig=()=>{try{return {...defaultConfig,...JSON.parse(localStorage.getItem(CONFIG_KEY)||"{}")}}catch{return {...defaultConfig}}};
 const readHistory=()=>{try{const h=JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]");return Array.isArray(h)?h.filter(x=>x&&x.mediaKey).slice(0,24):[]}catch{return []}};
 const escapeHtml=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -122,7 +122,7 @@ async function showGallery(root){
     image.loading="lazy";image.alt="生成作品："+item.prompt.slice(0,50);
     const caption=document.createElement("span");caption.textContent=item.prompt||"未命名作品";
     card.append(image,caption);list.append(card);
-    card.addEventListener("click",()=>window.xyOpenImagePreview?.(image.src));
+    card.addEventListener("click",()=>{if(image.getAttribute("src"))window.xyOpenImagePreview?.(image.src)});
     (async()=>{
       const holder={attachments:[{kind:"image",mediaKey:item.mediaKey}]};
       try{await window.xyImagePayload?.hydrate?.([holder])}catch{}
@@ -199,6 +199,7 @@ function initReference(root){
   };
 }
 function open(){
+  referenceFile=null;
   document.querySelector("#sidebar")?.classList.remove("open");
   const body=$("#panelBody"),panel=$("#panel");
   if(!body||!panel)return;
@@ -207,7 +208,7 @@ function open(){
   body.innerHTML='<div class="xy-imagine" id="xyImageStudio">'+
     '<div class="xy-imagine-hero"><span>IMAGINE · CREATE</span><h2>给想象一个形状。</h2><p>写下画面，让图像模型为你作画。</p></div>'+
     '<label class="xy-imagine-field" for="xyImaginePrompt"><strong>画面描述</strong><textarea id="xyImaginePrompt" rows="4" maxlength="4000" placeholder="例如：窗边的浅色花束，日光穿过薄纱，温柔而细腻的插画…"></textarea></label>'+
-    '<div class="xy-imagine-row"><label class="xy-imagine-field" for="xyImagineSize"><strong>画面比例</strong><select id="xyImagineSize"><option value="1024x1024">方形 · 1:1</option><option value="1536x1024">横向 · 3:2</option><option value="1024x1536">竖向 · 2:3</option></select></label>'+
+    '<div class="xy-imagine-row"><label class="xy-imagine-field" for="xyImagineSize"><strong>画面比例</strong><select id="xyImagineSize"><option value="1024x1024">方形 · 1:1</option><option value="1536x1024">横向 · 3:2</option><option value="1024x1536">竖向 · 2:3</option><option value="1024x768">横向 · 4:3（依模型支持）</option><option value="720x1280">手机 · 9:16（依模型支持）</option></select></label>'+
     '<label class="xy-imagine-field" for="xyImagineModel"><strong>图像模型</strong><input id="xyImagineModel" placeholder="例如：gpt-image-1"></label></div>'+
     '<div class="xy-imagine-ref"><label class="xy-imagine-ref-select" for="xyImagineReference">＋ 添加参考图</label><input type="file" id="xyImagineReference" accept="image/*" hidden><span id="xyImagineReferenceName">不使用参考图</span><button type="button" id="xyImagineClearReference" hidden aria-label="移除参考图">×</button></div>'+
     '<details class="xy-imagine-config" id="xyImagineConfig"><summary><span>生成接口设置<small>可使用已有接口，也能单独填图像接口</small></span><i aria-hidden="true">⌄</i></summary>'+
@@ -219,7 +220,7 @@ function open(){
     '<button type="button" id="xyImagineGenerate" class="xy-imagine-generate">✦ 开始生成</button>'+
     '<p id="xyImagineStatus" class="xy-imagine-status" role="status" aria-live="polite">每次点击生成才会向你选择的接口发送请求。</p>'+
     '<section id="xyImagineResult" class="xy-imagine-result" hidden><h3>本次作品</h3><img id="xyImaginePreview" alt="本次生成的图像"><p id="xyImagineResultNote"></p><button type="button" id="xyImagineShowFull">查看大图</button></section>'+
-    '<section class="xy-imagine-history"><div class="xy-imagine-history-head"><h3>我的画册</h3><span id="xyImagineGalleryCount">0 张</span></div><div id="xyImagineGallery" class="xy-imagine-gallery"></div></section>'+
+    '<section class="xy-imagine-history"><div class="xy-imagine-history-head"><h3>我的画册</h3><span id="xyImagineGalleryCount">0 张</span></div><div id="xyImagineGallery" class="xy-imagine-gallery"></div><p class="xy-imagine-gallery-note">画册图片保存在本机，清理应用数据可能丢失；接口和尺寸需由服务商支持。</p></section>'+
     '</div>';
   panel.classList.add("open");
   $("#scrim")?.classList.add("show");
