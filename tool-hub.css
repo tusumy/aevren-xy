@@ -219,3 +219,50 @@ html[data-theme-mode="dark"] #panel .xy-mcp-tool-row,body.theme-dark #panel .xy-
 @media(prefers-reduced-motion:reduce){
   #xySidebarFavorites .xy-sidebar-fav-link{transition:none}
 }
+
+/* Recently opened tools: small shortcuts inside the hub, never duplicate sidebar navigation. */
+#xyToolHub .xy-hub-recent{
+  margin:4px 0 17px;
+  padding:12px 12px 13px;
+  border:1px solid var(--hub-line,rgba(85,110,94,.16));
+  background:var(--hub-paper,rgba(255,255,255,.68));
+  border-radius:17px;
+}
+#xyToolHub .xy-hub-recent[hidden]{display:none!important}
+#xyToolHub .xy-hub-recent h3{
+  margin:0 2px 11px;
+  color:var(--hub-ink,#29332e);
+  font-size:11px;
+  font-weight:620;
+  letter-spacing:.045em
+}
+#xyToolHub .xy-hub-recent-links{
+  display:flex;gap:7px;
+  overflow-x:auto;overscroll-behavior-x:contain;
+  scrollbar-width:none;
+}
+#xyToolHub .xy-hub-recent-links::-webkit-scrollbar{display:none}
+#xyToolHub .xy-hub-recent-link{
+  min-width:0;flex:1 0 auto;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  height:38px;padding:5px 11px;
+  background:var(--hub-soft,#edf3ed);
+  border:1px solid var(--hub-line,rgba(85,110,94,.14));
+  border-radius:12px;
+  font:inherit;font-size:11px;color:var(--hub-ink,#29332e);
+  white-space:nowrap;cursor:pointer;
+}
+#xyToolHub .xy-hub-recent-link:focus-visible{
+  outline:2px solid var(--hub-accent,#365d4a);
+  outline-offset:2px;
+}
+#xyToolHub .xy-hub-recent-link:active{transform:scale(.985)}
+#xyToolHub .xy-hub-recent-icon{
+  display:grid;place-items:center;
+  width:21px;height:21px;flex:none;
+  color:var(--hub-accent,#365d4a)
+}
+#xyToolHub .xy-hub-recent-icon svg{width:20px;height:20px}
+@media(max-width:460px){
+  #xyToolHub .xy-hub-recent-link{padding:5px 10px}
+}
