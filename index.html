@@ -44,6 +44,7 @@
   <link rel="stylesheet" href="./chat-surface.css?v=xy20261019surface1" />
   <link rel="stylesheet" href="./art-details.css?v=xy20261019art1" />
   <link rel="stylesheet" href="./conversation-finder.css?v=xy20261019a" />
+  <link rel="stylesheet" href="./settings-tidy.css?v=xy20261019fold1" />
 </head>
 <body>
   <div class="app">
@@ -64,8 +65,10 @@
       </div>
       <div class="sidebar-bottom">
         <button class="nav-btn xy-tools-entry" type="button" data-panel="toolhub"><span class="xy-tools-symbol" aria-hidden="true">✦</span><span class="xy-tools-copy">工具中心<small>整理所有功能</small></span><span class="xy-tools-chevron" aria-hidden="true">↗</span></button>
-        <div class="xy-sidebar-fav-head"><span><span aria-hidden="true">★</span> 已收藏</span><b id="xySidebarFavCount" aria-label="收藏数量">0</b></div>
-        <nav id="xySidebarFavorites" class="xy-sidebar-favorites" aria-label="已收藏的工具"></nav>
+        <details class="xy-sidebar-fav-disclosure" id="xySidebarFavDisclosure">
+          <summary class="xy-sidebar-fav-head" aria-label="展开或收起已收藏工具"><span><span aria-hidden="true">★</span> 已收藏</span><span class="xy-sidebar-fav-right"><b id="xySidebarFavCount" aria-label="收藏数量">0</b><i aria-hidden="true">⌄</i></span></summary>
+          <nav id="xySidebarFavorites" class="xy-sidebar-favorites" aria-label="已收藏的工具"></nav>
+        </details>
         <!-- Legacy memory counter remains hidden for existing chat renderers. -->
         <span id="memoryCount" hidden>0</span>
       </div>
@@ -112,7 +115,7 @@
   <script src="./chat-markdown.js?v=xy20261015md1"></script>
   <script src="./message-ui.js?v=xy20261017datestamp1"></script>
   <script src="./vision-ui.js?v=xy20261011visionfix"></script>
-  <script src="./vision-fallback.js?v=xy20261011custom"></script>
+  <script src="./vision-fallback.js?v=xy20261019fold1"></script>
   <script src="./composer-guard.js?v=xy20261008c"></script>
   <script src="./status-ui.js?v=xy20261008c"></script>
   <script src="./message-actions.js?v=xy20261017footer2"></script>
@@ -143,5 +146,6 @@
   <script src="./html-message-preview.js?v=xy20261017jnfix"></script>
   <script src="./tool-hub.js?v=xy20261019recent1"></script>
   <script src="./conversation-finder.js?v=xy20261019a"></script>
+  <script src="./settings-tidy.js?v=xy20261019fold1"></script>
 </body>
 </html>
