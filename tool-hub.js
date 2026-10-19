@@ -4,6 +4,7 @@
     {id:"characters",title:"角色",subtitle:"角色资料、用户名字",symbol:"◇",group:"日常"},
     {id:"study",title:"书房",subtitle:"角色卡与故事预设",symbol:"▤",group:"创作"},
     {id:"journal",title:"日记",subtitle:"记录日常，翻阅书架",symbol:"✎",group:"创作"},
+    {id:"imagine",title:"生图",subtitle:"文生图、参考图与作品",symbol:"✦",group:"创作"},
     {id:"theme",title:"主题",subtitle:"配色、气泡与外观",symbol:"◐",group:"外观与管理"},
     {id:"data",title:"数据管理",subtitle:"备份、导入与恢复",symbol:"▥",group:"外观与管理"},
     {id:"mcp",title:"MCP 工具",subtitle:"连接服务与查看状态",symbol:"⌘",group:"连接"},
@@ -20,7 +21,8 @@
     data:'<rect x="6" y="4" width="14" height="16" rx="2"/><path d="M9.5 8h7M9.5 12h7M9.5 16H15M3 8v13h13"/>',
     mcp:'<rect x="3" y="3" width="6" height="6" rx="1.7"/><rect x="15" y="3" width="6" height="6" rx="1.7"/><rect x="9" y="15" width="6" height="6" rx="1.7"/><path d="M9 6h6M6 9v3l4.3 3.5M18 9v3l-4.3 3.5"/>',
     settings:'<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/><circle cx="16" cy="12" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/><circle cx="11" cy="18" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/>',
-    voice:'<path d="M10 17V4l10-2v12"/><circle cx="6.5" cy="18" r="3.5"/><circle cx="16.5" cy="15" r="3.5"/><path d="M10 7l10-2"/>'
+    voice:'<path d="M10 17V4l10-2v12"/><circle cx="6.5" cy="18" r="3.5"/><circle cx="16.5" cy="15" r="3.5"/><path d="M10 7l10-2"/>',
+    imagine:'<rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="m5 16 4-4 3.2 3.2 3.6-4 3.7 4.8"/><circle cx="9" cy="8.5" r="1.5"/><path d="M18 1v4M16 3h4"/>'
   };
   function drawnIcon(id){
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">'+(strokes[id]||strokes.theme)+'</svg>';
@@ -189,6 +191,11 @@
     if(type==="voice"){
       noteUsed("voice");
       return window.xyOpenVoicePanel?.();
+    }
+    if(type==="imagine"){
+      noteUsed("imagine");
+      window.xyEnsureOverlayHistory?.();
+      return window.xyImageStudio?.open?.();
     }
     const result=previousOpen(type);
     noteUsed(type);
