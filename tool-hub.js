@@ -32,7 +32,28 @@
       return Array.isArray(saved)?saved.filter(id=>tools.some(x=>x.id===id)):["study","memory","mcp"];
     }catch{return ["study","memory","mcp"]}
   }
-  function persistFavorites(ids){try{localStorage.setItem(favKey,JSON.stringify(ids))}catch{}}
+  function persistFavorites(ids){
+    try{localStorage.setItem(favKey,JSON.stringify(ids))}catch{}
+    renderSidebarFavorites();
+  }
+  // Sidebar is a live reflection of the very same stars used in Tool Hub.
+  // No second shortcut list or separate persistence.
+  function renderSidebarFavorites(){
+    const host=document.querySelector("#xySidebarFavorites");
+    if(!host)return;
+    const pinned=favorites().map(id=>tools.find(tool=>tool.id===id)).filter(Boolean);
+    const counter=document.querySelector("#xySidebarFavCount");
+    if(counter)counter.textContent=String(pinned.length);
+    host.innerHTML=pinned.length?pinned.map(item=>
+      '<button class="xy-sidebar-fav-link" type="button" data-xy-favorite="'+item.id+'" aria-label="打开'+escapeHtml(item.title)+'">'+
+        '<span class="xy-sidebar-fav-icon">'+drawnIcon(item.id)+'</span>'+
+        '<span class="xy-sidebar-fav-name">'+escapeHtml(item.title)+'</span>'+
+        '<span class="xy-sidebar-fav-arrow" aria-hidden="true">›</span>'+
+      '</button>'
+    ).join(""):'<div class="xy-sidebar-fav-empty">暂无收藏。去工具中心点星号添加。</div>'+
+      '<button type="button" class="xy-sidebar-fav-add" data-xy-open-hub>＋ 添加常用工具</button>';
+  }
+
   const groups=["日常","创作","外观与管理","连接"];
   function status(){
     const e=typeof endpoints!=="undefined"&&Array.isArray(endpoints)?endpoints:[];
@@ -137,4 +158,12 @@
     if(type==="toolhub"){window.xyEnsureOverlayHistory?.();return openHub()}
     return previousOpen(type);
   };
+  const shortcutHost=document.querySelector("#xySidebarFavorites");
+  shortcutHost?.addEventListener("click",e=>{
+    const open=e.target.closest("[data-xy-favorite]");
+    if(open){openPanel(open.dataset.xyFavorite);return}
+    if(e.target.closest("[data-xy-open-hub]"))openPanel("toolhub");
+  });
+  window.addEventListener("storage",e=>{if(e.key===favKey)renderSidebarFavorites()});
+  renderSidebarFavorites();
 })();
