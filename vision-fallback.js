@@ -51,6 +51,15 @@
  }
  function wantsFallback(){return available()&&get().auto}
  function forSend(){return !!window.xyNextVisualFallback || wantsFallback()}
+ function updateVisionSummary(){
+   const el=document.querySelector("#xyFallbackSummary");
+   if(!el)return;
+   const cfg=get(),ep=chosen();
+   const label=String(ep?.model||"").trim();
+   const ready=available();
+   el.textContent=ready?((cfg.auto?"自动识图 · ":"手动识图 · ")+label):"未配置";
+   el.title=ready?("视觉模型："+label):"还没有可用的备用视觉模型";
+ }
  function sync(){
    const ui=document.querySelector("#xyFallbackSelect");
    if(!ui)return;
@@ -64,12 +73,13 @@
    document.querySelector("#xyBackupCustomFields")?.toggleAttribute("hidden",(opts.mode||"existing")!=="custom");
    document.querySelector("#xyFallbackAuto").checked=!!opts.auto;
    document.querySelector("#xyFallbackDetail").value=opts.detail;
+   updateVisionSummary();
  }
  function renderSettings(){
    const body=document.querySelector("#panelBody"),list=body?.querySelector("#endpointList");
    if(!list||body.querySelector("#xyFallbackPanel"))return;
-   const panel=document.createElement("div");panel.id="xyFallbackPanel";panel.style.cssText="margin:16px 0;padding:14px;border:1px solid #aabbb055;border-radius:13px;font-size:12px;color:#526157";
-   panel.innerHTML='<strong style="display:block;margin-bottom:8px">备用视觉模型</strong><label style="display:block;margin:8px 0">接口来源 <select id="xyFallbackMode"><option value="existing">已有接口</option><option value="custom">自定义视觉接口</option></select></label><div id="xyBackupCustomFields" hidden style="display:grid;gap:7px;margin:8px 0"><select id="xyBackupProtocol"><option value="openai">OpenAI 兼容</option><option value="gemini">Gemini</option><option value="anthropic">Anthropic</option></select><input id="xyBackupBase" placeholder="Base URL（例：https://api.example.com/v1）"><input id="xyBackupKey" type="password" placeholder="API Key"><input id="xyBackupModel" placeholder="视觉模型名称"></div><p style="font-size:11px;opacity:.78">先给一个真正支持看图的接口开启「视觉」，然后在这里选它。主聊天角色和接口保持不变。</p><select id="xyFallbackSelect" style="width:100%;padding:9px;border:1px solid #bac7bc;border-radius:9px;background:#fff"></select><label style="display:flex;gap:8px;align-items:center;margin:11px 0"><input type="checkbox" id="xyFallbackAuto"> 当前模型仅文本时自动使用备用视觉</label><label style="display:block;margin-bottom:5px">分析方式</label><select id="xyFallbackDetail" style="width:100%;padding:8px;margin-bottom:9px;border:1px solid #bac7bc;border-radius:9px;background:#fff"><option value="balanced">简洁描述</option><option value="detailed">详细分析</option><option value="ocr">文字识别优先</option></select><button id="xyFallbackSave" type="button" style="padding:8px 14px;border-radius:9px;border:1px solid #bac7bc;background:#f8faf8">保存备用视觉设置</button>';
+   const panel=document.createElement("div");panel.id="xyFallbackPanel";panel.className="xy-vision-panel";
+   panel.innerHTML='<details class="xy-vision-details" id="xyVisionDisclosure"><summary class="xy-vision-summary"><span class="xy-vision-summary-icon" aria-hidden="true">◉</span><span class="xy-vision-summary-text"><strong>备用视觉模型</strong><small id="xyFallbackSummary">未配置</small></span><span class="xy-vision-summary-chevron" aria-hidden="true">⌄</span></summary><div class="xy-vision-detail-body"><label style="display:block;margin:8px 0">接口来源 <select id="xyFallbackMode"><option value="existing">已有接口</option><option value="custom">自定义视觉接口</option></select></label><div id="xyBackupCustomFields" hidden style="display:grid;gap:7px;margin:8px 0"><select id="xyBackupProtocol"><option value="openai">OpenAI 兼容</option><option value="gemini">Gemini</option><option value="anthropic">Anthropic</option></select><input id="xyBackupBase" placeholder="Base URL（例：https://api.example.com/v1）"><input id="xyBackupKey" type="password" placeholder="API Key"><input id="xyBackupModel" placeholder="视觉模型名称"></div><p style="font-size:11px;opacity:.78">先给一个真正支持看图的接口开启「视觉」，然后在这里选它。主聊天角色和接口保持不变。</p><select id="xyFallbackSelect" style="width:100%;padding:9px;border:1px solid #bac7bc;border-radius:9px;background:#fff"></select><label style="display:flex;gap:8px;align-items:center;margin:11px 0"><input type="checkbox" id="xyFallbackAuto"> 当前模型仅文本时自动使用备用视觉</label><label style="display:block;margin-bottom:5px">分析方式</label><select id="xyFallbackDetail" style="width:100%;padding:8px;margin-bottom:9px;border:1px solid #bac7bc;border-radius:9px;background:#fff"><option value="balanced">简洁描述</option><option value="detailed">详细分析</option><option value="ocr">文字识别优先</option></select><button id="xyFallbackSave" type="button" style="padding:8px 14px;border-radius:9px;border:1px solid #bac7bc;background:#f8faf8">保存备用视觉设置</button></div></details>';
    list.parentElement.insertBefore(panel,list.nextSibling);
    sync();
    panel.querySelector("#xyFallbackMode").onchange=e=>panel.querySelector("#xyBackupCustomFields").hidden=e.target.value!=="custom";
@@ -78,6 +88,9 @@
      const mode=uiValue("#xyFallbackMode");
      if(mode==="custom"&&(!custom.base||!custom.model)){window.xyAttachments?.toast?.("请填写视觉 Base URL 和模型名",true);return}
      localStorage.setItem(KEY,JSON.stringify({mode,custom,endpointId:uiValue("#xyFallbackSelect"),auto:!!panel.querySelector("#xyFallbackAuto").checked,detail:uiValue("#xyFallbackDetail")}));
+     updateVisionSummary();
+     const disclosure=panel.querySelector("#xyVisionDisclosure");
+     if(disclosure)disclosure.open=false;
      window.xyAttachments?.toast?.("备用视觉设置已保存");
    };
  }
