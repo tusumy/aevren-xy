@@ -1,0 +1,202 @@
+/* 砚屿 · 生图画室。视觉内容与输入字段分离；移动端同样可读。 */
+#panel:has(#xyImageStudio){width:min(540px,100vw)}
+#panel:has(#xyImageStudio) #panelBody{overflow-y:auto;overscroll-behavior:contain}
+#xyImageStudio{
+  --im-line:color-mix(in srgb,var(--theme-accent,#587d68) 17%,transparent);
+  --im-soft:color-mix(in srgb,var(--theme-accent,#587d68) 7%,#fdfdfa);
+  --im-accent:var(--xy-ui-accent,var(--theme-accent,#587d68));
+  --im-ink:var(--ink,#2d3a33);
+  --im-muted:var(--muted,#6f7f73);
+  display:grid;gap:15px;padding-bottom:26px;
+  color:var(--im-ink);font-family:inherit;
+}
+#xyImageStudio *{box-sizing:border-box}
+#xyImageStudio [hidden]{display:none!important}
+#xyImageStudio .xy-imagine-hero{
+  position:relative;isolation:isolate;
+  border-radius:22px;border:1px solid var(--im-line);
+  overflow:hidden;min-height:148px;
+  padding:22px 21px;
+  background:linear-gradient(120deg,var(--im-soft),rgba(255,255,255,.8));
+}
+#xyImageStudio .xy-imagine-hero::before{
+  content:"";position:absolute;right:-25px;top:-19px;bottom:-22px;width:196px;
+  pointer-events:none;
+  background:url("./assets/xy-island-atlas.svg") center/contain no-repeat;
+  opacity:.27;z-index:-1;
+}
+#xyImageStudio .xy-imagine-hero span{
+  color:var(--im-accent);letter-spacing:.18em;font-size:10px;font-weight:600
+}
+#xyImageStudio .xy-imagine-hero h2{
+  margin:13px 0 5px;font-size:21px;font-weight:650;line-height:1.38;
+  letter-spacing:.015em;color:var(--im-ink)
+}
+#xyImageStudio .xy-imagine-hero p{
+  margin:0;font-size:11px;color:var(--im-muted);line-height:1.65
+}
+#xyImageStudio .xy-imagine-field{display:grid;gap:8px;min-width:0}
+#xyImageStudio .xy-imagine-field>strong{
+  color:var(--im-ink);font-size:12px;line-height:1.4;font-weight:640
+}
+#xyImageStudio .xy-imagine-field :is(textarea,input,select){
+  width:100%;min-width:0;
+  font:inherit;font-size:13px;line-height:1.5;
+  background:rgba(255,255,255,.66);
+  color:var(--im-ink);
+  border:1px solid var(--im-line);
+  border-radius:13px;
+  padding:11px 12px;
+  outline:none;
+}
+#xyImageStudio .xy-imagine-field textarea{min-height:111px;resize:vertical}
+#xyImageStudio .xy-imagine-field :is(textarea,input,select):focus-visible{
+  border-color:var(--im-accent);
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--im-accent) 10%,transparent)
+}
+#xyImageStudio .xy-imagine-field :is(textarea,input)::placeholder{color:var(--im-muted);opacity:.82}
+#xyImageStudio .xy-imagine-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+#xyImageStudio .xy-imagine-ref{
+  display:flex;align-items:center;min-height:41px;gap:9px;min-width:0;
+  padding:5px 0;
+}
+#xyImageStudio .xy-imagine-ref-select{
+  flex:none;cursor:pointer;border:1px solid var(--im-line);
+  border-radius:12px;padding:9px 12px;
+  background:var(--im-soft);
+  font-size:11px;font-weight:600;color:var(--im-accent)
+}
+#xyImageStudio .xy-imagine-ref-select:focus-within{outline:2px solid var(--im-accent)}
+#xyImageStudio .xy-imagine-ref>span{
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-size:11px;color:var(--im-muted)
+}
+#xyImageStudio .xy-imagine-ref>button{
+  width:28px;height:28px;flex:none;border:0;border-radius:9px;
+  background:var(--im-soft);font-size:18px;color:var(--im-muted)
+}
+#xyImageStudio .xy-imagine-config{
+  overflow:hidden;border:1px solid var(--im-line);
+  background:rgba(255,255,255,.43);
+  border-radius:16px;
+}
+#xyImageStudio .xy-imagine-config>summary{
+  cursor:pointer;user-select:none;list-style:none;
+  display:flex;align-items:center;justify-content:space-between;gap:9px;
+  padding:13px 15px;
+  color:var(--im-ink);
+}
+#xyImageStudio .xy-imagine-config>summary::-webkit-details-marker{display:none}
+#xyImageStudio .xy-imagine-config>summary span{display:grid;gap:5px;font-size:12px;font-weight:650}
+#xyImageStudio .xy-imagine-config>summary small{font-size:10px;font-weight:400;color:var(--im-muted)}
+#xyImageStudio .xy-imagine-config>summary i{
+  flex:none;font-size:17px;font-style:normal;color:var(--im-muted);
+  transition:transform .17s;
+}
+#xyImageStudio .xy-imagine-config[open]>summary i{transform:rotate(180deg)}
+#xyImageStudio .xy-imagine-config-body{
+  display:grid;gap:13px;border-top:1px solid var(--im-line);
+  padding:13px 15px 15px;
+}
+#xyImageStudio #xyImagineCustom{display:grid;gap:12px}
+#xyImageStudio .xy-imagine-config-body>p{
+  margin:0;color:var(--im-muted);font-size:10px;line-height:1.8
+}
+#xyImageStudio .xy-imagine-save-config{
+  min-height:40px;border-radius:11px;
+  border:1px solid var(--im-line);
+  background:var(--im-soft);color:var(--im-accent);
+  font-size:12px;font-weight:600;cursor:pointer
+}
+#xyImageStudio .xy-imagine-generate{
+  width:100%;min-height:48px;border:0;
+  border-radius:15px;
+  background:var(--im-accent);color:var(--xy-ui-accent-on,#fff);
+  font-size:13px;font-weight:660;letter-spacing:.025em;
+  cursor:pointer;box-shadow:0 7px 20px color-mix(in srgb,var(--im-accent) 17%,transparent);
+}
+#xyImageStudio .xy-imagine-generate:disabled{
+  cursor:progress;opacity:.65;box-shadow:none
+}
+#xyImageStudio :is(button,summary):focus-visible{outline:2px solid var(--im-accent);outline-offset:2px}
+#xyImageStudio .xy-imagine-status{
+  margin:-7px 1px 0;font-size:10px;line-height:1.7;
+  color:var(--im-muted);overflow-wrap:anywhere
+}
+#xyImageStudio .xy-imagine-status[data-error="1"]{color:#b45351}
+#xyImageStudio .xy-imagine-result{
+  padding:13px;display:grid;gap:9px;
+  border:1px solid var(--im-line);border-radius:17px;
+  background:rgba(255,255,255,.53)
+}
+#xyImageStudio :is(.xy-imagine-result,.xy-imagine-history) h3{
+  margin:0;font-size:12px;font-weight:660;color:var(--im-ink)
+}
+#xyImageStudio .xy-imagine-result>img{
+  display:block;width:100%;max-height:470px;object-fit:contain;
+  border-radius:12px;background:var(--im-soft)
+}
+#xyImageStudio .xy-imagine-result>p{
+  margin:0;color:var(--im-muted);line-height:1.6;font-size:10px;
+}
+#xyImageStudio .xy-imagine-result>button{
+  min-height:38px;border:1px solid var(--im-line);
+  background:var(--im-soft);color:var(--im-accent);border-radius:10px;cursor:pointer
+}
+#xyImageStudio .xy-imagine-history{
+  display:grid;gap:12px;padding-top:17px;
+  border-top:1px solid var(--im-line)
+}
+#xyImageStudio .xy-imagine-history-head{
+  display:flex;justify-content:space-between;align-items:center;gap:8px
+}
+#xyImageStudio .xy-imagine-history-head span{color:var(--im-muted);font-size:10px}
+#xyImageStudio .xy-imagine-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#xyImageStudio .xy-imagine-thumb{
+  min-width:0;overflow:hidden;text-align:left;cursor:pointer;
+  background:rgba(255,255,255,.52);color:var(--im-ink);
+  padding:5px;border:1px solid var(--im-line);border-radius:13px;
+  display:grid;gap:7px;align-content:start;
+}
+#xyImageStudio .xy-imagine-thumb>img{
+  display:block;width:100%;height:145px;object-fit:cover;
+  border-radius:9px;background:var(--im-soft)
+}
+#xyImageStudio .xy-imagine-thumb.is-missing>img{display:none}
+#xyImageStudio .xy-imagine-thumb>span{
+  min-width:0;padding:0 5px 5px;color:var(--im-muted);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:10px
+}
+#xyImageStudio .xy-imagine-empty{
+  grid-column:1/-1;min-height:130px;
+  display:grid;place-items:center;text-align:center;
+  padding:25px 18px 12px;border-radius:15px;
+  color:var(--im-muted);font-size:11px;line-height:1.7;
+  background:var(--im-soft)
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyImageStudio{
+  --im-line:rgba(179,209,185,.2);
+  --im-soft:rgba(73,97,78,.23);
+  --im-ink:#edf5ee;
+  --im-muted:#b4c9bb;
+  --im-accent:var(--xy-ui-accent,#98b49f);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyImageStudio .xy-imagine-hero{
+  background:linear-gradient(120deg,rgba(58,77,64,.65),rgba(32,45,36,.88));
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyImageStudio .xy-imagine-hero::before{opacity:.16;filter:brightness(1.8)}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyImageStudio .xy-imagine-field :is(input,select,textarea){
+  background:rgba(26,39,31,.94)!important;color:var(--im-ink)!important;border-color:var(--im-line)!important
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyImageStudio :is(.xy-imagine-config,.xy-imagine-result,.xy-imagine-thumb){background:rgba(33,46,36,.82)}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyImageStudio .xy-imagine-generate{
+  color:var(--xy-ui-accent-on,#fff)
+}
+@media(max-width:760px){
+  #panel:has(#xyImageStudio){width:100vw;max-width:100vw}
+  #xyImageStudio .xy-imagine-hero{padding:19px 17px;min-height:140px}
+  #xyImageStudio .xy-imagine-hero::before{right:-55px;opacity:.16}
+  #xyImageStudio .xy-imagine-gallery{gap:8px}
+}
+@media(max-width:340px){#xyImageStudio .xy-imagine-row{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){#xyImageStudio .xy-imagine-config>summary i{transition:none}}
