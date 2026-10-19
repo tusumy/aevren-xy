@@ -1,0 +1,147 @@
+/* 砚屿 · drawn visual identity. All artwork stays outside reading surfaces.
+   Original vector illustrations are transparent, local, and dependency-free. */
+#xyToolHub .xy-hub-hero{
+  isolation:isolate;
+  min-height:220px;
+}
+#xyToolHub .xy-hub-hero::after{
+  content:"";
+  pointer-events:none;
+  position:absolute;
+  width:200px;height:194px;
+  top:16px;right:-4px;left:auto;bottom:auto;
+  border:0;border-radius:0;
+  box-shadow:none;
+  background:url("./assets/xy-island-atlas.svg") center/contain no-repeat;
+  opacity:.78;
+  transform:rotate(-3deg);
+  z-index:0;
+}
+#xyToolHub .xy-hub-hero::before{
+  content:"";pointer-events:none;
+  position:absolute;
+  height:1px;width:62px;left:24px;top:18px;
+  background:linear-gradient(90deg,var(--hub-accent),transparent);
+  opacity:.26;z-index:0;
+}
+#xyToolHub .xy-hub-hero > *{position:relative;z-index:1}
+#xyToolHub .xy-hub-hero h2{max-width:270px;text-wrap:balance}
+#xyToolHub .xy-hub-hero p{max-width:260px}
+#xyToolHub .xy-hub-glyph{
+  --xy-hub-icon-fill:var(--hub-paper,#eff5f0);
+  width:38px;height:38px;flex:none;
+  border-radius:13px;
+  background:linear-gradient(135deg,var(--hub-soft),color-mix(in srgb,var(--hub-accent) 5%,transparent));
+  color:var(--hub-accent);
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--hub-accent) 11%,transparent);
+}
+#xyToolHub .xy-hub-glyph svg{
+  width:23px;height:23px;
+  display:block;
+  overflow:visible;
+}
+#xyToolHub .xy-hub-open{gap:0}
+#xyToolHub .xy-hub-open .xy-hub-copy{margin-top:10px}
+#xyToolHub .xy-hub-card{
+  overflow:hidden;
+}
+#xyToolHub .xy-hub-card::before{
+  content:"";position:absolute;pointer-events:none;
+  top:0;left:14px;width:38px;height:1px;
+  background:var(--hub-accent);opacity:.25;
+}
+#xyToolHub .xy-hub-card:hover .xy-hub-glyph{
+  background:color-mix(in srgb,var(--hub-accent) 12%,var(--hub-soft));
+}
+#panel #xyStudy .study-cover::after{
+  content:"";
+  position:absolute;pointer-events:none;
+  background:url("./assets/xy-storybook-sprig.svg") center/contain no-repeat;
+  width:174px;height:156px;
+  top:4px;right:-25px;left:auto;bottom:auto;
+  color:transparent;font-size:0;line-height:0;
+  opacity:.35;
+  transform:rotate(6deg);
+  z-index:0;
+}
+#panel #xyStudy .study-cover > *{
+  position:relative;z-index:1;
+}
+#panel #xyStudy .study-cover strong,
+#panel #xyStudy .study-cover p{
+  max-width:85%;
+}
+#panel #xyStudy .study-cover .study-overview{
+  max-width:none;
+}
+#panel .xy-journal-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:260px;
+  margin:10px 0 24px;padding:20px 14px 24px;
+  border-radius:20px;
+  background:linear-gradient(145deg,rgba(239,247,239,.45),rgba(251,249,241,.45));
+  border:1px dashed color-mix(in srgb,var(--theme-accent,#365d4a) 19%,transparent);
+  text-align:center;
+}
+#panel .xy-journal-empty-art{
+  display:block;flex:none;width:194px;height:155px;
+  max-width:100%;
+  background:url("./assets/xy-journal-botanical.svg") center/contain no-repeat;
+  opacity:.83;
+  pointer-events:none;
+}
+#panel .xy-journal-empty strong{
+  color:inherit;font-weight:640;font-size:15px;letter-spacing:.03em;margin-top:5px;
+}
+#panel .xy-journal-empty p{
+  margin:7px 0 0;color:var(--muted,#718078);font-size:11px;line-height:1.7;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-hero::after{
+  filter:brightness(1.35) saturate(.78);
+  opacity:.47;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-glyph{
+  --xy-hub-icon-fill:#29372e;
+  box-shadow:inset 0 0 0 1px rgba(196,225,201,.10);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover::after{
+  filter:brightness(1.8) saturate(.62);
+  opacity:.16;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel .xy-journal-empty{
+  background:linear-gradient(145deg,rgba(53,71,58,.44),rgba(31,43,35,.29));
+  border-color:rgba(176,207,183,.19);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel .xy-journal-empty-art{
+  filter:brightness(1.5) saturate(.7);opacity:.65;
+}
+/* On narrow phones the artwork gets out of the way of real text. */
+@media(max-width:460px){
+  #xyToolHub .xy-hub-hero{min-height:0}
+  #xyToolHub .xy-hub-hero::after{
+    width:159px;height:147px;
+    top:28px;right:-38px;
+    opacity:.24;
+  }
+  #xyToolHub .xy-hub-hero h2{max-width:100%}
+  #xyToolHub .xy-hub-hero p{max-width:100%}
+  #panel #xyStudy .study-cover::after{
+    width:148px;height:139px;
+    right:-44px;top:12px;
+    opacity:.15;
+  }
+  #panel #xyStudy .study-cover strong,
+  #panel #xyStudy .study-cover p{
+    max-width:100%;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #xyToolHub .xy-hub-hero::after,
+  #panel #xyStudy .study-cover::after{transform:none}
+}
+
+/* Night-mode phone art remains faint, even though its desktop tint is brighter. */
+@media(max-width:460px){
+  :is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-hero::after{opacity:.17}
+  :is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover::after{opacity:.10}
+}

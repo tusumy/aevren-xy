@@ -1,0 +1,294 @@
+/* 砚屿 · chat shell visual system (2026-10-19)
+   CSS-only refinement: leave message shape skins, user theme, and all controls intact. */
+.app{
+  --xy-shell-line:rgba(75,88,80,.115);
+  --xy-shell-frost:rgba(255,255,255,.67);
+  --xy-shell-solid:rgba(255,255,255,.85);
+  --xy-shell-dim:#69766e;
+  --xy-shell-ink:#2e3731;
+  --xy-shell-elev:0 12px 32px rgba(38,50,41,.075);
+  --xy-shell-accent:var(--theme-accent,#365d4a);
+}
+.app .main{isolation:isolate}
+.app .main header{
+  flex:0 0 auto;
+  min-height:64px;height:64px;
+  gap:12px;
+  border-bottom:1px solid var(--xy-shell-line);
+  background:linear-gradient(130deg,rgba(255,255,255,.67),rgba(250,250,247,.43))!important;
+  backdrop-filter:blur(22px) saturate(1.12);
+  -webkit-backdrop-filter:blur(22px) saturate(1.12);
+  box-shadow:0 4px 24px rgba(44,62,49,.025);
+}
+.app .main header .presence{min-width:0;gap:10px}
+.app .main header .presence strong{
+  font-weight:680;line-height:1.24;letter-spacing:.012em;font-size:14px;color:var(--xy-shell-ink)
+}
+.app .main header .presence span{
+  font-size:10px;letter-spacing:.015em;line-height:1.4;color:var(--xy-shell-dim);
+  max-width:155px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+}
+.app .main header .presence i{
+  width:8px;height:8px;flex:none;box-shadow:0 0 0 4px color-mix(in srgb,var(--xy-shell-accent) 14%,transparent)!important;
+}
+.app .main header .icon-btn{
+  flex:none;display:grid;place-items:center;
+  min-width:38px;min-height:38px;border-radius:13px;
+  color:var(--xy-shell-ink);transition:background .16s ease,transform .16s ease
+}
+.app .main header .icon-btn:active{transform:scale(.95)}
+.app .main header .icon-btn:hover{background:rgba(255,255,255,.58)}
+.app .main .messages{
+  min-height:0;
+  padding-top:29px;
+  scroll-padding-top:24px;
+  scroll-padding-bottom:15px;
+}
+.app .main .messages .day{
+  display:table;max-width:85%;
+  margin:0 auto 26px;padding:5px 13px;
+  font-size:10px;letter-spacing:.07em;
+  border:1px solid var(--xy-shell-line);
+  border-radius:999px;
+  background:color-mix(in srgb,var(--theme-bg,#f7f5f0) 20%,rgba(255,255,255,.68));
+  color:var(--xy-shell-dim);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+}
+.app .main .messages .bubble{line-height:1.7;overflow-wrap:anywhere}
+.app .main .messages .speaker{
+  font-size:10px;line-height:1.5;
+  color:var(--xy-shell-dim);font-weight:550;letter-spacing:.015em;
+}
+.app .main .messages .message-time{
+  font-size:9px;letter-spacing:.012em;
+  opacity:.84
+}
+.app .main .composer-wrap{
+  flex:0 0 auto;
+  padding-top:11px;
+  padding-bottom:max(12px,env(safe-area-inset-bottom));
+  position:relative;
+}
+.app .main .composer{
+  display:flex;
+  align-items:flex-end;
+  min-height:56px;
+  padding:7px 8px;
+  border-radius:22px;
+  border:1px solid rgba(129,148,135,.22);
+  background:linear-gradient(135deg,rgba(255,255,255,.89),rgba(255,255,255,.73));
+  box-shadow:0 13px 36px rgba(36,54,42,.10),0 1px 1px rgba(255,255,255,.85) inset;
+  backdrop-filter:blur(23px) saturate(1.06);
+  -webkit-backdrop-filter:blur(23px) saturate(1.06);
+  transition:border-color .16s ease,box-shadow .16s ease;
+}
+.app .main .composer:focus-within{
+  transform:none;
+  border-color:color-mix(in srgb,var(--xy-shell-accent) 38%,transparent);
+  box-shadow:0 15px 38px rgba(36,54,42,.12),0 0 0 3px color-mix(in srgb,var(--xy-shell-accent) 7%,transparent)
+}
+.app .main .composer textarea{
+  flex:1;min-width:0;
+  min-height:40px;
+  padding:10px 9px;
+  font-size:14px;
+  line-height:1.5;
+  color:var(--xy-shell-ink);
+  caret-color:var(--xy-shell-accent);
+  background:transparent;
+}
+.app .main .composer textarea::placeholder{color:#8b978f;opacity:1}
+.app .main .composer .attach,
+.app .main .composer .send{
+  flex:0 0 40px;
+  min-width:40px;width:40px;height:40px;
+  border-radius:14px;
+}
+.app .main .composer .attach{
+  display:grid;place-items:center;
+  color:var(--xy-shell-accent);
+  background:color-mix(in srgb,var(--xy-shell-accent) 7%,transparent);
+  font-size:21px;
+}
+.app .main .composer .attach:active{transform:scale(.95)}
+.app .main .composer .send{
+  display:grid;place-items:center;
+  color:var(--theme-accent-text,#fff);
+  background:var(--xy-shell-accent)!important;
+  box-shadow:0 3px 10px color-mix(in srgb,var(--xy-shell-accent) 22%,transparent);
+  font-size:19px;
+}
+.app .main .composer .send.is-mic{
+  background:transparent!important;
+  color:var(--xy-shell-accent)!important;
+  box-shadow:none!important;
+}
+.app .main .composer .send.is-recording{
+  background:rgba(168,79,79,.14)!important;
+  color:#b34d4d!important;box-shadow:none!important;
+}
+.app .main .composer .send.is-transcribing{
+  background:transparent!important;
+  color:var(--xy-shell-accent)!important;box-shadow:none!important;
+}
+/* Side navigation: the brand is calm and the tool drawer is secondary. */
+.app .sidebar{border-color:var(--xy-shell-line);gap:0}
+.app .sidebar .brand{
+  position:relative;min-height:66px;
+  padding:3px 7px 16px;align-items:center;
+}
+.app .sidebar .brand-mark{
+  width:41px;height:41px;flex:none;
+  border-radius:14px;
+  background:linear-gradient(145deg,rgba(255,255,255,.94),rgba(242,248,243,.72))!important;
+  border:1px solid rgba(129,159,139,.24)!important;
+  color:var(--xy-shell-accent)!important;
+  box-shadow:0 7px 17px rgba(32,61,43,.07),inset 0 1px 0 rgba(255,255,255,.9)!important;
+}
+.app .sidebar .brand strong{font-family:inherit;font-size:16px;font-weight:700;letter-spacing:.08em}
+.app .sidebar .brand span{font-size:10px;letter-spacing:.07em}
+.app .sidebar .new-chat{
+  min-height:45px;display:flex;align-items:center;justify-content:flex-start;
+  padding:10px 15px;
+  border-radius:14px;
+  font-size:13px;font-weight:580;
+  color:var(--xy-shell-ink);
+  background:linear-gradient(120deg,rgba(255,255,255,.78),rgba(255,255,255,.51));
+  border:1px solid rgba(116,142,123,.2);
+  box-shadow:0 5px 13px rgba(52,67,57,.04);
+}
+.app .sidebar .section-label{padding:24px 9px 10px;letter-spacing:.15em}
+.app .sidebar .chats{gap:5px;scrollbar-width:thin;scrollbar-color:rgba(95,119,101,.15) transparent}
+.app .sidebar .chat-item{
+  min-height:43px;padding:11px 12px;
+  border-radius:13px;
+  font-size:12px;
+  line-height:1.65;
+  transition:background .15s ease,color .15s ease
+}
+.app .sidebar .chat-item.active{
+  font-weight:650;background:color-mix(in srgb,var(--xy-shell-accent) 9%,rgba(255,255,255,.7));
+}
+.app .sidebar .sidebar-bottom{border-radius:18px}
+.app .sidebar .sidebar-bottom .xy-tools-entry{
+  box-shadow:none;min-height:51px;
+  background:linear-gradient(128deg,color-mix(in srgb,var(--xy-shell-accent) 12%,white),rgba(255,255,255,.47));
+}
+.app .sidebar .sidebar-bottom .xy-tools-entry .xy-tools-copy{gap:3px}
+/* Side panels should feel like part of the same app, not a separate settings site. */
+.app #panel{border-left:1px solid var(--xy-shell-line)}
+.app #panel .panel-head{
+  align-items:center;
+  padding-bottom:13px;
+  border-bottom:1px solid var(--xy-shell-line);
+  margin-bottom:16px;
+}
+.app #panel .panel-head h2{
+  font-family:inherit;
+  font-size:19px;
+  line-height:1.35;
+  font-weight:700;
+  letter-spacing:.015em;
+  color:var(--xy-shell-ink)
+}
+.app #panel .panel-head #panelEyebrow{font-size:9px;letter-spacing:.17em;color:var(--xy-shell-dim)}
+.app #panel .panel-head #closePanel{
+  flex:none;
+  display:grid;place-items:center;
+  width:38px;height:38px;min-height:38px;
+  border-radius:13px;
+  background:rgba(255,255,255,.52);
+  border:1px solid var(--xy-shell-line);
+  color:var(--xy-shell-ink);
+}
+/* Keyboard access without forcing desktop hover visuals on touch devices. */
+.app :is(.sidebar .new-chat,.sidebar .chat-item,.main header .icon-btn,.main .composer .attach,.main .composer .send):focus-visible{
+  outline:2px solid var(--xy-shell-accent)!important;outline-offset:3px
+}
+@media(max-width:760px){
+  .app .main header{
+    min-height:58px;height:58px;
+    padding:0 13px;
+    gap:8px;
+  }
+  .app .main header .icon-btn{min-width:38px;min-height:38px}
+  .app .main .messages{
+    padding-top:23px;
+    padding-left:17px!important;
+    padding-right:17px!important;
+    padding-bottom:17px;
+  }
+  .app .main .messages .day{margin-bottom:22px}
+  .app .main .composer-wrap{padding:9px 12px max(10px,env(safe-area-inset-bottom))}
+  .app .main .composer{min-height:54px;padding:6px 7px;border-radius:21px}
+  .app .main .composer textarea{font-size:14px;min-height:40px;padding:10px 8px}
+  .app .main .composer .attach,.app .main .composer .send{
+    flex-basis:40px;width:40px;min-width:40px;height:40px;border-radius:13px
+  }
+  .app .sidebar .brand{padding-right:46px}
+  .app #panel .panel-head{margin-bottom:14px}
+}
+@media(max-width:350px){
+  .app .main header .presence span{max-width:95px}
+  .app .main .composer-wrap{padding-left:8px;padding-right:8px}
+  .app .main .messages{padding-left:13px!important;padding-right:13px!important}
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .app{
+  --xy-shell-line:rgba(185,209,191,.14);
+  --xy-shell-frost:rgba(31,37,34,.83);
+  --xy-shell-solid:rgba(35,43,38,.95);
+  --xy-shell-dim:#aebcb2;
+  --xy-shell-ink:#edf4ee;
+  --xy-shell-elev:0 16px 32px rgba(0,0,0,.17);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .app .main header{
+  background:linear-gradient(135deg,rgba(30,38,34,.94),rgba(27,33,30,.83))!important;
+  border-bottom-color:var(--xy-shell-line);
+  box-shadow:0 5px 18px rgba(0,0,0,.08)
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .app .main .composer{
+  background:linear-gradient(135deg,rgba(42,50,45,.96),rgba(32,40,35,.96))!important;
+  border-color:rgba(171,196,178,.18)!important;
+  box-shadow:0 12px 26px rgba(0,0,0,.19),inset 0 1px 0 rgba(255,255,255,.055)!important
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .app .main .composer:focus-within{
+  border-color:color-mix(in srgb,var(--xy-shell-accent) 52%,#a8bdb0)!important;
+  box-shadow:0 12px 27px rgba(0,0,0,.21),0 0 0 3px color-mix(in srgb,var(--xy-shell-accent) 16%,transparent)!important
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .app .main .composer textarea{
+  color:var(--xy-shell-ink)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .app .main .composer textarea::placeholder{color:#a0afa4}
+:is(html[data-theme-mode="dark"],body.theme-dark) .app .main .messages .day{
+  background:rgba(35,43,38,.75);border-color:rgba(183,207,189,.13);
+  color:#aebdb2
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .app .sidebar .brand-mark{
+  background:linear-gradient(145deg,rgba(65,83,70,.8),rgba(39,52,44,.95))!important;
+  border-color:rgba(185,218,193,.22)!important;
+  color:#eaf3ed!important;
+  box-shadow:0 8px 20px rgba(0,0,0,.16)!important
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .app .sidebar .brand strong{color:var(--xy-shell-ink)!important}
+:is(html[data-theme-mode="dark"],body.theme-dark) .app .sidebar .new-chat{
+  background:rgba(60,76,64,.85)!important;
+  color:var(--xy-shell-ink)!important;border-color:rgba(171,205,180,.2)!important
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .app .sidebar .chat-item.active{
+  background:rgba(84,116,93,.30)!important;color:#ecf5ee!important
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .app #panel .panel-head h2{
+  color:var(--xy-shell-ink)!important
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .app #panel .panel-head #closePanel{
+  color:var(--xy-shell-ink)!important;background:rgba(255,255,255,.055)!important;
+  border-color:var(--xy-shell-line)!important
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) .app .sidebar .sidebar-bottom>.xy-tools-entry{
+  background:linear-gradient(135deg,rgba(88,119,96,.32),rgba(45,67,52,.2))!important;
+  border-color:rgba(170,212,181,.26)!important;
+}
+@media(prefers-reduced-motion:reduce){
+  .app .main .composer,.app .sidebar .chat-item,.app .main header .icon-btn{transition:none}
+}
