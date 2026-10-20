@@ -1,151 +1,218 @@
-/* XY Pages: let the artwork be the actual page boundary.
- * The SVG coastline is an outline around ALL Tool Hub controls,
- * the Study is already a bound book, and Journal is one notebook sheet.
- * No postcard-sized art behind copy, no new nested display cards.
- * Shared hues always follow Theme > accent. */
-
-/* 1. Island. The entire tool collection is surrounded by one shore. */
+/* 砚屿：图画在介绍卡里，功能内容是下面独立、可折叠的区域。
+   Main correction: NO site-wide island outline or whole-page book wrapper.
+   All art has reserved space: it cannot cover a label or button. */
 #panel:has(#xyToolHub){
-  background:color-mix(in srgb,var(--theme-bg,#eeecea) 45%,#f1efeb)!important;
+  background:var(--surface, var(--panel,#f3f2ef))!important;
 }
-#panel:has(#xyToolHub) #panelBody{
-  padding:9px 9px 24px!important;
-}
+#panel:has(#xyToolHub) #panelBody{padding:0 5px 20px!important}
 #xyToolHub{
   --hub-accent:var(--xy-ui-accent,var(--theme-accent,#777));
   --hub-accent-on:var(--xy-ui-accent-on,#fff);
-  --hub-paper:rgba(255,255,255,.63);
-  --hub-ink:#30312f;
-  --hub-muted:#6e716c;
-  --hub-line:color-mix(in srgb,var(--hub-accent) 15%,#dddcd8);
-  --hub-soft:color-mix(in srgb,var(--hub-accent) 8%,#f7f6f2);
+  --hub-ink:var(--ink,#333532);
+  --hub-muted:var(--muted,#6e746d);
+  --hub-line:var(--xy-ui-accent-border,rgba(112,112,112,.18));
+  --hub-paper:rgba(255,255,255,.66);
+  --hub-soft:var(--xy-ui-accent-soft,rgba(130,130,130,.09));
   --hub-elevation:none;
-  position:relative;isolation:isolate;
-  box-sizing:border-box;
-  width:100%;
-  min-height:490px;
-  margin:5px auto 20px;
-  padding:29px 28px 47px;
-  border:1px solid var(--hub-line);
-  border-radius:42px 35px 44px 36px / 51px 43px 44px 58px;
-  background:
-    linear-gradient(145deg,color-mix(in srgb,var(--theme-bg,#f0eeeb) 7%,#fffefa),#f9f8f3);
-  box-shadow:0 13px 32px rgba(49,45,41,.10),inset 0 0 0 5px color-mix(in srgb,var(--hub-accent) 3%,transparent);
+  width:100%;min-height:0;margin:0;
+  padding:0 2px 22px;
+  border:0;box-shadow:none;background:none;
+  border-radius:0;isolation:unset;
 }
-#xyToolHub::before{
-  content:"";
-  position:absolute;inset:-4px;
-  z-index:0;pointer-events:none;
-  background:var(--hub-accent);
-  -webkit-mask:url("./assets/xy-island-shoreline.svg") center/100% 100% no-repeat;
-  mask:url("./assets/xy-island-shoreline.svg") center/100% 100% no-repeat;
-  opacity:.52;
-}
-#xyToolHub > *{position:relative;z-index:1}
-/* The island frame replaces the former separate feature-card poster. */
+#xyToolHub::before{display:none!important;content:none!important}
 #xyToolHub .xy-hub-hero{
-  min-height:0!important;
-  margin:0;
-  padding:13px 2px 20px!important;
-  border:0!important;
-  border-radius:0!important;
-  background:none!important;
-  box-shadow:none!important;
-  overflow:visible;
+  display:grid!important;
+  grid-template-columns:minmax(0,1.3fr) minmax(110px,.9fr);
+  gap:5px;align-items:center;
+  min-height:232px;
+  margin:0 0 13px;padding:19px 18px 20px!important;
+  overflow:hidden!important;
+  isolation:isolate;
+  border:1px solid var(--hub-line)!important;
+  border-radius:24px!important;
+  background:linear-gradient(115deg,color-mix(in srgb,var(--hub-accent) 7%,#fffcf9),#fbfaf8)!important;
+  box-shadow:0 10px 26px rgba(40,37,33,.06)!important;
 }
-#xyToolHub .xy-hub-hero::before,
-#xyToolHub .xy-hub-hero::after{
-  content:none!important;
-  display:none!important;
+#xyToolHub .xy-hub-hero::after,
+#xyToolHub .xy-hub-hero::before{content:none!important;display:none!important}
+#xyToolHub .xy-hub-intro{min-width:0;position:relative;z-index:1}
+#xyToolHub .xy-hub-hero h2{
+  max-width:none!important;margin:12px 0 9px;
+  font-size:clamp(18px,4vw,23px);line-height:1.52;
+  color:var(--hub-ink);overflow-wrap:anywhere;
 }
-#xyToolHub .xy-hub-hero h2,
 #xyToolHub .xy-hub-hero p{
-  max-width:100%!important;
-  text-wrap:pretty;
-  color:var(--hub-ink);
+  margin:0 0 13px;max-width:none!important;
+  font-size:11px;line-height:1.8;color:var(--hub-muted);
 }
-#xyToolHub .xy-hub-hero h2{font-size:clamp(19px,4vw,23px);line-height:1.53;margin:11px 0 10px}
-#xyToolHub .xy-hub-hero p{margin:0 0 15px;line-height:1.8;font-size:11px;color:var(--hub-muted)}
-#xyToolHub .xy-hub-hero-kicker{color:var(--hub-accent);opacity:.85}
+#xyToolHub .xy-hub-hero-kicker{font-size:9px;letter-spacing:.12em;color:var(--hub-accent)}
 #xyToolHub .xy-hub-status{
-  max-width:100%;background:var(--hub-soft);
-  border:1px solid var(--hub-line);color:var(--hub-muted);
-  box-shadow:none;
+  display:inline-flex;max-width:100%;
+  background:var(--hub-paper);border-color:var(--hub-line);
+  padding:6px 9px;font-size:10px;
 }
-#xyToolHub .xy-hub-stats{
-  gap:0;
-  margin:0 0 19px;
-  padding:11px 0 13px;
-  border-block:1px solid var(--hub-line);
+#xyToolHub .xy-hub-status strong{max-width:110px}
+#xyToolHub .xy-hub-island-art{
+  display:block;grid-column:2;grid-row:1;
+  justify-self:center;align-self:center;
+  width:100%;height:184px;
+  pointer-events:none;
+  background:var(--xy-ui-accent-ink,var(--hub-accent));
+  -webkit-mask:url("./assets/xy-island-atlas.svg") center/contain no-repeat;
+  mask:url("./assets/xy-island-atlas.svg") center/contain no-repeat;
+  opacity:.75;filter:none!important;
 }
+#xyToolHub .xy-hub-sections,
+#panel #xyStudy .xy-study-sections{
+  margin:15px 0 0;
+  border:1px solid var(--xy-ui-accent-border,rgba(115,115,115,.19));
+  border-radius:17px;overflow:hidden;
+  background:color-mix(in srgb,var(--theme-bg,#efeeeb) 6%,#fffefa);
+  box-shadow:0 5px 18px rgba(37,34,30,.035);
+}
+#xyToolHub .xy-hub-sections>summary,
+#panel #xyStudy .xy-study-sections>summary{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;min-height:67px;padding:14px 16px;
+  cursor:pointer;list-style:none;
+  color:var(--hub-ink,var(--ink,#333));text-align:left;
+}
+#xyToolHub .xy-hub-sections>summary::-webkit-details-marker,
+#panel #xyStudy .xy-study-sections>summary::-webkit-details-marker{display:none}
+#xyToolHub .xy-hub-sections>summary:focus-visible,
+#panel #xyStudy .xy-study-sections>summary:focus-visible{
+  outline:2px solid var(--xy-ui-accent);outline-offset:-3px;border-radius:15px;
+}
+#xyToolHub .xy-hub-sections>summary>span:first-child,
+#panel #xyStudy .xy-study-sections>summary>span:first-child{
+  min-width:0;display:grid;gap:6px;
+}
+#xyToolHub .xy-hub-sections>summary strong,
+#panel #xyStudy .xy-study-sections>summary strong{font-size:13px;font-weight:650;color:var(--ink,#333)}
+#xyToolHub .xy-hub-sections>summary small,
+#panel #xyStudy .xy-study-sections>summary small{font-size:10px;font-weight:400;color:var(--muted,#777)}
+#xyToolHub .xy-hub-sections-chevron,
+#panel #xyStudy .xy-study-sections-chevron{
+  flex:none;font-size:20px;font-style:normal;line-height:1;
+  color:var(--xy-ui-accent-ink,var(--xy-ui-accent,#777));
+  transition:transform .18s;
+}
+#xyToolHub .xy-hub-sections[open] .xy-hub-sections-chevron,
+#panel #xyStudy .xy-study-sections[open] .xy-study-sections-chevron{transform:rotate(180deg)}
+#xyToolHub .xy-hub-sections-body,
+#panel #xyStudy .xy-study-sections-body{
+  padding:13px 14px 20px;border-top:1px solid var(--xy-ui-accent-border,rgba(115,115,115,.19));
+}
+#xyToolHub .xy-hub-stats{margin:0 0 16px;gap:0;padding:0 0 11px;border-bottom:1px solid var(--hub-line)}
 #xyToolHub .xy-hub-stats>div{
-  min-width:0;
-  padding:6px 7px!important;
-  border:0!important;
-  border-radius:0!important;
-  box-shadow:none!important;
-  background:transparent!important;
+  padding:5px 6px!important;border:0!important;
+  border-radius:0!important;background:transparent!important;box-shadow:none!important;
   text-align:center;
 }
 #xyToolHub .xy-hub-stats>div + div{border-left:1px solid var(--hub-line)!important}
-#xyToolHub .xy-hub-stats strong{font-size:18px;color:var(--hub-ink)}
-#xyToolHub .xy-hub-stats span{font-size:9px;color:var(--hub-muted)}
-#xyToolHub .xy-hub-search{
-  background:var(--hub-paper);
-  border-color:var(--hub-line);
-  box-shadow:none;
-}
-#xyToolHub .xy-hub-filters{padding:10px 0 8px}
-#xyToolHub .xy-hub-filters button{
-  min-height:31px;background:transparent;border-color:var(--hub-line);
-}
-#xyToolHub .xy-hub-filters button.is-active{
-  color:var(--hub-accent-on);background:var(--hub-accent);
-  border-color:var(--hub-accent);
-}
-#xyToolHub .xy-hub-group{margin-top:17px}
-#xyToolHub .xy-hub-card{
-  min-height:104px;
-  border-color:var(--hub-line);
-  background:var(--hub-paper);
-  box-shadow:none!important;
-  border-radius:15px;
-}
+#xyToolHub .xy-hub-card{min-height:100px;box-shadow:none!important;background:var(--hub-paper);border-color:var(--hub-line)}
 #xyToolHub .xy-hub-card::before{display:none}
-#xyToolHub .xy-hub-open{padding:13px 12px}
-#xyToolHub .xy-hub-glyph{
-  width:32px;height:32px;border-radius:11px;
-  background:var(--hub-soft);
-  box-shadow:none;
+#xyToolHub .xy-hub-glyph{background:var(--hub-soft)}
+/* The Study header card uses the right-hand book illustration; the counts
+   and actual editable workspace are a separate folded section BELOW it. */
+#panel:has(#xyStudy){background:var(--surface,var(--panel,#f3f2ef))!important;padding:18px 18px max(14px,env(safe-area-inset-bottom))}
+#panel:has(#xyStudy) .panel-head{margin-bottom:13px;padding:2px 4px 11px;border-bottom:1px solid var(--xy-ui-accent-border,rgba(115,115,115,.18))}
+#panel:has(#xyStudy) #panelBody{padding:5px 5px 30px!important;overflow-y:auto}
+#panel #xyStudy{
+  --story-ink:var(--ink,#333);
+  --story-muted:var(--muted,#666);
+  --story-accent:var(--xy-ui-accent-ink,var(--xy-ui-accent,#777));
+  --story-line:var(--xy-ui-accent-border,rgba(115,115,115,.18));
+  --story-paper:#fffdf9;
+  --story-card:color-mix(in srgb,var(--xy-ui-accent) 4%,#fdfdfa);
+  --story-cover:var(--xy-ui-accent-soft,#f4f4f3);
+  width:100%;max-width:720px;
+  margin:0 auto;padding:0 2px 25px!important;
+  border:0!important;border-radius:0!important;background:none!important;
+  box-shadow:none!important;color:var(--story-ink);
 }
-#xyToolHub .xy-hub-glyph svg{width:21px;height:21px}
-#xyToolHub .xy-hub-copy{margin-top:8px;gap:3px}
-#xyToolHub .xy-hub-card:focus-within{
-  border-color:var(--hub-accent);
-}
-/* 2. The book IS the entire Study page, not an icon next to the cover. */
+#panel #xyStudy::before,#panel #xyStudy::after{display:none!important;content:none!important}
 #panel #xyStudy .study-cover{
-  display:block!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1.35fr) minmax(110px,.95fr);
+  column-gap:8px;row-gap:9px;align-items:start;
+  min-height:252px;
+  margin:0;padding:22px 20px 23px!important;
+  border-radius:24px!important;
+  border:1px solid var(--story-line)!important;
+  background:linear-gradient(117deg,color-mix(in srgb,var(--xy-ui-accent) 7%,#fffefa),#fffdf9)!important;
+  box-shadow:0 9px 28px rgba(41,38,33,.06)!important;
+  overflow:hidden;isolation:isolate;
 }
-#panel #xyStudy .study-cover .xy-study-cover-art{
-  display:none!important;
+#panel #xyStudy .study-cover::after,#panel #xyStudy .study-cover::before{
+  content:none!important;display:none!important;
 }
-#panel #xyStudy .study-cover > :is(strong,p,.study-cover-kicker){
-  grid-column:auto!important;grid-row:auto!important;
-  max-width:100%!important;
+#panel #xyStudy .study-cover > :is(.study-cover-kicker,strong,p){
+  grid-column:1!important;min-width:0;max-width:100%!important;
+  color:var(--story-ink)!important;
+  position:relative;z-index:1;
+}
+#panel #xyStudy .study-cover .study-cover-kicker{
+  grid-row:1!important;
+  font-size:9px;letter-spacing:.13em;
+  color:var(--story-accent)!important;
 }
 #panel #xyStudy .study-cover > strong{
-  display:block;margin-top:15px;
-  max-width:none!important;
+  grid-row:2!important;display:block;
+  margin:8px 0 2px;
+  font-size:clamp(18px,4vw,26px);
+  line-height:1.4;letter-spacing:.01em;
+  color:var(--story-ink)!important;
 }
 #panel #xyStudy .study-cover > p{
-  display:block;margin-top:10px;
+  grid-row:3!important;display:block;
+  margin:0;font-size:11px;line-height:1.8;
+  color:var(--story-muted)!important;
 }
-#panel #xyStudy .study-cover .study-overview{
-  display:grid;
-  grid-column:auto!important;grid-row:auto!important;
-  margin-top:16px;
+#panel #xyStudy .xy-study-hero-art{
+  grid-column:2;grid-row:1 / 4;
+  justify-self:center;align-self:center;
+  display:block;
+  width:100%;height:193px;
+  pointer-events:none;
+  background:var(--xy-ui-accent-ink,var(--xy-ui-accent,#888));
+  -webkit-mask:url("./assets/xy-storybook-sprig.svg") center/contain no-repeat;
+  mask:url("./assets/xy-storybook-sprig.svg") center/contain no-repeat;
+  opacity:.73;filter:none!important;
 }
+#panel #xyStudy .xy-study-sections>summary{color:var(--story-ink)}
+#panel #xyStudy .xy-study-sections-body{padding:13px 13px 22px}
+#panel #xyStudy .study-overview{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));
+  margin:0 0 17px;padding:0 0 15px;
+  border-top:0;border-bottom:1px solid var(--story-line);
+}
+#panel #xyStudy .study-overview span{
+  color:var(--story-muted)!important;border-right:1px solid var(--story-line)!important
+}
+#panel #xyStudy .study-overview b{color:var(--story-ink)!important}
+#panel #xyStudy .study-overview small{color:var(--story-muted)!important}
+#panel #xyStudy .study-tabs{background:var(--story-cover)!important;border-color:var(--story-line)!important}
+#panel #xyStudy .study-tabs button{color:var(--story-muted)!important}
+#panel #xyStudy .study-tabs button.selected{
+  background:var(--xy-ui-accent)!important;
+  color:var(--xy-ui-accent-on,#fff)!important;
+  box-shadow:none!important;
+}
+#panel #xyStudy .study-progress-num{
+  background:var(--story-cover)!important;color:var(--story-accent)!important;border-color:var(--story-line)!important;
+}
+#panel #xyStudy .study-progress-bar{background:var(--story-cover)!important}
+#panel #xyStudy .study-progress-bar span{background:var(--xy-ui-accent)!important}
+#panel #xyStudy .study-auto-trigger{background:var(--xy-ui-accent)!important;color:var(--xy-ui-accent-on,#fff)!important}
+#panel #xyStudy .study-auto-toggle input{accent-color:var(--xy-ui-accent)}
+#panel #xyStudy .study-chapter-entry::before{background:var(--xy-ui-accent)!important}
+#panel #xyStudy .study-import{background:var(--story-cover)!important;border-color:var(--story-line)!important;color:var(--story-accent)!important}
+#panel #xyStudy .study-memory-board,#panel #xyStudy .study-editor,#panel #xyStudy .study-greeting-picker{
+  background:var(--story-card)!important;border-color:var(--story-line)!important;
+}
+/* Keep previous whole-notebook styling intact; this correction only alters
+   Tool Hub and Study, not existing diary records or readers. */
 /* 3. Notebook. All journal actions, editor, bookshelf and reading pages
  * live on the SAME sheet. The rings/spine are part of the sheet edge. */
 #panel:has(#xyJournalLibrary){
@@ -228,31 +295,6 @@
   background:rgba(255,255,255,.69);
   border-color:var(--xy-notebook-line);
 }
-/* Neutral night paper; all decorated edges still use the chosen accent. */
-:is(html[data-theme-mode="dark"],body.theme-dark) #panel:has(#xyToolHub){
-  background:#1f2023!important;
-}
-:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub{
-  --hub-paper:rgba(255,255,255,.06);
-  --hub-ink:#f0f0f1;
-  --hub-muted:#bcbec1;
-  --hub-line:color-mix(in srgb,var(--hub-accent) 22%,#505157);
-  --hub-soft:color-mix(in srgb,var(--hub-accent) 14%,#303136);
-  background:linear-gradient(145deg,#2b2c30,#26272b)!important;
-  box-shadow:0 13px 35px rgba(0,0,0,.28);
-}
-:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub::before{opacity:.48}
-:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-hero{
-  background:none!important;border:0!important;
-}
-:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-card,
-:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-stats>div{
-  background:var(--hub-paper)!important;
-  border-color:var(--hub-line)!important;
-}
-:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-stats>div{
-  background:transparent!important;border:0!important;
-}
 :is(html[data-theme-mode="dark"],body.theme-dark) #panel:has(#xyJournalLibrary){
   background:#1e1f23!important;
 }
@@ -276,16 +318,77 @@
   color:#f0f0f1!important;
   border-color:var(--xy-notebook-line);
 }
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel:has(#xyToolHub),
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel:has(#xyStudy){
+  background:#202124!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub{
+  --hub-paper:rgba(255,255,255,.05);
+  --hub-soft:var(--xy-ui-accent-soft,rgba(180,180,180,.12));
+  --hub-ink:#edf2ee;--hub-muted:#b7bfc0;
+  --hub-line:rgba(190,200,191,.2);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-hero,
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover{
+  background:linear-gradient(120deg,#2b2d30,#24272b)!important;
+  border-color:rgba(181,187,181,.18)!important;
+  box-shadow:0 7px 28px rgba(0,0,0,.14)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-hero h2{color:var(--hub-ink)!important}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-hero p{color:var(--hub-muted)!important}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-sections,
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .xy-study-sections{
+  background:#2b2c30;border-color:rgba(185,190,185,.17)
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-sections>summary strong,
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .xy-study-sections>summary strong{color:#f0f1f2}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-sections>summary small,
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .xy-study-sections>summary small{color:#bcbfc1}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy{
+  --story-ink:#f1f1f2;--story-muted:#bdc3bd;
+  --story-paper:#2b2c31;--story-card:#303237;
+  --story-cover:var(--xy-ui-accent-soft,rgba(150,150,150,.12));
+  --story-line:rgba(187,197,187,.18);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover > :is(.study-cover-kicker,strong,p){
+  -webkit-text-fill-color:currentColor;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover > strong{color:var(--story-ink)!important}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover > p{color:var(--story-muted)!important}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-tabs{
+  background:var(--story-cover)!important
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-tabs button.selected{
+  background:var(--xy-ui-accent)!important;color:var(--xy-ui-accent-on,#fff)!important;
+  -webkit-text-fill-color:var(--xy-ui-accent-on,#fff)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy :is(.study-editor,.study-greeting-picker,.study-auto-panel,.study-memory-board){
+  background:var(--story-card)!important;border-color:var(--story-line)!important
+}
 @media(max-width:760px){
-  #panel:has(#xyToolHub) #panelBody{padding:6px 4px 19px!important}
-  #xyToolHub{margin:5px 0 16px;padding:25px 19px 41px;border-radius:31px 27px 33px 25px / 42px 35px 35px 49px}
-  #xyToolHub .xy-hub-hero{padding:10px 2px 15px!important}
-  #panel:has(#xyJournalLibrary){width:100vw}
-  #panel:has(#xyJournalLibrary) #panelBody{padding:22px 13px 31px 29px!important}
+  #panel:has(#xyToolHub) #panelBody{padding:0 2px 18px!important}
+  #xyToolHub .xy-hub-hero{
+    grid-template-columns:minmax(0,1.2fr) minmax(100px,.8fr);
+    min-height:235px;padding:17px 13px!important;gap:3px;
+  }
+  #xyToolHub .xy-hub-island-art{height:170px}
+  #xyToolHub .xy-hub-sections-body{padding:12px 11px 18px}
+  #panel:has(#xyStudy){width:100vw;padding:16px 11px max(12px,env(safe-area-inset-bottom))}
+  #panel:has(#xyStudy) #panelBody{padding:5px 2px 28px!important}
+  #panel #xyStudy .study-cover{
+    grid-template-columns:minmax(0,1.2fr) minmax(99px,.8fr);
+    gap:5px;min-height:242px;padding:17px 13px!important;
+  }
+  #panel #xyStudy .xy-study-hero-art{height:168px}
 }
 @media(max-width:360px){
-  #xyToolHub{padding:24px 15px 37px}
-  #xyToolHub .xy-hub-grid{gap:7px}
-  #xyToolHub .xy-hub-open{padding:12px 9px}
-  #panel:has(#xyJournalLibrary) #panelBody{padding-left:26px!important}
+  #xyToolHub .xy-hub-hero{grid-template-columns:minmax(0,1fr) 102px;padding:17px 11px!important}
+  #xyToolHub .xy-hub-hero h2{font-size:18px}
+  #xyToolHub .xy-hub-island-art{height:142px}
+  #panel #xyStudy .study-cover{grid-template-columns:minmax(0,1fr) 96px;padding:15px 11px!important}
+  #panel #xyStudy .xy-study-hero-art{height:145px}
+}
+@media(prefers-reduced-motion:reduce){
+  #xyToolHub .xy-hub-sections-chevron,
+  #panel #xyStudy .xy-study-sections-chevron{transition:none}
 }
