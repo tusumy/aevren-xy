@@ -49,10 +49,13 @@
   function activeConfig(url){
     if(IS_NATIVE)return null;
     const list=Array.isArray(endpoints)?endpoints:[];
-    const ep=list.find(x=>x.active)||list[0];
+    // Routed chats and backup vision may target a non-active channel.
+    // Select the matching endpoint by its URL, not the global active flag.
+    const ep=list.filter(x=>x?.base)
+      .sort((a,b)=>cleanBase(b.base).length-cleanBase(a.base).length)
+      .find(x=>{const b=cleanBase(x.base);return url===b||url.startsWith(b+'/')});
     if(!ep)return null;
     const base=cleanBase(ep.base);
-    if(!base||!(url===base||url.startsWith(base+'/')))return null;
     const picked=proxyFor(modeFor(ep),ep.proxy,ep.proxyKey);
     return picked?{base,...picked}:null;
   }
