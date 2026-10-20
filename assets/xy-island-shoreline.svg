@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 760" preserveAspectRatio="none" fill="none" aria-hidden="true">
+  <title>砚屿 · 环绕整页的海岸线</title>
+  <!-- All shore strokes stay inside narrow page gutters. No path crosses
+       readable content even when the Tool Hub grows very long on a phone. -->
+  <g stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke-width="2.8" d="M12 11 C47 2 90 8 129 5 C173 2 208 7 244 4 C288 0 333 5 366 13
+      C376 49 368 97 373 148 C367 204 377 265 370 320 C376 375 367 426 372 480
+      C366 539 377 594 369 652 C376 695 372 740 361 750
+      C316 755 283 752 244 756 C201 752 165 759 127 755 C82 760 40 753 13 746
+      C5 711 11 671 7 635 C15 586 4 546 10 497 C4 442 12 399 7 347
+      C12 299 4 250 10 204 C5 150 13 103 8 58 C8 39 9 21 12 11 Z"/>
+    <path stroke-width="1" stroke-dasharray="1 7" d="M26 16 C72 12 111 16 154 12 C216 17 251 10 309 13 C333 12 347 13 355 19
+      M362 30 C358 87 365 148 360 201 M361 222 C366 286 356 341 362 401
+      M361 428 C358 493 364 549 359 604 M362 627 C359 672 361 704 351 741
+      M342 744 C285 745 239 748 186 750 C132 748 90 750 31 739
+      M20 727 C16 675 23 625 16 579 M19 549 C13 492 19 437 15 380
+      M18 340 C17 289 14 232 18 182 M20 163 C15 113 22 60 19 26"/>
+    <path stroke-width="1.1" d="M39 21 C74 19 94 21 116 19 M272 17 C299 19 315 20 340 21
+      M29 735 C62 741 89 741 118 743 M273 744 C303 742 327 743 342 739
+      M26 55 C27 91 26 121 24 139 M352 645 C354 680 352 698 350 716"/>
+    <path stroke-width="1.2" d="M106 2 v9 m-4.5-4.5h9 M303 3 v9 m-4.5-4.5h9
+      M3 367v12m-6-6h12 M374 602v13m-6.5-6.5h13"/>
+  </g>
+</svg>
