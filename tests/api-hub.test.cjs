@@ -83,3 +83,54 @@ test('preserves configured route order and supports sticky tool rounds',async()=
   assert.equal(calls.length,1);
   assert.match(calls[0],/backup/);
 });
+
+test('model controls live only in a compact, initially closed settings disclosure',()=>{
+  let removed=0,created=0,section=null;
+  const db=new Map();
+  const currentChat={id:1};
+  const endpoints=[{id:'a',name:'Primary',base:'https://primary.example/v1',key:'KEY_A',model:'same',models:['same']}];
+  const values=new Map();
+  const listener={};
+  const list={insertAdjacentElement:(_position,element)=>{section=element}};
+  const body={querySelector:selector=>selector==='#endpointList'?list:selector==='#xyApiHubPanel'?section:null};
+  const doc={
+    querySelector(selector){
+      if(selector==='#xyModelQuickSwitch')return {remove:()=>{removed++}};
+      if(selector==='#panelBody')return body;
+      if(selector==='#xyApiHubPanel')return section;
+      return null;
+    },
+    createElement(tag){
+      created++;assert.equal(tag,'details');
+      return {tagName:tag,open:false,addEventListener:(type,fn)=>listener[type]=fn,
+        querySelector(selector){
+          if(!values.has(selector))values.set(selector,{checked:false,value:'',textContent:'',innerHTML:''});
+          return values.get(selector);
+        }};
+    }
+  };
+  const ctx={
+    window:{AevrenApiCompat:{completeChatEndpoint:base=>base+'/chat/completions'}},
+    document:doc,endpoints,
+    store:{get:(key,def)=>db.get(key)??def,set:(key,value)=>db.set(key,value)},
+    openPanel:()=>{},
+    renderMessages:()=>{},chat:()=>currentChat,save:()=>{},
+    requestAnimationFrame:fn=>fn(),performance:{now:()=>Date.now()},
+    fetch:async()=>mockResponse(200),Date,URL,Error,Number,String,Map,Set,Array,Math,JSON
+  };
+  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'..','api-hub.js'),'utf8'),ctx);
+  assert.equal(removed,1);
+  ctx.openPanel('settings');
+  assert.equal(created,1);
+  assert.equal(section.tagName,'details');
+  assert.equal(section.open,false);
+  assert.match(section.innerHTML,/^<summary class="xy-hub-summary">/);
+  assert.match(section.innerHTML,/id="xyHubCurrent"/);
+  assert.equal(values.get('#xyHubCount').textContent,'1 个模型');
+  listener.click({target:{closest:()=>({
+    dataset:{ep:'a',model:'same'},
+    classList:{contains:()=>false}
+  })}});
+  assert.equal(currentChat.xyApiChoice.model,'same');
+  assert.equal(section.open,false);
+});
