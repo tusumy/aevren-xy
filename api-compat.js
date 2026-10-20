@@ -229,7 +229,7 @@
     if(!window.xyHeartNotes?.enabled?.())throw new Error("心音功能尚未开启");
     const active=chat();
     if(active!==c)throw new Error("请先回到需要补写心音的对话");
-    const ep=endpoints.find(x=>x.active)||endpoints[0];
+    const ep=window.xyApiHub?.resolveEndpoint?.(chat())||endpoints.find(x=>x.active)||endpoints[0];
     if(!ep?.base||!ep.model)throw new Error("请先设置有效的模型接口");
     const previous=c.messages.slice(0,index).reverse().find(x=>x?.role==="user");
     const name=window.xyCurrentCharacter?.()?.name||"角色";
@@ -250,7 +250,7 @@
     const attachments=fromCall?[]:(Array.isArray(window.xyActiveSendAttachments)?window.xyActiveSendAttachments:[]);
     if(!text&&!attachments.length)return;
     if(sending){if(fromCall)throw new Error('上一条消息还在发送');return}
-    const ep=endpoints.find(x=>x.active)||endpoints[0];
+    const ep=window.xyApiHub?.resolveEndpoint?.(chat())||endpoints.find(x=>x.active)||endpoints[0];
     if(!fromCall&&attachments.some(a=>a?.kind==="image")&&ep?.vision!==true&&!window.xyVisionFallback?.forSend?.()){
       window.xyAttachments?.restore?.(attachments);
       window.xyAttachments?.toast?.("当前模型不支持看图，请启用视觉或设置备用视觉模型",true);
@@ -347,6 +347,7 @@
     const mt=mcpTools();
     const target=completeChatEndpoint(ep.base);
 
+    let routeId=null;
     try{
       for(let round=0;round<6;round++){
         const payload={model:ep.model,messages,stream:false};
@@ -355,7 +356,10 @@
         if(Number(ep.maxTokens)>0)payload.max_tokens=Number(ep.maxTokens);
         if(mt.out.length){payload.tools=mt.out;payload.tool_choice='auto'}
 
-        const res=await fetch(target,{method:'POST',headers,body:JSON.stringify(payload)});
+        const routed=window.xyApiHub
+           ?await window.xyApiHub.sendChat(ep,payload,routeId)
+           :{res:await fetch(target,{method:'POST',headers,body:JSON.stringify(payload)}),routeId:ep.id};
+         const res=routed.res;routeId=routed.routeId;
         const {data,raw}=await readJsonResponse(res);
         if(!res.ok)throw new Error('HTTP '+res.status+' · '+diagnostic(data,raw));
         if(data?.error)throw new Error(diagnostic(data,raw));
