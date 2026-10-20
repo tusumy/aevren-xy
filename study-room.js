@@ -19,6 +19,9 @@ function book(db,who=id()){
 }
 const currentBook=()=>book(load());
 let tab="card",editLore="",editChapter="",status="",greetingChoice=0,greetingRole="";
+const studyFoldKey="xy.study.details.open.v1";
+let studySectionsOpen=false;
+try{studySectionsOpen=localStorage.getItem(studyFoldKey)==="true"}catch{}
 function saveStudy(edit,message="已保存到本机"){
   try{const db=load();edit(book(db));localStorage.setItem(KEY,JSON.stringify(db));status=message;draw()}
   catch(e){status="保存失败："+String(e?.message||e);draw()}
@@ -54,16 +57,20 @@ function draw(){
   };
   // Avoid the app-wide header{height:72px} used for the chat title bar.
   // A book cover must grow with its title and overview stats.
-  const hero='<section class="study-cover">'+
+  const hero='<section class="study-cover" aria-label="书房故事档案封面">'+
     '<span class="study-cover-kicker">THE STORY ARCHIVE <i>✦</i></span>'+
     '<strong>'+escape(charName())+'的故事档案</strong>'+
     '<p>'+escape(bindingNote)+'</p>'+
+    '<span class="xy-study-hero-art" aria-hidden="true"></span></section>';
+  let html='<div id="xyStudy">'+hero+
+    '<details class="xy-study-sections" id="xyStudySections" '+(studySectionsOpen?'open':'')+'>'+
+    '<summary class="xy-study-sections-summary"><span><strong>展开书房内容</strong><small>'+counts.greetings+' 种开场 · '+counts.lore+' 条设定 · '+counts.chapters+' 篇章节</small></span><span class="xy-study-sections-chevron" aria-hidden="true">⌄</span></summary>'+
+    '<div class="xy-study-sections-body">'+
     '<div class="study-overview">'+
       '<span><b>'+counts.greetings+'</b><small>种开场</small></span>'+
       '<span><b>'+counts.lore+'</b><small>条设定</small></span>'+
       '<span><b>'+counts.chapters+'</b><small>篇章节</small></span>'+
-    '</div></section>';
-  let html='<div id="xyStudy">'+hero+
+    '</div>'+
     '<nav class="study-tabs" aria-label="书房页面">'+[["card","人物"],["preset","预设"],["lore","世界书"],["chapter","故事线"]].map(x=>btn("tab",x[1],x[0],x[0]===tab?"selected":"")).join("")+'</nav>'+
     (status?'<p class="study-status" role="status">'+escape(status)+'</p>':"")+
     '<details class="study-preview"><summary>这轮角色读到了什么 <span>核对上下文 ↗</span></summary>'+
@@ -202,8 +209,14 @@ function draw(){
       '</section>';
   }
   html+='<footer class="study-footer">'+btn("export","导出本角色书房 JSON")+btn("copy","复制书房 JSON")+
-    '<small>书房资料保存在本机，同时包含在「数据管理」的砚屿完整备份里。</small></footer></div>';
-  host.innerHTML=html;panel.classList.add("open");document.querySelector("#scrim")?.classList.add("show");
+    '<small>书房资料保存在本机，同时包含在「数据管理」的砚屿完整备份里。</small></footer></div></details></div>';
+  host.innerHTML=html;
+  const fold=host.querySelector("#xyStudySections");
+  fold?.addEventListener("toggle",()=>{
+    studySectionsOpen=fold.open;
+    try{localStorage.setItem(studyFoldKey,String(fold.open))}catch{}
+  });
+  panel.classList.add("open");document.querySelector("#scrim")?.classList.add("show");
 }
 const val=k=>document.getElementById(k)?.value?.trim()||"";
 const on=k=>!!document.getElementById(k)?.checked;
