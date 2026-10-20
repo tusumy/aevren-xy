@@ -180,7 +180,11 @@
       const tab=e.target.closest("[data-hub-filter]");
       if(tab){currentTab=tab.dataset.hubFilter;updateFilter(root);return}
       const open=e.target.closest("[data-open]");
-      if(open)openPanel(open.dataset.open);
+      if(open){
+        // Keep the hub as this tool's parent in both toolbar and Android Back.
+        window.xyPanelNavigation?.enterFromHub?.();
+        openPanel(open.dataset.open);
+      }
     });
     drawCards(root);
     renderRecent(root);
