@@ -216,7 +216,7 @@
     };
     const headers={"Content-Type":"application/json",Accept:"application/json"};
     if(ep.key)headers.Authorization="Bearer "+ep.key;
-    const res=await fetch(completeChatEndpoint(ep.base),{method:"POST",headers,body:JSON.stringify(req)});
+    const res=window.xyApiHub?(await window.xyApiHub.sendChat(ep,req)).res:await fetch(completeChatEndpoint(ep.base),{method:"POST",headers,body:JSON.stringify(req)});
     const {data,raw}=await readJsonResponse(res);
     if(!res.ok||data?.error)throw new Error("心音补生成失败："+diagnostic(data,raw));
     const msg=normalizeApiResponse(data);
