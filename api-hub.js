@@ -56,22 +56,9 @@
     if(!ep||!modelsFor(ep).some(x=>keyOf(x)===keyOf(model)))return;
     const c=chat();if(!c)return;
     c.xyApiChoice={endpointId,model};
-    save();renderHeader();renderUI();
-  }
-  function renderHeader(){
-    const parent=document.querySelector("header .presence");
-    if(!parent)return;
-    let btn=document.querySelector("#xyModelQuickSwitch");
-    if(!btn){
-      btn=document.createElement("button");btn.id="xyModelQuickSwitch";
-      btn.className="xy-model-quick";btn.type="button";
-      btn.setAttribute("aria-label","切换当前对话模型");
-      parent.insertAdjacentElement("afterend",btn);
-      btn.addEventListener("click",()=>{openPanel("settings");requestAnimationFrame(()=>document.querySelector("#xyApiHubPanel")?.scrollIntoView({block:"start",behavior:"smooth"}))});
-    }
-    const x=selected();
-    btn.textContent=x?.model||"选择模型";
-    btn.title=x?.endpoint?x.endpoint.name+" · "+(x.model||"未选择"):"选择模型";
+    save();renderUI();
+    const panel=document.querySelector('#xyApiHubPanel');
+    if(panel)panel.open=false;
   }
   function record(ep,model,status,elapsed,tokens){
     const logs=stats();
@@ -134,7 +121,12 @@
     const chosen=selected(),fav=favorites();
     const all=groups();
     const visible=all.filter(x=>(!search||(x.name+" "+x.candidates.map(c=>c.endpoint.name).join(" ")).toLowerCase().includes(search))&&(!onlyFav||fav.includes(x.id)));
-    root.querySelector("#xyHubCount").textContent=visible.length+" / "+all.length+" 个模型";
+    // The summary remains readable even while the model list is folded away.
+    root.querySelector("#xyHubCount").textContent=all.length+" 个模型";
+    const label=chosen?.model
+      ?chosen.model+(chosen.endpoint?.name?" · "+chosen.endpoint.name:"")
+      :"尚未选择模型";
+    root.querySelector("#xyHubCurrent").textContent=label;
     root.querySelector("#xyHubModels").innerHTML=visible.map(g=>{
       const sorted=orderedCandidates(g,chosen?.model&&keyOf(chosen.model)===g.id?chosen.endpoint.id:"");
       const primary=sorted[0];
@@ -144,14 +136,14 @@
     }).join("")||'<p class="xy-hub-empty">没有找到模型。先在下方添加渠道或同步模型。</p>';
     const cards=root.querySelector("#xyHubChannels");
     cards.innerHTML=endpoints.map(ep=>'<div class="xy-hub-channel"><div><strong>'+escText(ep.name)+'</strong><small>'+modelsFor(ep).length+' 个已知模型 · '+statsText(ep.id)+'</small></div><button type="button" data-sync="'+escText(ep.id)+'">同步模型</button></div>').join("");
-    renderHeader();
   }
   function inject(){
     const body=document.querySelector("#panelBody");
     if(!body?.querySelector("#endpointList"))return;
     if(body.querySelector("#xyApiHubPanel")){renderUI();return}
-    const section=document.createElement("section");section.id="xyApiHubPanel";section.className="xy-api-hub";
-    section.innerHTML='<div class="xy-hub-heading"><div><strong>统一模型</strong><small>当前对话独立选择 · 本机直连，无需部署服务</small></div><span id="xyHubCount"></span></div><label class="xy-hub-filter"><input type="search" id="xyHubSearch" placeholder="搜索模型或渠道"><span><input type="checkbox" id="xyHubOnlyFav"> 仅收藏</span></label><div id="xyHubModels" class="xy-hub-models"></div><details class="xy-hub-channel-panel"><summary>渠道模型与今日使用量</summary><div id="xyHubChannels"></div><small id="xyHubSyncStatus" role="status"></small></details><p class="xy-hub-tip">只在多个渠道提供相同模型 ID 时，才自动尝试备用渠道；不会偷偷换成其他模型。旧对话与原 API 配置保留。</p>';
+    // Native disclosure: compact by default and accessible by tapping the row.
+    const section=document.createElement("details");section.id="xyApiHubPanel";section.className="xy-api-hub";
+    section.innerHTML='<summary class="xy-hub-summary"><span class="xy-hub-summary-main"><strong>统一模型</strong><small id="xyHubCurrent">尚未选择模型</small></span><span class="xy-hub-summary-tail"><small id="xyHubCount"></small><i aria-hidden="true">⌄</i></span></summary><div class="xy-hub-content"><label class="xy-hub-filter"><input type="search" id="xyHubSearch" placeholder="搜索模型或渠道"><span><input type="checkbox" id="xyHubOnlyFav"> 仅收藏</span></label><div id="xyHubModels" class="xy-hub-models"></div><details class="xy-hub-channel-panel"><summary>渠道模型与今日使用量</summary><div id="xyHubChannels"></div><small id="xyHubSyncStatus" role="status"></small></details><p class="xy-hub-tip">只在多个渠道提供相同模型 ID 时，才自动尝试备用渠道；不会偷偷换成其他模型。旧对话与原 API 配置保留。</p></div>';
     const list=body.querySelector("#endpointList");
     list.insertAdjacentElement("beforebegin",section);
     section.addEventListener("input",e=>{if(e.target.id==="xyHubSearch")renderUI()});
@@ -208,8 +200,7 @@
     if(type==="settings")requestAnimationFrame(inject);
     return result;
   };
-  const oldRenderMessages=renderMessages;
-  renderMessages=function(){const result=oldRenderMessages();renderHeader();return result};
-  window.xyApiHub={resolveEndpoint,sendChat,groups,selected,renderHeader};
-  renderHeader();
+  // No second model button in the conversation header. The gear opens this section.
+  document.querySelector("#xyModelQuickSwitch")?.remove();
+  window.xyApiHub={resolveEndpoint,sendChat,groups,selected};
 })();
