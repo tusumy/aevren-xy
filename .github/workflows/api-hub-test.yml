@@ -1,0 +1,42 @@
+name: API Hub Checks
+
+on:
+  pull_request:
+    paths:
+      - 'api-hub.js'
+      - 'api-hub.css'
+      - 'api-compat.js'
+      - 'app.js'
+      - 'index.html'
+      - 'proxy-layer.js'
+      - 'tests/api-hub.test.cjs'
+      - '.github/workflows/api-hub-test.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'api-hub.js'
+      - 'api-compat.js'
+      - 'app.js'
+      - 'proxy-layer.js'
+      - 'tests/api-hub.test.cjs'
+      - '.github/workflows/api-hub-test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  api-hub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check api-hub.js
+          node --check api-compat.js
+          node --check app.js
+          node --check proxy-layer.js
+      - name: Route regression tests
+        run: node --test tests/api-hub.test.cjs
