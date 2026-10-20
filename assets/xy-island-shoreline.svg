@@ -1,22 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 760" preserveAspectRatio="none" fill="none" aria-hidden="true">
-  <title>砚屿 · 环绕内容的海岸线</title>
-  <!-- The complete island shoreline surrounds the page, instead of a little
-       scenic sticker placed over its words. All paths are alpha-only masks. -->
-  <g stroke="#000" stroke-linejoin="round" stroke-linecap="round">
-    <path stroke-width="3" d="M34 65 C51 41 90 23 135 28 C171 13 212 27 241 19 C287 14 334 35 346 69
-      C362 108 350 163 358 221 C369 275 353 326 360 379 C365 436 355 500 353 561
-      C358 624 353 683 330 714 C307 746 261 733 216 747 C172 739 132 751 92 732
-      C49 741 20 716 24 673 C10 611 23 556 17 501 C7 441 25 389 16 331
-      C9 277 23 230 16 177 C10 125 12 94 34 65 Z"/>
-    <path stroke-width="1.5" stroke-dasharray="1 7" d="M45 77 C68 46 93 49 142 45 C170 34 199 47 241 35 C279 34 319 45 331 78
-      M340 92 C346 162 337 208 344 276 M339 473 C346 535 337 601 336 657
-      M320 697 C294 719 246 713 218 729 C176 723 139 730 99 713 M38 680 C27 621 38 589 29 532
-      M30 313 C21 258 34 222 28 169"/>
-    <path stroke-width="1" d="M45 111 C60 89 89 71 116 73 M270 58 C295 60 318 78 321 101
-      M326 639 C324 664 307 689 284 699 M61 700 C81 711 97 708 115 719"/>
-    <path stroke-width="1.3" d="M52 735 C87 749 119 754 150 750 M199 759 C237 749 267 754 293 742
-      M6 186 C0 210 2 229 7 244 M373 420 C378 452 377 485 373 504"/>
-    <path stroke-width="1.4" d="M90 17 v9 m-5-4.5h10 M299 16 v10 m-5-5h10
-      M8 377v12 m-6-6h12 M365 610v14m-7-7h14"/>
+  <title>砚屿 · 环绕整页的海岸线</title>
+  <!-- All shore strokes stay inside narrow page gutters. No path crosses
+       readable content even when the Tool Hub grows very long on a phone. -->
+  <g stroke="#000" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke-width="2.8" d="M12 11 C47 2 90 8 129 5 C173 2 208 7 244 4 C288 0 333 5 366 13
+      C376 49 368 97 373 148 C367 204 377 265 370 320 C376 375 367 426 372 480
+      C366 539 377 594 369 652 C376 695 372 740 361 750
+      C316 755 283 752 244 756 C201 752 165 759 127 755 C82 760 40 753 13 746
+      C5 711 11 671 7 635 C15 586 4 546 10 497 C4 442 12 399 7 347
+      C12 299 4 250 10 204 C5 150 13 103 8 58 C8 39 9 21 12 11 Z"/>
+    <path stroke-width="1" stroke-dasharray="1 7" d="M26 16 C72 12 111 16 154 12 C216 17 251 10 309 13 C333 12 347 13 355 19
+      M362 30 C358 87 365 148 360 201 M361 222 C366 286 356 341 362 401
+      M361 428 C358 493 364 549 359 604 M362 627 C359 672 361 704 351 741
+      M342 744 C285 745 239 748 186 750 C132 748 90 750 31 739
+      M20 727 C16 675 23 625 16 579 M19 549 C13 492 19 437 15 380
+      M18 340 C17 289 14 232 18 182 M20 163 C15 113 22 60 19 26"/>
+    <path stroke-width="1.1" d="M39 21 C74 19 94 21 116 19 M272 17 C299 19 315 20 340 21
+      M29 735 C62 741 89 741 118 743 M273 744 C303 742 327 743 342 739
+      M26 55 C27 91 26 121 24 139 M352 645 C354 680 352 698 350 716"/>
+    <path stroke-width="1.2" d="M106 2 v9 m-4.5-4.5h9 M303 3 v9 m-4.5-4.5h9
+      M3 367v12m-6-6h12 M374 602v13m-6.5-6.5h13"/>
   </g>
 </svg>
