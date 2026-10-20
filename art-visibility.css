@@ -1,0 +1,113 @@
+/* Show all three drawn illustrations in their actual home pages.
+   Island lives in Tool Hub; book in Study; botanical notes in Journal.
+   Never overlay text with illustration pixels. */
+
+/* The old book illustration was a nearly invisible pseudo-element on phones.
+   Put it in its own grid column instead. */
+#panel #xyStudy .study-cover{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 122px;
+  column-gap:5px;
+  row-gap:9px;
+  align-items:start;
+}
+#panel #xyStudy .study-cover::after{content:none!important;display:none!important}
+#panel #xyStudy .study-cover > :is(.study-cover-kicker,strong,p){
+  grid-column:1;
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+}
+#panel #xyStudy .study-cover > .study-cover-kicker{grid-row:1}
+#panel #xyStudy .study-cover > strong{grid-row:2}
+#panel #xyStudy .study-cover > p{grid-row:3}
+#panel #xyStudy .study-cover .xy-study-cover-art{
+  grid-column:2;
+  grid-row:1 / span 3;
+  align-self:center;
+  justify-self:end;
+  width:122px;
+  height:122px;
+  z-index:0;
+  background:url("./assets/xy-storybook-sprig.svg") center/contain no-repeat;
+  opacity:.94;
+  pointer-events:none;
+  filter:contrast(1.14) saturate(1.04);
+}
+#panel #xyStudy .study-cover > .study-overview{
+  grid-column:1/-1;
+  grid-row:4;
+  max-width:none;
+}
+#panel .xy-journal-shelf-artwork[hidden]{display:none!important}
+#panel .xy-journal-shelf-artwork{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 132px;
+  align-items:center;
+  gap:7px;
+  min-height:103px;
+  padding:8px 10px 8px 17px;
+  margin:-4px 0 15px;
+  overflow:hidden;
+  border-radius:15px;
+  border:1px solid color-mix(in srgb,var(--theme-accent,#62816b) 16%,transparent);
+  background:linear-gradient(120deg,rgba(235,243,234,.64),rgba(252,251,244,.47));
+}
+#panel .xy-journal-shelf-artwork-copy{
+  min-width:0;
+  display:grid;
+  gap:8px;
+  align-content:center;
+}
+#panel .xy-journal-shelf-artwork-copy small{
+  font-size:9px;
+  letter-spacing:.15em;
+  line-height:1.5;
+  color:var(--muted,#708779);
+}
+#panel .xy-journal-shelf-artwork-copy strong{
+  font-size:14px;
+  font-weight:620;
+  line-height:1.55;
+  color:var(--ink,#31503b);
+  overflow-wrap:anywhere;
+}
+#panel .xy-journal-shelf-artwork-image{
+  display:block;
+  width:132px;
+  height:100px;
+  max-width:100%;
+  background:url("./assets/xy-journal-botanical.svg") center/contain no-repeat;
+  opacity:.95;
+  pointer-events:none;
+  filter:contrast(1.12) saturate(1.05);
+}
+/* The two drawings must remain legible in dark mode while their copy
+   stays on a solid high-contrast surface. */
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover .xy-study-cover-art{
+  filter:brightness(1.5) contrast(1.08) saturate(.8);
+  opacity:.84;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel .xy-journal-shelf-artwork{
+  background:linear-gradient(120deg,rgba(41,60,47,.88),rgba(35,49,40,.93));
+  border-color:rgba(181,209,185,.2);
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel .xy-journal-shelf-artwork-copy small{color:#b3cbb9}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel .xy-journal-shelf-artwork-copy strong{color:#e5f3e8}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel .xy-journal-shelf-artwork-image{
+  filter:brightness(1.5) contrast(1.1) saturate(.73);
+  opacity:.82;
+}
+@media(max-width:460px){
+  #panel #xyStudy .study-cover{grid-template-columns:minmax(0,1fr) 100px;column-gap:2px}
+  #panel #xyStudy .study-cover .xy-study-cover-art{width:102px;height:112px;opacity:.94}
+  #panel .xy-journal-shelf-artwork{grid-template-columns:minmax(0,1fr) 105px;padding-left:14px}
+  #panel .xy-journal-shelf-artwork-image{width:105px;height:90px}
+}
+@media(max-width:350px){
+  #panel #xyStudy .study-cover{grid-template-columns:minmax(0,1fr) 82px}
+  #panel #xyStudy .study-cover .xy-study-cover-art{width:84px;height:103px}
+  #panel .xy-journal-shelf-artwork{grid-template-columns:minmax(0,1fr) 88px}
+  #panel .xy-journal-shelf-artwork-image{width:88px;height:88px}
+  #panel .xy-journal-shelf-artwork-copy strong{font-size:13px}
+}
