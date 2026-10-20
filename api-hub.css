@@ -1,18 +1,33 @@
 
 /* On-device API hub: compact, theme-compatible, no separate settings screen. */
-.xy-model-quick{
-  margin-left:auto;max-width:min(38vw,180px);min-width:72px;border:1px solid var(--border,rgba(120,120,120,.22));
-  border-radius:999px;background:var(--surface,rgba(127,127,127,.07));color:inherit;
-  padding:7px 10px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
 .xy-api-hub{
-  padding:14px;margin:10px 0 16px;border:1px solid var(--border,rgba(127,127,127,.2));
-  border-radius:18px;background:var(--surface,rgba(127,127,127,.05));color:inherit
+  padding:0;margin:8px 0 13px;
+  border:1px solid var(--border,rgba(127,127,127,.2));
+  border-radius:16px;background:var(--surface,rgba(127,127,127,.05));color:inherit;
+  overflow:visible;
 }
-.xy-hub-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.xy-hub-heading>div{display:flex;flex-direction:column;gap:3px}
-.xy-hub-heading strong{font-size:16px;font-weight:650}
-.xy-hub-heading small,.xy-hub-heading>span,.xy-hub-tip,.xy-hub-channel-panel small{font-size:11px;opacity:.7}
+.xy-hub-summary{
+  list-style:none;display:flex;align-items:center;gap:10px;min-height:62px;
+  padding:12px 14px;cursor:pointer;user-select:none;border-radius:16px;
+}
+.xy-hub-summary::-webkit-details-marker{display:none}
+.xy-hub-summary::marker{content:""}
+.xy-hub-summary:focus-visible{outline:2px solid var(--accent,#698b8a);outline-offset:2px}
+.xy-hub-summary-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.xy-hub-summary-main strong{font-size:15px;font-weight:650}
+.xy-hub-summary-main small{
+  display:block;font-size:11px;opacity:.65;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.xy-hub-summary-tail{display:flex;align-items:center;flex:none;gap:8px}
+.xy-hub-summary-tail small{font-size:11px;opacity:.65;white-space:nowrap}
+.xy-hub-summary-tail i{
+  font-size:17px;font-style:normal;opacity:.55;
+  transition:transform .18s ease;transform-origin:center;
+}
+.xy-api-hub[open] .xy-hub-summary-tail i{transform:rotate(180deg)}
+.xy-api-hub[open] .xy-hub-summary{border-bottom-left-radius:0;border-bottom-right-radius:0}
+.xy-hub-content{padding:0 12px 12px;border-top:1px solid rgba(127,127,127,.12)}
 .xy-hub-filter{display:flex;align-items:center;gap:9px;margin:12px 0}
 .xy-hub-filter>input{min-width:0;flex:1;box-sizing:border-box;padding:9px 10px;border-radius:10px;border:1px solid rgba(127,127,127,.26);background:transparent;color:inherit}
 .xy-hub-filter>span{white-space:nowrap;font-size:12px;display:flex;align-items:center;gap:4px}
@@ -46,4 +61,4 @@
 .xy-hub-channel button{border:1px solid rgba(127,127,127,.27);border-radius:9px;padding:7px 9px;font-size:11px}
 .xy-hub-tip{line-height:1.55;margin:9px 0 0}
 .xy-hub-empty{font-size:12px;opacity:.7;padding:12px}
-@media(max-width:420px){.xy-api-hub{padding:11px;margin:8px 0 13px}.xy-model-quick{max-width:30vw}}
+@media(max-width:420px){.xy-hub-summary{padding:11px 12px}.xy-hub-summary-main strong{font-size:14px}.xy-hub-content{padding:0 11px 11px}}
