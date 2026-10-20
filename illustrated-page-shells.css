@@ -211,6 +211,70 @@
 #panel #xyStudy .study-memory-board,#panel #xyStudy .study-editor,#panel #xyStudy .study-greeting-picker{
   background:var(--story-card)!important;border-color:var(--story-line)!important;
 }
+/* The feature cards themselves become the drawings:
+   first a little island cove with a shore and water at its rim,
+   then an open two-page storybook whose left page holds the real text. */
+#xyToolHub .xy-hub-hero{
+  border-radius:41px 33px 43px 31px / 39px 46px 38px 48px!important;
+  background:
+    radial-gradient(ellipse at 78% 74%,color-mix(in srgb,var(--hub-accent) 16%,transparent),transparent 66%),
+    linear-gradient(125deg,#fffdf9,color-mix(in srgb,var(--hub-accent) 5%,#fbfaf5))!important;
+}
+#xyToolHub .xy-hub-hero::before{
+  content:""!important;display:block!important;
+  position:absolute;inset:7px;z-index:0;pointer-events:none;
+  border-radius:38px 30px 39px 26px / 35px 42px 34px 44px;
+  border:1px solid color-mix(in srgb,var(--hub-accent) 27%,transparent);
+  background:none!important;
+  height:auto;width:auto;transform:none;box-shadow:none;
+}
+#xyToolHub .xy-hub-hero::after{
+  content:""!important;display:block!important;
+  position:absolute;left:13%;right:9%;bottom:8px;top:auto;
+  height:15px;width:auto;z-index:0;
+  border:0;box-shadow:none;transform:none;
+  background:repeating-radial-gradient(ellipse at 50% 0%,transparent 0 20px,color-mix(in srgb,var(--hub-accent) 19%,transparent) 22px 23px,transparent 24px 45px);
+  opacity:.62;pointer-events:none;
+}
+#panel #xyStudy .study-cover{
+  border-radius:26px 18px 19px 27px / 22px 28px 26px 20px!important;
+  background:
+    linear-gradient(90deg,transparent 0 56%,color-mix(in srgb,var(--xy-ui-accent) 11%,transparent) 59%,rgba(100,100,100,.06) 60%,rgba(255,255,255,.8) 62%,transparent 64%),
+    linear-gradient(90deg,#fffefa 0 59%,#faf9f4 60% 100%)!important;
+  box-shadow:4px 5px 0 -2px color-mix(in srgb,var(--xy-ui-accent) 13%,#deddd9),0 14px 29px rgba(35,35,35,.07)!important;
+}
+#panel #xyStudy .study-cover::before{
+  content:""!important;display:block!important;
+  position:absolute;z-index:0;pointer-events:none;
+  top:12px;bottom:12px;left:59%;right:auto;
+  width:2px;height:auto;
+  border:0;border-radius:999px;
+  background:linear-gradient(180deg,transparent,color-mix(in srgb,var(--xy-ui-accent) 22%,#bbb) 17% 84%,transparent)!important;
+  opacity:.85;box-shadow:2px 0 4px rgba(65,65,65,.05);
+}
+#panel #xyStudy .study-cover::after{
+  content:""!important;display:block!important;
+  position:absolute;inset:7px;z-index:0;pointer-events:none;
+  border:1px solid color-mix(in srgb,var(--xy-ui-accent) 16%,#deddd8);
+  border-radius:21px 14px 14px 23px / 17px 23px 19px 16px;
+  background:none!important;box-shadow:none;
+  width:auto;height:auto;opacity:.85;
+  top:7px;right:7px;bottom:7px;left:7px;transform:none;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #xyToolHub .xy-hub-hero{
+  background:
+    radial-gradient(ellipse at 77% 70%,color-mix(in srgb,var(--hub-accent) 17%,transparent),transparent 66%),
+    linear-gradient(130deg,#2b2d30,#25272b)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover{
+  background:
+    linear-gradient(90deg,transparent 0 56%,color-mix(in srgb,var(--xy-ui-accent) 12%,transparent) 59%,rgba(0,0,0,.13) 60%,rgba(255,255,255,.025) 62%,transparent 64%),
+    linear-gradient(90deg,#2f3034 0 59%,#292a2e 60% 100%)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover::after{
+  border-color:rgba(180,180,180,.16);
+}
+
 /* Keep previous whole-notebook styling intact; this correction only alters
    Tool Hub and Study, not existing diary records or readers. */
 /* 3. Notebook. All journal actions, editor, bookshelf and reading pages
