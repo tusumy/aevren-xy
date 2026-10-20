@@ -32,6 +32,11 @@
   const favKey="xy.toolhub.favorites.v1";
   let currentTab="all";
   let currentSearch="";
+  const expandKey="xy.toolhub.sections.open.v1";
+  function readExpanded(){
+    try{return localStorage.getItem(expandKey)==="true"}catch{return false}
+  }
+
   function favorites(){
     try{
       const saved=JSON.parse(localStorage.getItem(favKey));
@@ -149,10 +154,15 @@
     document.querySelector("#panelTitle").textContent="工具中心";
     const state=status();
     body.innerHTML='<div id="xyToolHub">'+
-      '<div class="xy-hub-hero"><div class="xy-hub-hero-kicker">YOUR SPACE · YOUR TOOLS</div>'+
-      '<h2>把复杂的收起来。<br>想用时，一点就到。</h2>'+
-      '<p>聊天留在外面，功能都放在这里。原来的设置和数据不会改变。</p>'+
-      '<div class="xy-hub-status"><span class="xy-hub-status-dot" aria-hidden="true"></span><span>当前接口 <strong>'+escapeHtml(state.selected)+'</strong></span></div></div>'+
+      '<section class="xy-hub-hero" aria-label="工具中心介绍">'+
+        '<div class="xy-hub-intro"><div class="xy-hub-hero-kicker">YOUR SPACE · YOUR TOOLS</div>'+
+        '<h2>把复杂的收起来。<br>想用时，一点就到。</h2>'+
+        '<p>聊天留在外面，功能都放在这里。原来的设置和数据不会改变。</p>'+
+        '<div class="xy-hub-status"><span class="xy-hub-status-dot" aria-hidden="true"></span><span>当前接口 <strong>'+escapeHtml(state.selected)+'</strong></span></div></div>'+
+        '<span class="xy-hub-island-art" aria-hidden="true"></span></section>'+
+      '<details class="xy-hub-sections" id="xyHubSectionsDisclosure" '+(readExpanded()?'open':'')+'>'+
+      '<summary><span><strong>工具与收藏</strong><small>'+tools.length+' 个功能 · 点开查看</small></span><span class="xy-hub-sections-chevron" aria-hidden="true">⌄</span></summary>'+
+      '<div class="xy-hub-sections-body">'+
       '<div class="xy-hub-stats"><div><strong>'+String(tools.length).padStart(2,"0")+'</strong><span>个功能入口</span></div><div><strong>'+state.enabled+'</strong><span>已启用 MCP</span></div><div><strong id="xyHubFavCount">0</strong><span>收藏的入口</span></div></div>'+
       '<section class="xy-hub-recent" id="xyHubRecent" hidden><h3>最近打开</h3><div id="xyHubRecentLinks" class="xy-hub-recent-links"></div></section>'+ 
       '<label class="xy-hub-search"><span aria-hidden="true">⌕</span><input id="xyHubSearch" type="search" autocomplete="off" placeholder="搜索工具、功能…" aria-label="搜索工具"></label>'+
@@ -162,8 +172,12 @@
       '<button type="button" data-hub-filter="外观与管理">管理</button><button type="button" data-hub-filter="连接">连接</button></div>'+
       '<div class="xy-hub-result"><span>找到 <b id="xyHubShowing">8</b> 项</span><span>点星号可收藏</span></div>'+
       '<div id="xyHubSections"></div><div id="xyHubEmpty" class="xy-hub-empty" hidden>没找到这个工具，换个关键词试试。</div>'+
-      '<p class="xy-hub-footer">功能入口集中管理 · 各页面保留原来的操作方式</p></div>';
+      '<p class="xy-hub-footer">功能入口集中管理 · 各页面保留原来的操作方式</p></div></details></div>';
     const root=body.querySelector("#xyToolHub");
+    const fold=root.querySelector("#xyHubSectionsDisclosure");
+    fold?.addEventListener("toggle",()=>{
+      try{localStorage.setItem(expandKey,String(fold.open))}catch{}
+    });
     root.querySelector("#xyHubSearch").value=currentSearch;
     root.addEventListener("input",e=>{
       if(e.target.id==="xyHubSearch"){currentSearch=e.target.value;updateFilter(root)}
