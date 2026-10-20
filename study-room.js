@@ -56,7 +56,6 @@ function draw(){
   // A book cover must grow with its title and overview stats.
   const hero='<section class="study-cover">'+
     '<span class="study-cover-kicker">THE STORY ARCHIVE <i>✦</i></span>'+
-    '<span class="xy-study-cover-art" aria-hidden="true"></span>'+
     '<strong>'+escape(charName())+'的故事档案</strong>'+
     '<p>'+escape(bindingNote)+'</p>'+
     '<div class="study-overview">'+
