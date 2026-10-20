@@ -17,11 +17,15 @@
    original.replaceWith(shell);
    const originalEditor=body.querySelector("#xyJournalEditor");
    const heading=document.createElement("div");heading.className="xy-journal-shelf-head";heading.textContent="DIARY SHELF · "+list().length+" 篇";
+   const artwork=document.createElement("div");
+   artwork.className="xy-journal-shelf-artwork";
+   artwork.innerHTML='<span class="xy-journal-shelf-artwork-copy"><small>BOTANICAL NOTES</small><strong>收好每一页日常</strong></span><span class="xy-journal-shelf-artwork-image" aria-hidden="true"></span>';
    const search=document.createElement("input");search.type="search";search.className="xy-journal-search";search.placeholder="搜索日期、标题或正文…";
    const shelf=document.createElement("div");shelf.className="xy-journal-shelf";
    const reader=document.createElement("div");reader.className="xy-journal-reader";reader.hidden=true;
-   shell.append(heading,search,shelf,reader);
+   shell.append(heading,artwork,search,shelf,reader);
    function render(q=""){
+     artwork.hidden=list().length===0;
      const found=list().filter(x=>!q||[title(x),x.text,day(x.createdAt)].some(v=>String(v||"").toLowerCase().includes(q.toLowerCase())));
      if(!found.length){
        shelf.innerHTML=q?"<p class='setting-note'>没有搜索结果</p>":"<div class='xy-journal-empty'><div class='xy-journal-empty-art' aria-hidden='true'></div><strong>留一页给今天</strong><p>书架还空着，写下第一篇吧。</p></div>";
@@ -33,7 +37,7 @@
    }
    function readBook(id){
      const entry=list().find(x=>x.id===id);if(!entry)return;
-     shelf.hidden=true;search.hidden=true;heading.hidden=true;reader.hidden=false;
+     shelf.hidden=true;search.hidden=true;heading.hidden=true;artwork.hidden=true;reader.hidden=false;
      reader.innerHTML="<button type='button' class='xy-journal-back' data-book-back>‹ 返回书架</button><article class='xy-journal-page'><div class='xy-journal-date'>"+safe(day(entry.createdAt))+" · "+safe(entry.characterName||ch().name)+"</div><h3>"+safe(title(entry))+"</h3><div class='xy-journal-content'>"+safe(entry.text)+"</div></article><div class='xy-journal-reader-actions'><button data-book-edit='"+safe(id)+"'>编辑</button><button data-book-rename='"+safe(id)+"'>重命名</button><button data-book-pin='"+safe(id)+"'>"+(entry.pinned?"取消置顶":"置顶")+"</button><button data-book-delete='"+safe(id)+"'>删除</button></div>";
    }
    function showShelf(){
