@@ -27,22 +27,17 @@
     document.documentElement.dataset.showAvatars=avatars.visible?"1":"0";
     if(!avatars.visible)return;
     const ch=currentCharacter(),assistantSrc=charAvatar(),userSrc=avatars.user||"";
-    const groups=new Map();
+    // Every rendered bubble gets its own avatar. Assistant replies can be split
+    // into several paragraph bubbles, and each one should still visibly belong
+    // to the speaker instead of looking like an anonymous continuation.
     box.querySelectorAll(".message[data-message]").forEach(row=>{
-      const key=row.dataset.message+":"+row.classList.contains("assistant");
-      if(!groups.has(key))groups.set(key,[]);
-      groups.get(key).push(row);
-    });
-    groups.forEach(rows=>{
-      const first=rows[0];if(!first)return;
-      const isAssistant=first.classList.contains("assistant");
+      const isAssistant=row.classList.contains("assistant");
       const src=isAssistant?assistantSrc:userSrc;
       const label=isAssistant?ch.name:"我";
       const node=avatarNode(src,label,isAssistant?"assistant":"user");
-      first.classList.add("xy-has-avatar");
-      if(isAssistant)first.insertAdjacentElement("afterbegin",node);
-      else first.appendChild(node);
-      if(isAssistant&&rows.length>1)rows.slice(1).forEach(row=>row.classList.add("xy-avatar-continuation"));
+      row.classList.add("xy-has-avatar");
+      if(isAssistant)row.insertAdjacentElement("afterbegin",node);
+      else row.appendChild(node);
     });
   }
 
