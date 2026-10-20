@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 760" preserveAspectRatio="none" fill="none" aria-hidden="true">
+  <title>砚屿 · 环绕内容的海岸线</title>
+  <!-- The complete island shoreline surrounds the page, instead of a little
+       scenic sticker placed over its words. All paths are alpha-only masks. -->
+  <g stroke="#000" stroke-linejoin="round" stroke-linecap="round">
+    <path stroke-width="3" d="M34 65 C51 41 90 23 135 28 C171 13 212 27 241 19 C287 14 334 35 346 69
+      C362 108 350 163 358 221 C369 275 353 326 360 379 C365 436 355 500 353 561
+      C358 624 353 683 330 714 C307 746 261 733 216 747 C172 739 132 751 92 732
+      C49 741 20 716 24 673 C10 611 23 556 17 501 C7 441 25 389 16 331
+      C9 277 23 230 16 177 C10 125 12 94 34 65 Z"/>
+    <path stroke-width="1.5" stroke-dasharray="1 7" d="M45 77 C68 46 93 49 142 45 C170 34 199 47 241 35 C279 34 319 45 331 78
+      M340 92 C346 162 337 208 344 276 M339 473 C346 535 337 601 336 657
+      M320 697 C294 719 246 713 218 729 C176 723 139 730 99 713 M38 680 C27 621 38 589 29 532
+      M30 313 C21 258 34 222 28 169"/>
+    <path stroke-width="1" d="M45 111 C60 89 89 71 116 73 M270 58 C295 60 318 78 321 101
+      M326 639 C324 664 307 689 284 699 M61 700 C81 711 97 708 115 719"/>
+    <path stroke-width="1.3" d="M52 735 C87 749 119 754 150 750 M199 759 C237 749 267 754 293 742
+      M6 186 C0 210 2 229 7 244 M373 420 C378 452 377 485 373 504"/>
+    <path stroke-width="1.4" d="M90 17 v9 m-5-4.5h10 M299 16 v10 m-5-5h10
+      M8 377v12 m-6-6h12 M365 610v14m-7-7h14"/>
+  </g>
+</svg>
