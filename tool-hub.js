@@ -222,6 +222,22 @@
     return result;
   };
   const shortcutHost=document.querySelector("#xySidebarFavorites");
+  const favoriteToggle=document.querySelector("#xySidebarFavToggle");
+  const favoriteExpandKey="xy.sidebar.favorites.expanded.v1";
+  function setSidebarFavoritesOpen(open){
+    if(shortcutHost)shortcutHost.hidden=!open;
+    if(favoriteToggle){
+      favoriteToggle.classList.toggle("is-open",open);
+      favoriteToggle.setAttribute("aria-expanded",String(open));
+    }
+    try{localStorage.setItem(favoriteExpandKey,String(open))}catch{}
+  }
+  if(favoriteToggle){
+    let initial=false;
+    try{initial=localStorage.getItem(favoriteExpandKey)==="true"}catch{}
+    setSidebarFavoritesOpen(initial);
+    favoriteToggle.addEventListener("click",()=>setSidebarFavoritesOpen(favoriteToggle.getAttribute("aria-expanded")!=="true"));
+  }
   shortcutHost?.addEventListener("click",e=>{
     const open=e.target.closest("[data-xy-favorite]");
     if(open){openPanel(open.dataset.xyFavorite);return}
