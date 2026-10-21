@@ -47,7 +47,7 @@
   <link rel="stylesheet" href="./settings-tidy.css?v=xy20261019fold1" />
   <link rel="stylesheet" href="./mcp-safety.css?v=xy20261019safe1" />
   <link rel="stylesheet" href="./image-studio.css?v=xy20261019atelier1" />
-  <link rel="stylesheet" href="./sidebar-refine.css?v=xy20261019atelier1" />
+  <link rel="stylesheet" href="./sidebar-refine.css?v=xy20261021compacttools1" />
   <link rel="stylesheet" href="./api-hub.css?v=xy20261020hub2" />
   <link rel="stylesheet" href="./art-visibility.css?v=xy20261020art2" />
   <link rel="stylesheet" href="./illustrated-page-shells.css?v=xy20261020hero2" />
@@ -70,11 +70,11 @@
         <p>换个标题关键词试试。</p>
       </div>
       <div class="sidebar-bottom">
-        <button class="nav-btn xy-tools-entry" type="button" data-panel="toolhub"><span class="xy-tools-symbol" aria-hidden="true">✦</span><span class="xy-tools-copy">工具中心<small>整理所有功能</small></span><span class="xy-tools-chevron" aria-hidden="true">↗</span></button>
-        <details class="xy-sidebar-fav-disclosure" id="xySidebarFavDisclosure">
-          <summary class="xy-sidebar-fav-head" aria-label="展开或收起已收藏工具"><span><span aria-hidden="true">★</span> 已收藏</span><span class="xy-sidebar-fav-right"><b id="xySidebarFavCount" aria-label="收藏数量">0</b><i aria-hidden="true">⌄</i></span></summary>
-          <nav id="xySidebarFavorites" class="xy-sidebar-favorites" aria-label="已收藏的工具"></nav>
-        </details>
+        <div class="xy-sidebar-tools-row">
+          <button class="nav-btn xy-tools-entry" type="button" data-panel="toolhub"><span class="xy-tools-symbol" aria-hidden="true">✦</span><span class="xy-tools-copy">工具中心<small>整理所有功能</small></span><span class="xy-tools-chevron" aria-hidden="true">↗</span></button>
+          <button class="xy-sidebar-fav-toggle" id="xySidebarFavToggle" type="button" aria-label="展开或收起已收藏工具" aria-expanded="false"><span class="xy-sidebar-fav-label"><span aria-hidden="true">★</span><span>收藏</span></span><span class="xy-sidebar-fav-right"><b id="xySidebarFavCount" aria-label="收藏数量">0</b><i aria-hidden="true">⌄</i></span></button>
+        </div>
+        <nav id="xySidebarFavorites" class="xy-sidebar-favorites" aria-label="已收藏的工具" hidden></nav>
         <!-- Legacy memory counter remains hidden for existing chat renderers. -->
         <span id="memoryCount" hidden>0</span>
       </div>
@@ -150,7 +150,7 @@
   <script src="./proactive-calls.js?v=xy20261015nativeonly"></script>
   <script src="./tavern-card-display.js?v=xy20261017jnfix"></script>
   <script src="./html-message-preview.js?v=xy20261017jnfix"></script>
-  <script src="./tool-hub.js?v=xy20261020hero2"></script>
+  <script src="./tool-hub.js?v=xy20261021compacttools1"></script>
   <script src="./conversation-finder.js?v=xy20261019a"></script>
   <script src="./settings-tidy.js?v=xy20261019fold1"></script>
   <script src="./mcp-safety.js?v=xy20261019safe1"></script>
