@@ -456,3 +456,127 @@
   #xyToolHub .xy-hub-sections-chevron,
   #panel #xyStudy .xy-study-sections-chevron{transition:none}
 }
+
+
+/* 2026-10-21 · Study cover correction.
+   The archive block IS the open book; do not frame the book inside another card. */
+#panel:has(#xyStudy){
+  background:#fffdf8!important;
+}
+#panel:has(#xyStudy) #panelBody{
+  background:transparent!important;
+}
+#panel #xyStudy .study-cover{
+  grid-template-columns:minmax(0,1fr) minmax(118px,.88fr)!important;
+  min-height:248px;
+  margin:0!important;
+  padding:22px 18px 24px!important;
+  border:0!important;
+  border-radius:0!important;
+  overflow:visible!important;
+  background:
+    linear-gradient(90deg,
+      #fffefa 0 48.5%,
+      rgba(117,149,133,.08) 49.2%,
+      rgba(70,86,77,.12) 50%,
+      rgba(255,255,255,.72) 50.8%,
+      #fffdf8 51.5% 100%)!important;
+  box-shadow:
+    0 10px 18px -16px rgba(43,50,46,.34),
+    inset 0 -1px 0 rgba(96,129,111,.15)!important;
+}
+#panel #xyStudy .study-cover::after{
+  content:none!important;
+  display:none!important;
+}
+#panel #xyStudy .study-cover::before{
+  content:""!important;
+  display:block!important;
+  position:absolute!important;
+  top:12px!important;
+  bottom:12px!important;
+  left:50%!important;
+  width:1px!important;
+  height:auto!important;
+  border:0!important;
+  border-radius:0!important;
+  background:linear-gradient(180deg,transparent,rgba(104,132,117,.23) 14% 86%,transparent)!important;
+  box-shadow:none!important;
+  opacity:.8!important;
+}
+#panel #xyStudy .study-cover > :is(.study-cover-kicker,strong,p){
+  grid-column:1!important;
+  padding-right:12px;
+}
+#panel #xyStudy .xy-study-hero-art{
+  grid-column:2!important;
+  grid-row:1 / 4!important;
+  width:100%!important;
+  height:196px!important;
+  align-self:center!important;
+  justify-self:center!important;
+  background:url("./assets/xy-storybook-sprig.svg") center/contain no-repeat!important;
+  -webkit-mask:none!important;
+  mask:none!important;
+  opacity:1!important;
+  filter:contrast(1.06) saturate(1.16) brightness(1.035)!important;
+}
+
+/* Repeated caret/arrow ornaments are not required in Study.
+   The labels themselves remain clickable, so the page reads cleaner. */
+#panel #xyStudy :is(
+  .xy-study-sections-chevron,
+  .study-greeting-chevron,
+  .study-chapter-chevron,
+  .study-digest-arrow
+){
+  display:none!important;
+}
+
+/* Keep the archive title clearly on the left page. */
+#panel #xyStudy .study-cover > strong{
+  max-width:100%!important;
+  color:#262b28!important;
+}
+#panel #xyStudy .study-cover > p{
+  color:#5d6a63!important;
+}
+#panel #xyStudy .study-cover-kicker{
+  color:#617c6e!important;
+}
+
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel:has(#xyStudy){
+  background:#252825!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover{
+  background:
+    linear-gradient(90deg,
+      #30332f 0 48.5%,
+      rgba(173,205,184,.08) 49.2%,
+      rgba(0,0,0,.22) 50%,
+      rgba(255,255,255,.025) 50.8%,
+      #2a2d29 51.5% 100%)!important;
+  box-shadow:0 10px 20px -17px rgba(0,0,0,.7)!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .xy-study-hero-art{
+  filter:brightness(1.2) contrast(1.04) saturate(.92)!important;
+  opacity:.92!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover > strong{
+  color:#eef2ee!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover > p{
+  color:#bdc9c0!important;
+}
+:is(html[data-theme-mode="dark"],body.theme-dark) #panel #xyStudy .study-cover-kicker{
+  color:#a9c5b2!important;
+}
+
+@media(max-width:460px){
+  #panel #xyStudy .study-cover{
+    grid-template-columns:minmax(0,1fr) 112px!important;
+    padding:18px 10px 21px!important;
+  }
+  #panel #xyStudy .study-cover > :is(.study-cover-kicker,strong,p){padding-right:4px}
+  #panel #xyStudy .xy-study-hero-art{height:172px!important}
+}
