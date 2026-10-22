@@ -104,10 +104,8 @@ function replay(){
  void world.offsetWidth;world.classList.add("is-intro");
  skip.hidden=false;notice.hidden=false;clearTimeout(noticeTimer);
  setPan(0);notice.textContent="穿过树叶，去看看秋千……";
- [[1300,"叶子散开了，秋千上有只粉毛小娃娃"],[2550,"小娃娃松开秋千，纵身跃下"],
- [3600,"穿过云海，向砚屿飞去"],[4950,"落在岛上的石阶旁"],
- [6050,"镜头拉远，整座岛慢慢亮起来"]].forEach(([t,s])=>schedule(()=>{notice.textContent=s},t));
- schedule(arrive,6600);
+ [[1700,"穿过树叶，看见秋千上的粉毛小娃娃"],[3200,"秋千轻轻摆动，他忽然松开手"],[4200,"纵身跃下，追着云海向前飞"],[6300,"岛屿越来越近，准备落地"],[7600,"落在岛上，云雾散开"]].forEach(([t,s])=>schedule(()=>{notice.textContent=s},t));
+ schedule(arrive,8400);
 }
 function finishExit(){
  clearTimeout(exitTimer);
