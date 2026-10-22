@@ -221,3 +221,12 @@
   .app .sidebar .sidebar-bottom .xy-sidebar-tools-row{gap:4px}
   .app .sidebar .sidebar-bottom .xy-sidebar-fav-toggle{padding-left:8px;padding-right:8px}
 }
+
+
+/* Remove decorative navigation arrows/carets from the compact sidebar. */
+.app .sidebar .sidebar-bottom .xy-tools-chevron,
+.app .sidebar .sidebar-bottom .xy-tools-chevron::after,
+.app .sidebar .sidebar-bottom .xy-sidebar-fav-toggle i{
+  display:none!important;
+  content:none!important;
+}
