@@ -39,7 +39,7 @@ const world=root.querySelector("#xyIslandWorld"),painting=root.querySelector("#x
 backdrop=root.querySelector(".xy-island-backdrop"),spots=root.querySelector("#xyIslandLabels"),
 skip=root.querySelector("#xyIslandSkip"),notice=root.querySelector("#xyIslandNotice"),
 tooltip=root.querySelector("#xyIslandTooltip");
-let introTimers=[],loaded=false,ready=false,toastTimer=0;
+let introTimers=[],loaded=false,ready=false,toastTimer=0,arrivalTimer=0,exitTimer=0;
 const reduced=!!window.matchMedia?.("(prefers-reduced-motion:reduce)")?.matches;
 let seen=false;try{seen=sessionStorage.getItem(INTRO_KEY)==="1"}catch{}
 function schedule(fn,ms){introTimers.push(setTimeout(fn,ms))}
@@ -66,13 +66,22 @@ function notify(s,ms=1900){
  toastTimer=setTimeout(()=>{tooltip.hidden=true},ms);
 }
 function arrive(){
- clearTimeline();ready=true;world.classList.remove("is-intro");world.classList.add("is-ready");
+ clearTimeline();clearTimeout(arrivalTimer);
+ ready=true;world.classList.add("is-ready");
  skip.hidden=true;notice.textContent="回来了，岛上的灯还亮着";
+ if(world.classList.contains("is-intro")){
+  // Let the animated character dissolve into the stable island instead of snapping away.
+  world.classList.add("is-arriving");
+  for(const animation of painting.getAnimations()){try{animation.finish()}catch{}}
+  arrivalTimer=setTimeout(()=>{
+   world.classList.remove("is-intro","is-arriving");
+  },580);
+ }else world.classList.remove("is-arriving");
  try{sessionStorage.setItem(INTRO_KEY,"1")}catch{}
 }
 function replay(){
  if(!loaded)return;
- clearTimeline();ready=false;world.classList.remove("is-ready","is-intro");
+ clearTimeline();clearTimeout(arrivalTimer);ready=false;world.classList.remove("is-ready","is-intro","is-arriving");
  void world.offsetWidth;world.classList.add("is-intro");
  skip.hidden=false;notice.textContent="穿过树叶，去看看秋千……";
  [[1300,"叶子散开了，秋千上有只粉毛小娃娃"],[2550,"小娃娃松开秋千，纵身跃下"],
@@ -80,12 +89,35 @@ function replay(){
  [6050,"镜头拉远，整座岛慢慢亮起来"]].forEach(([t,s])=>schedule(()=>{notice.textContent=s},t));
  schedule(arrive,6600);
 }
+function finishExit(){
+ clearTimeout(exitTimer);
+ root.hidden=true;
+ root.classList.remove("is-exiting","is-entering");
+ document.documentElement.classList.remove("xy-island-visible");
+}
 function close(){
- arrive();root.hidden=true;if(originalApp)originalApp.inert=originalInert;document.documentElement.classList.remove("xy-island-visible");
+ if(root.hidden)return;
+ arrive();
+ clearTimeout(exitTimer);
+ // Render the destination before fading out the island, preventing a black or blank frame.
+ if(originalApp)originalApp.inert=originalInert;
+ root.classList.remove("is-entering");
+ if(reduced){finishExit();return}
+ root.classList.add("is-exiting");
+ exitTimer=setTimeout(finishExit,440);
 }
 function open(){
- root.hidden=false;if(originalApp)originalApp.inert=true;document.documentElement.classList.add("xy-island-visible");
- if(loaded)arrive();layout();
+ clearTimeout(exitTimer);
+ root.classList.remove("is-exiting");
+ root.hidden=false;
+ if(originalApp)originalApp.inert=true;
+ document.documentElement.classList.add("xy-island-visible");
+ if(loaded)arrive();
+ layout();
+ if(!reduced){
+  root.classList.add("is-entering");
+  requestAnimationFrame(()=>requestAnimationFrame(()=>root.classList.remove("is-entering")));
+ }
 }
 function navigate(type){
  if(type==="island")return;
