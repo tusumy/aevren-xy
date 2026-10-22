@@ -53,8 +53,10 @@ function schedule(fn,ms){introTimers.push(setTimeout(fn,ms))}
 function clearTimeline(){introTimers.forEach(clearTimeout);introTimers=[]}
 function layout(){
  const width=world.clientWidth,height=world.clientHeight;if(!width||!height)return;
- const scale=Math.max(width/1024,height/1536),dx=(width-1024*scale)/2,dy=(height-1536*scale)/2;
- panMax=Math.max(0, (1024*scale-width)/2);
+ const scale=width>=780 ? height/1536 : Math.max(width/1024,height/1536);
+ const mapWidth=1024*scale,dx=(width-mapWidth)/2,dy=(height-1536*scale)/2;
+ root.style.setProperty("--xy-island-map-width",mapWidth+"px");
+ panMax=Math.max(0,(mapWidth-width)/2);
  setPan(panX);
  places.forEach(p=>{const e=p.el;e.style.left=dx+p.x*scale+"px";e.style.top=dy+p.y*scale+"px";
  e.style.width=p.w*scale+"px";e.style.height=p.h*scale+"px"});
@@ -123,6 +125,7 @@ function close(){
  exitTimer=setTimeout(finishExit,510);
 }
 function open(asReturn=false){
+ window.xyIslandLocations?.clear?.();
  clearTimeout(exitTimer);
  root.classList.remove("is-exiting","is-travelling");
  root.hidden=false;
@@ -158,6 +161,7 @@ function navigate(type,place=null){
   }else if(typeof openPanel==="function"){
    openPanel(type);
   }else throw Error("Missing destination "+type);
+  window.xyIslandLocations?.show?.(type,place);
   close();
  }catch(e){
   console.warn("[砚屿归岛] 无法打开",type,e);
@@ -172,21 +176,40 @@ spots.addEventListener("click",e=>{
 root.querySelector("#xyIslandReplay").addEventListener("click",replay);
 root.querySelector("#xyIslandTip").addEventListener("click",()=>notify("点岛上的房屋、灯塔或下方小图标，进入对应页面",2600));
 skip.addEventListener("click",arrive);
-// Move the complete painted island, hotspots included. Keep the navbar and controls stationary.
+// Swipe the actual panorama with landmarks and hit areas in the same coordinate system.
+let panFrame=0,pendingPan=0;
+function queuePan(value){
+ pendingPan=value;
+ if(panFrame)return;
+ panFrame=requestAnimationFrame(()=>{panFrame=0;setPan(pendingPan)});
+}
 world.addEventListener("pointerdown",e=>{
  if(!ready||root.hidden||e.button!==0||e.target.closest(".xy-island-controls,.xy-island-skip"))return;
- gesture={id:e.pointerId,x:e.clientX,y:e.clientY,start:panX,moved:false};
+ gesture={id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastTime:performance.now(),start:panX,moved:false,velocity:0};
 });
 world.addEventListener("pointermove",e=>{
  if(!gesture||gesture.id!==e.pointerId)return;
  const dx=e.clientX-gesture.x,dy=e.clientY-gesture.y;
- if(!gesture.moved&&Math.abs(dx)>9&&Math.abs(dx)>Math.abs(dy)*1.1){
-  gesture.moved=true;try{world.setPointerCapture(e.pointerId)}catch{}
+ if(!gesture.moved&&Math.abs(dx)>5&&Math.abs(dx)>Math.abs(dy)*.7){
+  gesture.moved=true;root.classList.add("is-dragging");
+  try{world.setPointerCapture(e.pointerId)}catch{}
  }
- if(gesture.moved){setPan(gesture.start+dx);if(e.cancelable)e.preventDefault()}
+ if(gesture.moved){
+  const now=performance.now(),elapsed=Math.max(8,now-gesture.lastTime);
+  gesture.velocity=Math.max(-1.8,Math.min(1.8,(e.clientX-gesture.lastX)/elapsed));
+  gesture.lastX=e.clientX;gesture.lastTime=now;
+  queuePan(gesture.start+dx);
+  if(e.cancelable)e.preventDefault();
+ }
 });
 function finishGesture(){
- if(gesture?.moved)suppressClickUntil=Date.now()+280;
+ const g=gesture;
+ if(g?.moved){
+  suppressClickUntil=Date.now()+320;
+  if(panFrame){cancelAnimationFrame(panFrame);panFrame=0;setPan(pendingPan)}
+  root.classList.remove("is-dragging");
+  setPan(panX+g.velocity*85);
+ }
  gesture=null;
 }
 world.addEventListener("pointerup",finishGesture);
@@ -195,8 +218,15 @@ world.addEventListener("lostpointercapture",finishGesture);
 world.addEventListener("click",e=>{
  if(Date.now()<suppressClickUntil){e.preventDefault();e.stopImmediatePropagation()}
 },true);
+world.addEventListener("wheel",e=>{
+ if(!ready||root.hidden||panMax===0)return;
+ if(e.ctrlKey)return;
+ if(Math.abs(e.deltaX)<Math.abs(e.deltaY)&&!e.shiftKey)return;
+ e.preventDefault();setPan(panX-(e.deltaX||e.deltaY));
+},{passive:false});
 // A real island route sits below every destination in browser / Android Back history.
 function returnToIsland(){
+ window.xyIslandLocations?.clear?.();
  fromIsland=false;routeKind="";
  document.querySelector("#panel")?.classList.remove("open");
  document.querySelector("#sidebar")?.classList.remove("open");
@@ -253,7 +283,7 @@ function nativeBack(){
  }
  return false;
 }
-window.xyIslandHome={open,close,replay,arrive,nativeBack};
+window.xyIslandHome={open,close,replay,arrive,nativeBack,navigate,panBy:dx=>setPan(panX+dx)};
 layout();ensureIslandRoot();if(originalApp)originalApp.inert=true;document.documentElement.classList.add("xy-island-visible");
 function failed(){
  console.warn("[砚屿归岛] 场景图未加载，已启用备用导航");
