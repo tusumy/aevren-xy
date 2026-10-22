@@ -81,3 +81,28 @@ html.xy-island-visible,html.xy-island-visible body{overflow:hidden!important}
 @media(prefers-reduced-motion:reduce){
  #xyIslandHome:not([hidden]){transition:none!important}
 }
+
+/* Island panoramic navigation — mobile gestures keep map and hit regions aligned. */
+#xyIslandHome .xy-island-world{touch-action:pan-y}
+#xyIslandHome .xy-island-painting{
+  left:50%;right:auto;width:max(100%,66.666667dvh);max-width:none;height:100%;
+  object-fit:cover;object-position:center;
+  transform:translate3d(calc(-50% + var(--xy-island-pan-x,0px)),0,0);
+  transition:opacity .5s ease,transform .10s ease-out,filter .4s ease;
+}
+#xyIslandHome .xy-island-labels{
+  transform:translate3d(var(--xy-island-pan-x,0px),0,0);
+  transition:transform .10s ease-out;will-change:transform
+}
+#xyIslandHome .xy-island-toolbar{display:none!important}
+#xyIslandHome.is-exiting .xy-island-painting{filter:brightness(1.05) blur(1px)}
+#xyIslandHome .xy-island-world.is-intro .xy-island-labels{transform:none}
+@keyframes xyIslandCamera {
+  0%,10%{transform:translate3d(calc(-50% + 32%),30%,0) scale(2.2);filter:blur(1.5px)}
+  23%{transform:translate3d(calc(-50% + 27%),25%,0) scale(2.1);filter:blur(0)}
+  36%{transform:translate3d(calc(-50% + 25%),21%,0) scale(1.94)}
+  49%{transform:translate3d(calc(-50% + 6%),9%,0) scale(1.62)}
+  67%{transform:translate3d(calc(-50% - 6%),-5%,0) scale(1.36)}
+  86%{transform:translate3d(calc(-50% - 2%),-3%,0) scale(1.12)}
+  100%{transform:translate3d(-50%,0,0) scale(1);filter:blur(0)}
+}
