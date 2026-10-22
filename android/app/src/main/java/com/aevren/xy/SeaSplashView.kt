@@ -1,51 +1,37 @@
 package com.aevren.xy
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.LinearGradient
 import android.graphics.Paint
-import android.graphics.Shader
-import android.graphics.Typeface
+import android.graphics.RectF
 import android.view.View
+import kotlin.math.max
 
 /**
- * Minimal native loading curtain; the animated island is rendered by the online WebView.
- * Deliberately contains no old cottage/house art or artificial wave animation.
+ * The native startup curtain matches the online island illustration.
+ * No separate "only words" screen, cottage, or extra animation.
  */
 class SeaSplashView(context: Context) : View(context) {
-    private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val bitmap = BitmapFactory.decodeResource(resources, R.drawable.island_splash)
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
 
     override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
         val w = width.toFloat()
         val h = height.toFloat()
-        if (w <= 0f || h <= 0f) return
-
-        paint.style = Paint.Style.FILL
-        paint.shader = LinearGradient(
-            0f, 0f, 0f, h,
-            intArrayOf(
-                Color.rgb(246, 229, 233),
-                Color.rgb(238, 231, 227),
-                Color.rgb(208, 228, 218)
-            ),
-            floatArrayOf(0f, .54f, 1f),
-            Shader.TileMode.CLAMP
+        canvas.drawColor(Color.rgb(232, 215, 218))
+        if (w <= 0f || h <= 0f || bitmap == null) return
+        val scale = max(w / bitmap.width, h / bitmap.height)
+        val drawnWidth = bitmap.width * scale
+        val drawnHeight = bitmap.height * scale
+        val dest = RectF(
+            (w - drawnWidth) / 2f,
+            (h - drawnHeight) / 2f,
+            (w + drawnWidth) / 2f,
+            (h + drawnHeight) / 2f
         )
-        canvas.drawRect(0f, 0f, w, h, paint)
-        paint.shader = null
-
-        // The native curtain remains visually quiet while WebView prepares the island.
-        val density = w / 390f
-        paint.color = Color.rgb(108, 82, 79)
-        paint.textAlign = Paint.Align.CENTER
-        paint.typeface = Typeface.create("serif", Typeface.NORMAL)
-        paint.textSize = 35f * density
-        canvas.drawText("砚屿", w / 2f, h * .49f, paint)
-
-        paint.typeface = Typeface.create("sans-serif", Typeface.NORMAL)
-        paint.textSize = 12f * density
-        paint.color = Color.rgb(143, 118, 116)
-        canvas.drawText("云海尽头，欢迎归岛", w / 2f, h * .53f, paint)
+        canvas.drawBitmap(bitmap, null, dest, paint)
     }
 }
