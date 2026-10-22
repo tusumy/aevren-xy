@@ -33,3 +33,19 @@
 @keyframes xyFilmLand{0%,72%{opacity:0;transform:translateY(-155%) scale(.5) rotate(18deg)}79%{opacity:1;transform:translateY(-35%) scale(.78) rotate(-6deg)}83%{opacity:1;transform:translateY(4%) scale(1.05) rotate(2deg)}87%{opacity:1;transform:translateY(-8%) scale(.94) rotate(-2deg)}91%,100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
 @keyframes xyFilmMist{from{transform:translateX(-4%)}to{transform:translateX(5%)}}
 @media(prefers-reduced-motion:reduce){#xyIslandHome .xy-island-film{display:none!important}}
+
+/* Mobile compositor: keep the plush layers moving without expensive fullscreen blur. */
+#xyIslandHome .xy-island-film{contain:paint;transform:translateZ(0)}
+#xyIslandHome .xy-island-world.is-intro .xy-film-swing,
+#xyIslandHome .xy-island-world.is-intro .xy-film-fly,
+#xyIslandHome .xy-island-world.is-intro .xy-film-land,
+#xyIslandHome .xy-island-world.is-intro .xy-film-leaves,
+#xyIslandHome .xy-island-world.is-intro .xy-film-tree{
+ will-change:transform,opacity
+}
+@media(max-width:760px){
+ #xyIslandHome .xy-island-film::before{filter:blur(14px);opacity:.38}
+ #xyIslandHome .xy-film-mist{filter:blur(6px)}
+ #xyIslandHome .xy-film-tree{filter:none}
+ #xyIslandHome .xy-film-leaves{filter:blur(6px)}
+}
