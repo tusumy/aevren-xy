@@ -17,6 +17,8 @@ const places=[
 ["tools",710,1447,160,120,"工具","toolhub"],
 ["mine",900,1447,153,120,"我的·设置","settings"]
 ].map(([id,x,y,w,h,name,type])=>({id,x,y,w,h,name,type}));
+const originalApp=document.querySelector(".app");
+const originalInert=!!originalApp?.inert;
 const root=document.createElement("section");
 root.id="xyIslandHome";root.setAttribute("aria-label","砚屿·岛屿主页");
 root.innerHTML=
@@ -79,10 +81,10 @@ function replay(){
  schedule(arrive,6600);
 }
 function close(){
- arrive();root.hidden=true;document.documentElement.classList.remove("xy-island-visible");
+ arrive();root.hidden=true;if(originalApp)originalApp.inert=originalInert;document.documentElement.classList.remove("xy-island-visible");
 }
 function open(){
- root.hidden=false;document.documentElement.classList.add("xy-island-visible");
+ root.hidden=false;if(originalApp)originalApp.inert=true;document.documentElement.classList.add("xy-island-visible");
  if(loaded)arrive();layout();
 }
 function navigate(type){
@@ -115,7 +117,7 @@ if(header&&!document.getElementById("xyIslandReturn")){
 }
 window.addEventListener("resize",layout);
 window.xyIslandHome={open,close,replay,arrive};
-layout();document.documentElement.classList.add("xy-island-visible");
+layout();if(originalApp)originalApp.inert=true;document.documentElement.classList.add("xy-island-visible");
 function failed(){
  console.warn("[砚屿归岛] 场景图未加载，已启用备用导航");
  root.classList.add("is-fallback");world.classList.add("has-image");
@@ -131,7 +133,8 @@ function setArtwork(encoded){
  painting.addEventListener("error",failed,{once:true});
  painting.src="data:image/webp;base64,"+encoded.trim();
 }
-fetch(ASSET,{cache:"force-cache"}).then(r=>{
+if(typeof window.xyIslandPaintingData==="string"&&window.xyIslandPaintingData.startsWith("data:image/webp;base64,")){setArtwork(window.xyIslandPaintingData.slice("data:image/webp;base64,".length));}
+else fetch(ASSET,{cache:"force-cache"}).then(r=>{
  if(!r.ok)throw Error("HTTP "+r.status);return r.text()
 }).then(t=>{if(!t.startsWith("UklGR"))throw Error("invalid island image");setArtwork(t)}).catch(failed);
 })();
