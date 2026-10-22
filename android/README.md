@@ -24,3 +24,9 @@ gradle -p android :app:assembleDebug
 Output:
 
 `android/app/build/outputs/apk/debug/app-debug.apk`
+
+## Island splash refresh (2026-10-22)
+
+The previous cottage drawing is removed from both the native loading curtain and adaptive launcher icon.
+The native loading curtain now waits for the illustrated island WebView scene to finish loading before fading, and Android Back delegates to the island's navigation stack.
+Install a newly built `app-debug.apk` over the currently installed `com.aevren.xy` to update native resources without clearing app data, provided Android accepts the matching signing key.
