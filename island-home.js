@@ -135,6 +135,8 @@ function navigate(type){
  fromIsland=true;routeKind=type;
  try{
   if(type==="chat"){
+   // The island is this route's return target even after revisiting via the header.
+   history.replaceState({...history.state,xyIslandChat:false},"");
    history.pushState({...history.state,xyIslandChat:true},"");
   }else if(typeof openPanel==="function"){
    openPanel(type);
@@ -182,7 +184,8 @@ world.addEventListener("click",e=>{
 // Nested hub tools still return to their parent hub on the first Back.
 window.addEventListener("popstate",()=>{
  if(!fromIsland)return;
- if(history.state?.xyOverlay || history.state?.xyHubChild || history.state?.xyIslandChat)return;
+ if(history.state?.xyOverlay || history.state?.xyHubChild)return;
+ if(routeKind==="chat"&&history.state?.xyIslandChat)return;
  fromIsland=false;routeKind="";
  document.querySelector("#panel")?.classList.remove("open");
  document.querySelector("#sidebar")?.classList.remove("open");
