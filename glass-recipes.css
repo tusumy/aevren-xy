@@ -1,0 +1,123 @@
+/* 砚屿 · optional glass finishes
+   Adapted from the MIT-licensed ideas in wave2234/liquid-glass-recipes.
+   Opt-in only. No effects on the scrolling message list or bubble skins. */
+
+:root {
+  --xy-glass-veil: .2;
+  --xy-glass-blur: 14px;
+}
+html[data-xy-glass="clear"] .app .main header,
+html[data-xy-glass="clear"] .app .main .composer,
+html[data-xy-glass="clear"] .app .sidebar .new-chat,
+html[data-xy-glass="clear"] .app .sidebar .sidebar-bottom .xy-tools-entry {
+  background: linear-gradient(160deg,rgba(255,255,255,calc(var(--xy-glass-veil) + .09)),rgba(255,255,255,var(--xy-glass-veil))) !important;
+  border-color: rgba(255,255,255,.32) !important;
+  -webkit-backdrop-filter: blur(var(--xy-glass-blur)) saturate(1.55) !important;
+  backdrop-filter: blur(var(--xy-glass-blur)) saturate(1.55) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.58),0 8px 24px rgba(20,30,50,.10) !important;
+}
+html[data-xy-glass="frost"] .app .main header,
+html[data-xy-glass="frost"] .app .main .composer,
+html[data-xy-glass="frost"] .app .sidebar .new-chat,
+html[data-xy-glass="frost"] .app .sidebar .sidebar-bottom .xy-tools-entry {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"),
+    linear-gradient(160deg,rgba(255,255,255,calc(var(--xy-glass-veil) + .1)),rgba(255,255,255,var(--xy-glass-veil))) !important;
+  border-color: rgba(255,255,255,.45) !important;
+  -webkit-backdrop-filter: blur(var(--xy-glass-blur)) saturate(1.35) !important;
+  backdrop-filter: blur(var(--xy-glass-blur)) saturate(1.35) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45),0 8px 24px rgba(20,30,50,.09) !important;
+}
+html[data-xy-glass="liquid"] .app .main header,
+html[data-xy-glass="liquid"] .app .main .composer,
+html[data-xy-glass="liquid"] .app .sidebar .new-chat,
+html[data-xy-glass="liquid"] .app .sidebar .sidebar-bottom .xy-tools-entry {
+  background:
+    radial-gradient(130% 80% at 16% -14%,rgba(255,255,255,.28),transparent 56%),
+    linear-gradient(135deg,rgba(255,255,255,var(--xy-glass-veil)),rgba(255,255,255,calc(var(--xy-glass-veil) * .64)) 46%,rgba(255,255,255,var(--xy-glass-veil))) !important;
+  border-color: rgba(255,255,255,.33) !important;
+  -webkit-backdrop-filter: blur(var(--xy-glass-blur)) saturate(1.55) !important;
+  backdrop-filter: blur(var(--xy-glass-blur)) saturate(1.55) !important;
+  -webkit-backdrop-filter: url(#xy-glass-lens) blur(var(--xy-glass-blur)) saturate(1.55) !important;
+  backdrop-filter: url(#xy-glass-lens) blur(var(--xy-glass-blur)) saturate(1.55) !important;
+  box-shadow: inset 0 1.5px 1px -.5px rgba(255,255,255,.62),
+              inset 0 -1.5px 1px -.5px rgba(24,32,46,.22),
+              0 10px 30px rgba(18,28,44,.13) !important;
+}
+/* Give dark surfaces an opaque enough pigment to keep text legible. */
+html[data-theme-mode="dark"][data-xy-glass="clear"] .app .main header,
+html[data-theme-mode="dark"][data-xy-glass="clear"] .app .main .composer,
+html[data-theme-mode="dark"][data-xy-glass="clear"] .app .sidebar .new-chat,
+html[data-theme-mode="dark"][data-xy-glass="clear"] .app .sidebar .sidebar-bottom .xy-tools-entry,
+html[data-theme-mode="dark"][data-xy-glass="frost"] .app .main header,
+html[data-theme-mode="dark"][data-xy-glass="frost"] .app .main .composer,
+html[data-theme-mode="dark"][data-xy-glass="frost"] .app .sidebar .new-chat,
+html[data-theme-mode="dark"][data-xy-glass="frost"] .app .sidebar .sidebar-bottom .xy-tools-entry {
+  background: linear-gradient(145deg,rgba(43,53,47,calc(.50 + var(--xy-glass-veil) * .45)),
+                                      rgba(25,33,29,calc(.65 + var(--xy-glass-veil) * .3))) !important;
+  border-color: rgba(185,213,192,.20) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10),0 10px 28px rgba(0,0,0,.22) !important;
+}
+html[data-theme-mode="dark"][data-xy-glass="liquid"] .app .main header,
+html[data-theme-mode="dark"][data-xy-glass="liquid"] .app .main .composer,
+html[data-theme-mode="dark"][data-xy-glass="liquid"] .app .sidebar .new-chat,
+html[data-theme-mode="dark"][data-xy-glass="liquid"] .app .sidebar .sidebar-bottom .xy-tools-entry {
+  background: radial-gradient(130% 80% at 16% -14%,rgba(255,255,255,.14),transparent 56%),
+              linear-gradient(140deg,rgba(44,56,48,calc(.55 + var(--xy-glass-veil) * .3)),
+                                      rgba(26,35,29,calc(.67 + var(--xy-glass-veil) * .2))) !important;
+  border-color: rgba(185,213,192,.19) !important;
+  box-shadow: inset 0 1.5px 1px -.5px rgba(255,255,255,.20),
+              inset 0 -1.5px 1px -.5px rgba(0,0,0,.22),
+              0 10px 30px rgba(0,0,0,.20) !important;
+}
+html[data-xy-glass]:not([data-xy-glass="off"]) .app .main .composer .attach,
+html[data-xy-glass]:not([data-xy-glass="off"]) .app .sidebar .new-chat,
+html[data-xy-glass]:not([data-xy-glass="off"]) .app .sidebar .sidebar-bottom .xy-tools-entry,
+html[data-xy-glass]:not([data-xy-glass="off"]) .app .main header .icon-btn {
+  transition: transform .34s cubic-bezier(.34,1.56,.64,1),background .2s ease;
+}
+html[data-xy-glass]:not([data-xy-glass="off"]) .app .main .composer .attach:active,
+html[data-xy-glass]:not([data-xy-glass="off"]) .app .sidebar .new-chat:active,
+html[data-xy-glass]:not([data-xy-glass="off"]) .app .sidebar .sidebar-bottom .xy-tools-entry:active,
+html[data-xy-glass]:not([data-xy-glass="off"]) .app .main header .icon-btn:active {
+  transform:scale(.95);
+}
+
+/* Theme controls: material previews and compact fine-tuning. */
+.xy-glass-card { color:var(--xy-shell-ink,var(--ink,#2e3731)); }
+.xy-glass-title { font-size:13px;font-weight:680;margin:0 0 4px; }
+.xy-glass-caption { font-size:11px;line-height:1.6;opacity:.72;margin:0 0 12px; }
+.xy-glass-choices { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px; }
+.xy-glass-choice {
+  appearance:none;border:1px solid rgba(100,117,105,.24);border-radius:12px;
+  background:rgba(255,255,255,.35);padding:6px 3px 8px;min-width:0;
+  color:inherit;font-size:10px;line-height:1.3;cursor:pointer;
+}
+.xy-glass-choice[aria-pressed="true"] { border-color:var(--theme-accent,#365d4a);box-shadow:0 0 0 1px var(--theme-accent,#365d4a); }
+.xy-glass-thumb {
+  display:block;position:relative;overflow:hidden;height:36px;margin:0 5px 6px;border-radius:9px;
+  background:repeating-linear-gradient(135deg,#d4ccc2 0 5px,#c3d9ce 5px 10px);
+}
+.xy-glass-thumb::after{ content:"";position:absolute;inset:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.75);box-shadow:inset 0 1px 1px rgba(255,255,255,.75); }
+.xy-glass-choice[data-xy-glass-finish="off"] .xy-glass-thumb::after{ background:#f1ede7; }
+.xy-glass-choice[data-xy-glass-finish="clear"] .xy-glass-thumb::after{ background:rgba(255,255,255,.22);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px); }
+.xy-glass-choice[data-xy-glass-finish="frost"] .xy-glass-thumb::after{ background:rgba(255,255,255,.65);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px); }
+.xy-glass-choice[data-xy-glass-finish="liquid"] .xy-glass-thumb::after{ background:linear-gradient(130deg,rgba(255,255,255,.48),rgba(255,255,255,.08));box-shadow:inset 0 2px 1px rgba(255,255,255,.9),inset 0 -2px 1px rgba(40,60,45,.16),0 2px 5px rgba(0,0,0,.09); }
+.xy-glass-tuning { margin-top:12px;display:grid;gap:9px; }
+.xy-glass-tuning label {display:block!important;margin:0!important;}
+.xy-glass-range-label {display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-bottom:7px;}
+.xy-glass-tuning input[type="range"] { width:100%;accent-color:var(--theme-accent,#365d4a); }
+.xy-glass-tuning [data-liquid-only][hidden] { display:none!important; }
+.xy-glass-tuning[aria-disabled="true"] {opacity:.46;}
+.xy-glass-tuning[aria-disabled="true"] input {pointer-events:none;}
+.xy-glass-footnote { font-size:10px;opacity:.68;line-height:1.6;margin:10px 0 0; }
+html[data-theme-mode="dark"] .xy-glass-choice { background:rgba(255,255,255,.055);border-color:rgba(255,255,255,.17); }
+html[data-theme-mode="dark"] .xy-glass-choice[aria-pressed="true"] { border-color:var(--xy-ui-accent,var(--theme-accent));box-shadow:0 0 0 1px var(--xy-ui-accent,var(--theme-accent)); }
+html[data-theme-mode="dark"] .xy-glass-choice[data-xy-glass-finish="off"] .xy-glass-thumb::after { background:#414b43; }
+@media(max-width:350px){ .xy-glass-choices { gap:4px; }.xy-glass-choice {font-size:9px;} }
+@media(prefers-reduced-motion:reduce){
+  html[data-xy-glass] .app .main .composer .attach,
+  html[data-xy-glass] .app .sidebar .new-chat,
+  html[data-xy-glass] .app .sidebar .sidebar-bottom .xy-tools-entry,
+  html[data-xy-glass] .app .main header .icon-btn{transition:none!important;}
+}
