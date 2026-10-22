@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
-    android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <path android:fillColor="#EEF4F1" android:pathData="M18,76 C29,71 39,72 49,76 C59,80 70,80 90,73 L90,92 L18,92 Z"/>
-    <path android:fillColor="#B8D1C6" android:pathData="M18,81 C31,76 42,77 54,81 C66,85 77,84 90,78 L90,92 L18,92 Z"/>
-    <path android:fillColor="#5F8172" android:pathData="M24,52 L54,27 L84,52 L78,52 L78,79 L30,79 L30,52 Z"/>
-    <path android:fillColor="#F3EEE5" android:pathData="M34,52 L74,52 L74,79 L34,79 Z"/>
-    <path android:fillColor="#30483E" android:pathData="M22,52 L54,24 L86,52 L78,52 L54,32 L30,52 Z"/>
-    <path android:fillColor="#E9BD6D" android:pathData="M61,58 L70,58 L70,67 L61,67 Z"/>
-    <path android:fillColor="#DDE7E1" android:pathData="M41,58 L51,58 L51,68 L41,68 Z"/>
-    <path android:fillColor="#8B6D58" android:pathData="M51,64 L59,64 L59,79 L51,79 Z"/>
-    <path android:fillColor="#8CAEA0" android:pathData="M17,84 C28,80 38,80 49,84 C60,88 72,88 91,81 L91,86 C75,91 60,92 47,88 C35,84 26,84 17,88 Z"/>
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Sunset sun behind floating cloud islands; no cottage in the app icon. -->
+    <path android:fillColor="#FFF2DE" android:pathData="M68,21 A19,19 0,1 1,67.9 21 Z"/>
+    <path android:fillColor="#E8B7C9" android:pathData="M54,23 C49,35 50,41 54,47 C58,41 59,35 54,23 Z"/>
+    <path android:fillColor="#F4C8D6" android:pathData="M32,33 C43,37 47,43 51,50 C41,48 34,44 32,33 Z"/>
+    <path android:fillColor="#F4C8D6" android:pathData="M76,33 C65,37 61,43 57,50 C67,48 74,44 76,33 Z"/>
+    <path android:fillColor="#E8B7C9" android:pathData="M36,57 C43,51 49,51 54,53 C51,62 44,64 36,57 Z"/>
+    <path android:fillColor="#E8B7C9" android:pathData="M72,57 C65,51 59,51 54,53 C57,62 64,64 72,57 Z"/>
+    <path android:fillColor="#6B9A90" android:pathData="M20,77 C31,65 42,66 53,70 C66,65 79,65 89,77 C75,86 33,86 20,77 Z"/>
+    <path android:fillColor="#F7EFE8" android:pathData="M14,80 C27,75 40,78 54,82 C65,84 78,79 94,80 L94,90 C79,86 66,92 52,88 C36,84 28,83 14,89 Z"/>
+    <path android:fillColor="#B4D6CA" android:pathData="M18,88 C31,83 43,86 53,91 C66,96 80,86 90,88 L90,96 L18,96 Z"/>
 </vector>
