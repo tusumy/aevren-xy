@@ -2,7 +2,6 @@
 (()=>{
 "use strict";
 const C=window.xyCreative;if(!C)return;
-const {$unused}= { $unused:null };
 const {esc}=C;let active="",line="",mode="shelf",error="";
 const panel=document.querySelector("#panel"),host=document.querySelector("#panelBody");
 function selected(kind){return [...host.querySelectorAll('[data-creative-pick="'+kind+'"]:checked')].map(x=>x.value)}
@@ -59,6 +58,10 @@ host.addEventListener("click",e=>{
  render();
 });
 const prev=openPanel;
-openPanel=function(type){if(type==="creation")return open();return prev(type)};
+openPanel=function(type){
+ if(type==="creation")return open();
+ panel?.classList.remove("xy-creative-panel");
+ return prev(type);
+};
 window.xyCreativeLibrary={open,render};
 })();
