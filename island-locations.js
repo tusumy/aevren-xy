@@ -7,6 +7,8 @@ const places=[
  {id:"home",name:"海边小屋",subtitle:"聊天 · 我们的日常",icon:"⌂",type:"chat",x:196,y:721},
  {id:"garden",name:"小岛",subtitle:"动态 · 农场 · 活动",icon:"❀",type:"chat",x:288,y:988},
  {id:"journal",name:"临海亭",subtitle:"日记 · 回忆",icon:"✎",type:"journal",x:896,y:1120},
+ {id:"creation",name:"创作角",subtitle:"自由设定 · 多本故事",icon:"▤",type:"creation",x:600,y:980},
+ {id:"groupchat",name:"群聊",subtitle:"多人角色 · 共同演绎",icon:"♧",type:"groupchat",x:540,y:1180},
  {id:"lighthouse",name:"灯塔",subtitle:"工具 · MCP · API",icon:"♧",type:"toolhub",x:855,y:473},
  {id:"study",name:"藏书阁",subtitle:"角色 · 书房 · 记忆",icon:"▤",type:"study",x:725,y:654},
  {id:"atelier",name:"画室",subtitle:"生图 · 画册",icon:"✧",type:"imagine",x:865,y:902},
@@ -18,6 +20,8 @@ const copy={
  chat:{name:"海边小屋",subtitle:"临海灯火 · 聊聊我们的日常",x:196,y:721},
  toolhub:{name:"云崖灯塔",subtitle:"海上灯塔 · 所有工具的入口",x:855,y:473},
  study:{name:"藏书阁",subtitle:"山间楼阁 · 角色与书房",x:725,y:654},
+ creation:{name:"创作角",subtitle:"樱花书舍 · 设定与故事",x:600,y:980},
+ groupchat:{name:"群聊剧场",subtitle:"云间聚会 · 多角色故事",x:540,y:1180},
  journal:{name:"临海亭",subtitle:"听潮写字 · 日记与回忆",x:896,y:1120},
  imagine:{name:"画室",subtitle:"樱花水岸 · 绘画与画册",x:865,y:902},
  settings:{name:"岛务所",subtitle:"我的设置",x:900,y:1447},
@@ -25,8 +29,8 @@ const copy={
 };
 const data={};
 for(const p of places)data[p.id]=p;
-const navs=[{side:"left",headline:"云海尽头",caption:"走进砚屿的日常",ids:["home","garden","journal"]},
- {side:"right",headline:"岛屿漫游",caption:"每个角落都有故事",ids:["lighthouse","study","atelier"]}];
+const navs=[{side:"left",headline:"云海尽头",caption:"走进砚屿的日常",ids:["home","groupchat","garden","journal"]},
+ {side:"right",headline:"岛屿漫游",caption:"每个角落都有故事",ids:["lighthouse","study","creation","atelier"]}];
 for(const n of navs){
  const aside=document.createElement("nav");
  aside.className="xy-island-desktop-dock";
