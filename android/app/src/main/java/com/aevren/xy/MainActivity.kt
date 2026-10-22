@@ -212,7 +212,7 @@ class MainActivity : Activity() {
         if (splashCheckBusy || splashClosing || nativeSplash == null) return
         splashCheckBusy = true
         webView.evaluateJavascript(
-            "(document.readyState === 'complete' && !!document.getElementById('messages'))"
+            "(document.readyState === 'complete' && !!document.querySelector('#xyIslandWorld.has-image'))"
         ) { answer ->
             splashCheckBusy = false
             if (splashClosing || nativeSplash == null) return@evaluateJavascript
@@ -224,7 +224,7 @@ class MainActivity : Activity() {
                 SystemClock.uptimeMillis(),
                 object : WebView.VisualStateCallback() {
                     override fun onComplete(requestId: Long) {
-                        val minimumMs = 1400L
+                        val minimumMs = 450L
                         val waitMs = (minimumMs - (SystemClock.uptimeMillis() - splashStartedAt)).coerceAtLeast(0L)
                         webView.postDelayed({
                             if (splashClosing) return@postDelayed
@@ -349,7 +349,17 @@ class MainActivity : Activity() {
 
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (::webView.isInitialized && webView.canGoBack()) webView.goBack() else super.onBackPressed()
+        if (!::webView.isInitialized) {
+            super.onBackPressed()
+            return
+        }
+        // Native Back must follow the island's in-page route, not jump to the chat WebView.
+        webView.evaluateJavascript(
+            "(function(){try{return !!window.xyIslandHome?.nativeBack?.()}catch(e){return false}})();"
+        ) { response ->
+            if (response.trim() == "true") return@evaluateJavascript
+            if (webView.canGoBack()) webView.goBack() else super@MainActivity.onBackPressed()
+        }
     }
 
     @Deprecated("Deprecated in Java")
