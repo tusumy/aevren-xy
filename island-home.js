@@ -239,7 +239,21 @@ if(header&&!document.getElementById("xyIslandReturn")){
  });
 }
 window.addEventListener("resize",layout);
-window.xyIslandHome={open,close,replay,arrive};
+function nativeBack(){
+ if(!root.hidden){
+  if(!ready)arrive();
+  // The island itself is the root screen; do not unexpectedly show chat.
+  return true;
+ }
+ if(fromIsland){
+  if(history.state?.xyHubChild || history.state?.xyOverlay || history.state?.xyIslandPage){
+   history.back();
+  } else returnToIsland();
+  return true;
+ }
+ return false;
+}
+window.xyIslandHome={open,close,replay,arrive,nativeBack};
 layout();ensureIslandRoot();if(originalApp)originalApp.inert=true;document.documentElement.classList.add("xy-island-visible");
 function failed(){
  console.warn("[砚屿归岛] 场景图未加载，已启用备用导航");
