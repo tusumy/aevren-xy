@@ -61,9 +61,17 @@ function clear(){
  panel?.querySelector(".xy-island-room-banner")?.remove();
  main?.classList.remove("xy-island-location-chat");
  main?.querySelector(".xy-island-chat-marker")?.remove();
+ // Remove only island-owned presentation variables; preserve all user theme styles.
+ for(const el of [panel,main]){
+  el?.style.removeProperty("--xy-island-room-image");
+  el?.style.removeProperty("--xy-room-focus-x");
+  el?.style.removeProperty("--xy-room-focus-y");
+ }
 }
 function show(type,place){
  clear();
+ // Chat is personal space: never replace the configured chat background.
+ if(type==="chat")return;
  const p=copy[type]||copy[place?.type];
  if(!p)return;
  const chosen=place?.id&&data[place.id]&&data[place.id].type===type?data[place.id]:p;
@@ -75,13 +83,7 @@ function show(type,place){
  target.style.setProperty("--xy-island-room-image",'url("'+source+'")');
  target.style.setProperty("--xy-room-focus-x",fx+"%");
  target.style.setProperty("--xy-room-focus-y",fy+"%");
- if(type==="chat"){
-  main.classList.add("xy-island-location-chat");
-  const badge=document.createElement("span");badge.className="xy-island-chat-marker";
-  badge.textContent="⌂  海边小屋 · "+chosen.subtitle;
-  main.appendChild(badge);
- }else{
-  panel.classList.add("xy-island-location-panel");
+ panel.classList.add("xy-island-location-panel");
   const banner=document.createElement("div");
   banner.className="xy-island-room-banner";
   banner.setAttribute("role","img");
@@ -92,7 +94,7 @@ function show(type,place){
   const panelHead=panel.querySelector(".panel-head");
   if(panelHead)panel.insertBefore(banner,panelHead);
   else panel.prepend(banner);
- }
+
 }
 window.xyIslandLocations={show,clear};
 })();
