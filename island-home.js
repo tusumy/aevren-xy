@@ -40,7 +40,13 @@ skip=root.querySelector("#xyIslandSkip"),notice=root.querySelector("#xyIslandNot
 tooltip=root.querySelector("#xyIslandTooltip");
 let introTimers=[],loaded=false,ready=false,toastTimer=0,arrivalTimer=0,exitTimer=0,noticeTimer=0;
 let panX=0,panMax=0,gesture=null,suppressClickUntil=0;
-let fromIsland=false,routeKind="";
+let fromIsland=false,routeKind="",routeTarget=null,returning=false;
+const NAV_ROOT="xyIslandRoot";
+function ensureIslandRoot(){
+ const h=history.state||{};
+ if(h[NAV_ROOT]&&!h.xyOverlay&&!h.xyHubChild&&!h.xyIslandPage)return;
+ history.replaceState({...h,[NAV_ROOT]:true,xyOverlay:false,xyHubChild:false,xyIslandPage:false,xyIslandChat:false},"");
+}
 const reduced=!!window.matchMedia?.("(prefers-reduced-motion:reduce)")?.matches;
 let seen=false;try{seen=sessionStorage.getItem(INTRO_KEY)==="1"}catch{}
 function schedule(fn,ms){introTimers.push(setTimeout(fn,ms))}
@@ -102,7 +108,7 @@ function replay(){
 function finishExit(){
  clearTimeout(exitTimer);
  root.hidden=true;
- root.classList.remove("is-exiting","is-entering");
+ root.classList.remove("is-exiting","is-entering","is-travelling");
  document.documentElement.classList.remove("xy-island-visible");
 }
 function close(){
@@ -113,36 +119,45 @@ function close(){
  if(originalApp)originalApp.inert=originalInert;
  root.classList.remove("is-entering");
  if(reduced){finishExit();return}
- root.classList.add("is-exiting");
- exitTimer=setTimeout(finishExit,440);
+ root.classList.add("is-exiting","is-travelling");
+ exitTimer=setTimeout(finishExit,510);
 }
-function open(){
+function open(asReturn=false){
  clearTimeout(exitTimer);
- root.classList.remove("is-exiting");
+ root.classList.remove("is-exiting","is-travelling");
  root.hidden=false;
  if(originalApp)originalApp.inert=true;
  document.documentElement.classList.add("xy-island-visible");
  if(loaded)arrive();
  layout();
+ if(!asReturn){fromIsland=false;routeKind="";ensureIslandRoot()}
  if(!reduced){
   root.classList.add("is-entering");
   requestAnimationFrame(()=>requestAnimationFrame(()=>root.classList.remove("is-entering")));
  }
 }
-function navigate(type){
+function navigate(type,place=null){
  if(type==="island")return;
  if(type==="replay"){replay();return}
- fromIsland=true;routeKind=type;
+ if(root.classList.contains("is-exiting"))return;
+ ensureIslandRoot();
+ fromIsland=true;routeKind=type;routeTarget=place;
+ if(place){
+  const b=place.el.getBoundingClientRect(),w=world.getBoundingClientRect();
+  root.style.setProperty("--xy-journey-x",((w.left+w.width/2)-(b.left+b.width/2))*.24+"px");
+  root.style.setProperty("--xy-journey-y",((w.top+w.height/2)-(b.top+b.height/2))*.22+"px");
+  root.style.setProperty("--xy-focus-x",(b.left-w.left+b.width/2)+"px");
+  root.style.setProperty("--xy-focus-y",(b.top-w.top+b.height/2)+"px");
+ }else{
+  root.style.setProperty("--xy-journey-x","0px");
+  root.style.setProperty("--xy-journey-y","0px");
+ }
  try{
   if(type==="chat"){
-   // The island is this route's return target even after revisiting via the header.
-   history.replaceState({...history.state,xyIslandChat:false},"");
-   history.pushState({...history.state,xyIslandChat:true},"");
+   history.pushState({...history.state,xyIslandRoot:false,xyIslandPage:"chat",xyOverlay:false,xyHubChild:false},"");
   }else if(typeof openPanel==="function"){
    openPanel(type);
-  }else{
-   throw Error("Missing destination "+type);
-  }
+  }else throw Error("Missing destination "+type);
   close();
  }catch(e){
   console.warn("[砚屿归岛] 无法打开",type,e);
@@ -152,7 +167,7 @@ function navigate(type){
 spots.addEventListener("click",e=>{
  if(Date.now()<suppressClickUntil)return;
  const el=e.target.closest("[data-place]");if(!el||!ready)return;
- const p=places.find(x=>x.id===el.dataset.place);if(p)navigate(p.type);
+ const p=places.find(x=>x.id===el.dataset.place);if(p)navigate(p.type,p);
 });
 root.querySelector("#xyIslandReplay").addEventListener("click",replay);
 root.querySelector("#xyIslandTip").addEventListener("click",()=>notify("点岛上的房屋、灯塔或下方小图标，进入对应页面",2600));
@@ -180,18 +195,33 @@ world.addEventListener("lostpointercapture",finishGesture);
 world.addEventListener("click",e=>{
  if(Date.now()<suppressClickUntil){e.preventDefault();e.stopImmediatePropagation()}
 },true);
-// Hardware Back: a panel launched from the island returns to the island rather than chat.
-// Nested hub tools still return to their parent hub on the first Back.
-window.addEventListener("popstate",()=>{
- if(!fromIsland)return;
- if(history.state?.xyOverlay || history.state?.xyHubChild)return;
- if(routeKind==="chat"&&history.state?.xyIslandChat)return;
+// A real island route sits below every destination in browser / Android Back history.
+function returnToIsland(){
  fromIsland=false;routeKind="";
  document.querySelector("#panel")?.classList.remove("open");
  document.querySelector("#sidebar")?.classList.remove("open");
  document.querySelector("#scrim")?.classList.remove("show");
- open();
+ open(true);
+}
+window.addEventListener("popstate",()=>{
+ if(!fromIsland)return;
+ const h=history.state||{};
+ if(h.xyOverlay||h.xyHubChild||h.xyIslandPage)return;
+ if(h[NAV_ROOT] || (!h.xyOverlay&&!h.xyHubChild)){
+  returnToIsland();
+ }
 });
+// Some overlay close buttons close the panel without waiting for browser history.
+// Capture their clicks so neither the underlying chat nor an empty frame is exposed.
+document.addEventListener("click",event=>{
+ if(!fromIsland||root.hidden===false)return;
+ const closeButton=event.target.closest?.("#closePanel,#sidebarClose,#scrim");
+ if(!closeButton||history.state?.xyHubChild)return;
+ event.preventDefault();event.stopImmediatePropagation();
+ if(history.state?.xyOverlay||history.state?.xyIslandPage)history.back();
+ else returnToIsland();
+},true);
+
 document.addEventListener("keydown",e=>{
  if(root.hidden||e.key!=="Escape")return;if(!ready)arrive();else close();
 });
@@ -201,11 +231,16 @@ if(header&&!document.getElementById("xyIslandReturn")){
  btn.className="xy-island-return";btn.textContent="屿";btn.title="回到砚屿岛屿主页";
  btn.setAttribute("aria-label","回到砚屿岛屿主页");
  header.insertBefore(btn,header.querySelector("#memoryBtn")||null);
- btn.addEventListener("click",open);
+ btn.addEventListener("click",()=>{
+   // Reopening from chat creates a fresh root; do not leave an overlay as its parent.
+   document.querySelector("#panel")?.classList.remove("open");
+   document.querySelector("#scrim")?.classList.remove("show");
+   open();
+ });
 }
 window.addEventListener("resize",layout);
 window.xyIslandHome={open,close,replay,arrive};
-layout();if(originalApp)originalApp.inert=true;document.documentElement.classList.add("xy-island-visible");
+layout();ensureIslandRoot();if(originalApp)originalApp.inert=true;document.documentElement.classList.add("xy-island-visible");
 function failed(){
  console.warn("[砚屿归岛] 场景图未加载，已启用备用导航");
  root.classList.add("is-fallback");world.classList.add("has-image");
