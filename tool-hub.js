@@ -3,6 +3,8 @@
     {id:"memory",title:"记忆",subtitle:"整理记忆与偏好",symbol:"⌁",group:"日常"},
     {id:"characters",title:"角色",subtitle:"角色资料、用户名字",symbol:"◇",group:"日常"},
     {id:"study",title:"书房",subtitle:"角色卡与故事预设",symbol:"▤",group:"创作"},
+    {id:"creation",title:"创作角",subtitle:"独立设定书 · 多条故事线",symbol:"✧",group:"创作"},
+    {id:"groupchat",title:"群聊",subtitle:"多选角色 · 共同演绎",symbol:"♧",group:"创作"},
     {id:"journal",title:"日记",subtitle:"记录日常，翻阅书架",symbol:"✎",group:"创作"},
     {id:"imagine",title:"生图",subtitle:"文生图、参考图与作品",symbol:"✦",group:"创作"},
     {id:"theme",title:"主题",subtitle:"配色、气泡与外观",symbol:"◐",group:"外观与管理"},
