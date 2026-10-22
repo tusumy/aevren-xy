@@ -1,0 +1,56 @@
+
+/* 创作角 · 独立书架 / 故事线 / 多人群聊，保留旧书房 */
+#panel.xy-creative-panel{width:min(760px,100vw);padding:20px clamp(15px,3vw,30px);overflow-y:auto;background:var(--panel,#f8f4ee);color:var(--ink,#3a3c38)}
+#panel.xy-creative-panel #panelBody{overflow:visible;min-height:0;padding-bottom:55px}
+#xyCreationView,#xyCreativeGroup{color:var(--ink,#3a3c38);font-size:13px;max-width:740px;margin:auto;line-height:1.65}
+#xyCreationView * ,#xyCreativeGroup *{box-sizing:border-box}
+#xyCreationView button,#xyCreativeGroup button{font:inherit;cursor:pointer;color:inherit}
+#xyCreationView h2,#xyCreativeGroup h2{font:500 clamp(24px,3vw,34px)/1.35 Georgia,"Songti SC",serif;letter-spacing:.05em;margin:12px 0}
+#xyCreationView label,#xyCreativeGroup label{display:grid;gap:8px;font-size:13px;font-weight:500;margin:15px 0}
+#xyCreationView input:not([type=checkbox]),#xyCreationView textarea,#xyCreativeGroup input:not([type=checkbox]),#xyCreativeGroup textarea,#xyCreativeGroup select{width:100%;max-width:100%;border:1px solid #aaaca33d;border-radius:14px;padding:12px 13px;background:var(--surface,#fffcf8);font:inherit;color:inherit;outline-offset:2px}
+#xyCreationView textarea,#xyCreativeGroup textarea{resize:vertical;min-height:90px;line-height:1.7}
+.xy-c-hero{padding:16px 0 19px;margin-bottom:12px;border-bottom:1px solid #ab9f8f38}
+.xy-c-hero small{font-size:10px;letter-spacing:.18em;color:#9a8b75}
+.xy-c-hero p{font-size:12px;color:var(--muted,#7d796f);margin:0}
+.xy-c-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:16px 0}
+.xy-c-actions>input{flex:1;min-width:140px}
+.xy-c-actions button,.xy-c-primary,.xy-c-send>button{border:0;border-radius:13px;padding:10px 17px;background:#8f7566;color:#fff!important;font-weight:600;box-shadow:0 3px 14px #6b534126}
+.xy-c-actions button:nth-child(even){background:#dcd2c5;color:#534b42!important}
+.xy-c-primary{margin-top:15px;max-width:100%}
+.xy-c-section{margin:28px 0 12px;font:500 18px/1.4 Georgia,"Songti SC",serif}
+.xy-c-stack{display:flex;flex-wrap:wrap;align-items:flex-start;gap:19px 12px;padding:15px 7px 27px;min-height:100px}
+.xy-c-book{position:relative;flex:0 1 173px;min-width:135px;min-height:208px;border:1px solid #fff9f7b0;border-radius:7px 16px 16px 7px;padding:15px 14px 13px 21px;background:linear-gradient(115deg,#42343442,#fff7ef12 14%,transparent 18%),linear-gradient(138deg,hsl(var(--h,10deg) 28% 53%),hsl(var(--h,10deg) 22% 38%));color:#fff8ec!important;box-shadow:6px 11px 2px -4px #9c91858c,9px 18px 16px #3b37342e;transform:rotate(calc((var(--i,0) - 2)*.7deg));display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:7px;transition:transform .2s ease,box-shadow .2s ease}
+.xy-c-book:hover,.xy-c-book:focus-visible{transform:translateY(-8px) rotate(0);box-shadow:6px 16px 4px -4px #9c91858c,12px 24px 20px #3b37344d;outline:2px solid #e0c6a8}
+.xy-c-book:before{content:"";position:absolute;top:4px;bottom:4px;left:9px;width:1px;background:#fff9e866}
+.xy-c-book small{font:10px/1.4 Georgia,serif;letter-spacing:.12em;opacity:.78}
+.xy-c-book strong{font:500 19px/1.5 Georgia,"Songti SC",serif;margin:auto 0;overflow-wrap:anywhere}
+.xy-c-book span{font-size:11px;opacity:.8;line-height:1.4}
+.xy-c-empty{padding:24px 16px;border:1px dashed #b5a5965e;border-radius:18px;color:var(--muted,#84796b);font-size:12px;background:#e1d9cf18;margin:11px 0}
+.xy-c-listbtn{display:flex;width:100%;align-items:center;gap:10px;justify-content:space-between;border:1px solid #b1a99f42;border-radius:14px;background:var(--surface,#fffdf8);padding:13px 15px;margin:7px 0;text-align:left}
+.xy-c-listbtn:hover{background:var(--soft,#f3eee8)}
+.xy-c-listbtn b{font-weight:550}
+.xy-c-listbtn small{font-size:11px;color:var(--muted,#948577)}
+.xy-c-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 0 24px}
+.xy-c-head button{border:1px solid #bcb0a050;border-radius:20px;background:var(--surface,#faf6ed);padding:7px 12px;font-size:12px}
+.xy-c-head button.warning{color:#a36461!important}
+.xy-c-roles{display:flex;flex-wrap:wrap;gap:7px;margin:6px 0 15px}
+#xyCreationView .xy-c-roles label,#xyCreativeGroup .xy-c-roles label{margin:0;display:flex;align-items:center;gap:5px;cursor:pointer;border:1px solid #b9ab9c73;border-radius:22px;background:var(--surface,#faf5ee);padding:8px 13px;font-size:12px;font-weight:400}
+.xy-c-roles input[type=checkbox]{accent-color:#a47f71}
+.xy-c-label{font-size:12px;color:var(--muted,#81796e);font-weight:600;margin-top:24px}
+.xy-c-chapter{background:var(--surface,#faf5eb);border:1px solid #b5a69552;border-radius:14px;padding:14px 17px;margin:12px 0}
+.xy-c-chapter header{height:auto;display:flex;justify-content:space-between;padding:0 0 10px;font-size:11px;color:#8f7e72;border:0}
+.xy-c-chapter header button{background:transparent;border:0}
+.xy-c-chapter p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;font-size:13px}
+.xy-c-dialogue{display:flex;flex-direction:column;gap:12px;max-height:55vh;min-height:170px;overflow-y:auto;overscroll-behavior:contain;background:linear-gradient(155deg,#b9b5a819,#a8c3b015);border:1px solid #c0b0a452;border-radius:22px;padding:18px}
+.xy-c-speech{align-self:flex-start;max-width:88%;padding:10px 15px;border-radius:17px 17px 17px 4px;background:var(--surface,#fffcf9);box-shadow:0 4px 13px #38392e12;overflow-wrap:anywhere}
+.xy-c-speech.mine{align-self:flex-end;border-radius:17px 17px 4px 17px;background:#e0e9df}
+.xy-c-speech small{display:block;font-size:11px;color:#998073;margin-bottom:4px}
+.xy-c-speech p{margin:0;white-space:pre-wrap;font-size:13px;line-height:1.65}
+.xy-c-send{display:grid;gap:8px;margin-top:14px}
+.xy-c-send textarea{min-height:75px!important}
+.xy-c-send>button:disabled{opacity:.6;cursor:progress}
+.xy-c-note{display:block;font-size:11px;color:var(--muted,#877e73);margin-top:12px}
+.xy-c-error{color:#a44b42;background:#fbece9;padding:10px 12px;border-radius:12px;line-height:1.5}
+.xy-cr-sidebar-link{width:100%;gap:10px;text-align:left}
+@media(max-width:760px){#panel.xy-creative-panel{width:100vw;padding:16px 16px max(24px,env(safe-area-inset-bottom))}
+.xy-c-stack{gap:10px}.xy-c-book{flex:1 0 calc(50% - 12px);min-width:115px;min-height:175px}.xy-c-dialogue{max-height:48vh;padding:12px}}
