@@ -64,3 +64,20 @@ html.xy-island-visible,html.xy-island-visible body{overflow:hidden!important}
 @media(prefers-reduced-motion:reduce){
  #xyIslandHome *,#xyIslandHome *::before,#xyIslandHome *::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+/* 2026-10-22 · make island/home transitions continuous */
+#xyIslandHome:not([hidden]){opacity:1;transform:translateZ(0) scale(1);transition:opacity .42s ease,transform .42s cubic-bezier(.25,.7,.3,1)}
+#xyIslandHome.is-exiting{opacity:0;transform:translateZ(0) scale(1.018);pointer-events:none}
+#xyIslandHome.is-entering{opacity:0;transform:translateZ(0) scale(.99)}
+#xyIslandHome .xy-island-world.is-intro.is-arriving .xy-island-film{
+ opacity:0!important;visibility:visible!important;transition:opacity .55s ease!important;
+}
+#xyIslandHome .xy-island-world.is-arriving .xy-island-controls,
+#xyIslandHome .xy-island-world.is-arriving .xy-island-toolbar{opacity:0;pointer-events:none}
+#xyIslandHome .xy-island-world.is-arriving .xy-island-entry{pointer-events:none}
+@media(max-width:760px){
+ #xyIslandHome .xy-island-backdrop{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+ #xyIslandHome:not([hidden]){transition:none!important}
+}
