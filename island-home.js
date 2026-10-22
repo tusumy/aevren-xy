@@ -32,14 +32,15 @@ root.innerHTML=
 '<nav class="xy-island-labels" id="xyIslandLabels" aria-label="岛上功能入口"></nav>'+
 '<div class="xy-island-notice" id="xyIslandNotice" aria-live="polite">穿过树叶，去看看秋千……</div>'+
 '<div class="xy-island-tooltip" id="xyIslandTooltip" role="status" hidden></div>'+
-'<div class="xy-island-toolbar"><button type="button" id="xyIslandRevisit" aria-label="重新观看开场">重看开场</button>'+
-'<button type="button" class="xy-island-chat" id="xyIslandChat">进入小屋　→</button></div></main>';
+'</main>';
 document.body.appendChild(root);
 const world=root.querySelector("#xyIslandWorld"),painting=root.querySelector("#xyIslandPainting"),
 backdrop=root.querySelector(".xy-island-backdrop"),spots=root.querySelector("#xyIslandLabels"),
 skip=root.querySelector("#xyIslandSkip"),notice=root.querySelector("#xyIslandNotice"),
 tooltip=root.querySelector("#xyIslandTooltip");
-let introTimers=[],loaded=false,ready=false,toastTimer=0,arrivalTimer=0,exitTimer=0;
+let introTimers=[],loaded=false,ready=false,toastTimer=0,arrivalTimer=0,exitTimer=0,noticeTimer=0;
+let panX=0,panMax=0,gesture=null,suppressClickUntil=0;
+let fromIsland=false,routeKind="";
 const reduced=!!window.matchMedia?.("(prefers-reduced-motion:reduce)")?.matches;
 let seen=false;try{seen=sessionStorage.getItem(INTRO_KEY)==="1"}catch{}
 function schedule(fn,ms){introTimers.push(setTimeout(fn,ms))}
@@ -47,6 +48,8 @@ function clearTimeline(){introTimers.forEach(clearTimeout);introTimers=[]}
 function layout(){
  const width=world.clientWidth,height=world.clientHeight;if(!width||!height)return;
  const scale=Math.max(width/1024,height/1536),dx=(width-1024*scale)/2,dy=(height-1536*scale)/2;
+ panMax=Math.max(0, (1024*scale-width)/2);
+ setPan(panX);
  places.forEach(p=>{const e=p.el;e.style.left=dx+p.x*scale+"px";e.style.top=dy+p.y*scale+"px";
  e.style.width=p.w*scale+"px";e.style.height=p.h*scale+"px"});
 }
@@ -61,6 +64,10 @@ for(let i=0;i<14;i++){
  petal.style.setProperty("--duration",(8+(i%7)*1.35)+"s");
  root.querySelector("#xyIslandPetals").appendChild(petal);
 }
+function setPan(value){
+ panX=Math.max(-panMax,Math.min(panMax,value));
+ root.style.setProperty("--xy-island-pan-x",panX+"px");
+}
 function notify(s,ms=1900){
  tooltip.textContent=s;tooltip.hidden=false;clearTimeout(toastTimer);
  toastTimer=setTimeout(()=>{tooltip.hidden=true},ms);
@@ -69,6 +76,8 @@ function arrive(){
  clearTimeline();clearTimeout(arrivalTimer);
  ready=true;world.classList.add("is-ready");
  skip.hidden=true;notice.textContent="回来了，岛上的灯还亮着";
+ clearTimeout(noticeTimer);notice.hidden=false;
+ noticeTimer=setTimeout(()=>{if(ready)notice.hidden=true},1400);
  if(world.classList.contains("is-intro")){
   // Let the animated character dissolve into the stable island instead of snapping away.
   world.classList.add("is-arriving");
@@ -83,7 +92,8 @@ function replay(){
  if(!loaded)return;
  clearTimeline();clearTimeout(arrivalTimer);ready=false;world.classList.remove("is-ready","is-intro","is-arriving");
  void world.offsetWidth;world.classList.add("is-intro");
- skip.hidden=false;notice.textContent="穿过树叶，去看看秋千……";
+ skip.hidden=false;notice.hidden=false;clearTimeout(noticeTimer);
+ setPan(0);notice.textContent="穿过树叶，去看看秋千……";
  [[1300,"叶子散开了，秋千上有只粉毛小娃娃"],[2550,"小娃娃松开秋千，纵身跃下"],
  [3600,"穿过云海，向砚屿飞去"],[4950,"落在岛上的石阶旁"],
  [6050,"镜头拉远，整座岛慢慢亮起来"]].forEach(([t,s])=>schedule(()=>{notice.textContent=s},t));
@@ -122,20 +132,63 @@ function open(){
 function navigate(type){
  if(type==="island")return;
  if(type==="replay"){replay();return}
- close();if(type==="chat")return;
- try{if(typeof openPanel==="function")openPanel(type);else open()}catch(e){
-  console.warn("[砚屿归岛] 无法打开",type,e);open();notify("这个入口暂时打不开，请从聊天页进入");
+ fromIsland=true;routeKind=type;
+ try{
+  if(type==="chat"){
+   history.pushState({...history.state,xyIslandChat:true},"");
+  }else if(typeof openPanel==="function"){
+   openPanel(type);
+  }else{
+   throw Error("Missing destination "+type);
+  }
+  close();
+ }catch(e){
+  console.warn("[砚屿归岛] 无法打开",type,e);
+  fromIsland=false;routeKind="";open();notify("入口暂时不可用");
  }
 }
 spots.addEventListener("click",e=>{
+ if(Date.now()<suppressClickUntil)return;
  const el=e.target.closest("[data-place]");if(!el||!ready)return;
  const p=places.find(x=>x.id===el.dataset.place);if(p)navigate(p.type);
 });
-root.querySelector("#xyIslandChat").addEventListener("click",()=>navigate("chat"));
-root.querySelector("#xyIslandRevisit").addEventListener("click",replay);
 root.querySelector("#xyIslandReplay").addEventListener("click",replay);
 root.querySelector("#xyIslandTip").addEventListener("click",()=>notify("点岛上的房屋、灯塔或下方小图标，进入对应页面",2600));
 skip.addEventListener("click",arrive);
+// Move the complete painted island, hotspots included. Keep the navbar and controls stationary.
+world.addEventListener("pointerdown",e=>{
+ if(!ready||root.hidden||e.button!==0||e.target.closest(".xy-island-controls,.xy-island-skip"))return;
+ gesture={id:e.pointerId,x:e.clientX,y:e.clientY,start:panX,moved:false};
+});
+world.addEventListener("pointermove",e=>{
+ if(!gesture||gesture.id!==e.pointerId)return;
+ const dx=e.clientX-gesture.x,dy=e.clientY-gesture.y;
+ if(!gesture.moved&&Math.abs(dx)>9&&Math.abs(dx)>Math.abs(dy)*1.1){
+  gesture.moved=true;try{world.setPointerCapture(e.pointerId)}catch{}
+ }
+ if(gesture.moved){setPan(gesture.start+dx);if(e.cancelable)e.preventDefault()}
+});
+function finishGesture(){
+ if(gesture?.moved)suppressClickUntil=Date.now()+280;
+ gesture=null;
+}
+world.addEventListener("pointerup",finishGesture);
+world.addEventListener("pointercancel",finishGesture);
+world.addEventListener("lostpointercapture",finishGesture);
+world.addEventListener("click",e=>{
+ if(Date.now()<suppressClickUntil){e.preventDefault();e.stopImmediatePropagation()}
+},true);
+// Hardware Back: a panel launched from the island returns to the island rather than chat.
+// Nested hub tools still return to their parent hub on the first Back.
+window.addEventListener("popstate",()=>{
+ if(!fromIsland)return;
+ if(history.state?.xyOverlay || history.state?.xyHubChild || history.state?.xyIslandChat)return;
+ fromIsland=false;routeKind="";
+ document.querySelector("#panel")?.classList.remove("open");
+ document.querySelector("#sidebar")?.classList.remove("open");
+ document.querySelector("#scrim")?.classList.remove("show");
+ open();
+});
 document.addEventListener("keydown",e=>{
  if(root.hidden||e.key!=="Escape")return;if(!ready)arrive();else close();
 });
