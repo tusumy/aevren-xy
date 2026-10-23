@@ -1,0 +1,49 @@
+/* MCP tool trace: compact glass panels; no expensive mobile blur. */
+.message.assistant .xy-tool-trace{
+  box-sizing:border-box;
+  width:min(380px,100%);
+  max-width:100%;
+  margin-top:7px;
+  border:1px solid color-mix(in srgb,var(--theme-accent,#527460) 18%,rgba(255,255,255,.55));
+  border-radius:15px;
+  background:linear-gradient(145deg,rgba(252,255,251,.78),rgba(229,240,233,.57));
+  color:var(--ink,#35453b);
+  box-shadow:0 7px 20px rgba(36,62,42,.055),inset 0 1px rgba(255,255,255,.65);
+  overflow:hidden;
+  font-size:12px;
+  line-height:1.5;
+}
+.xy-tool-trace summary{list-style:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.xy-tool-trace summary::-webkit-details-marker{display:none}
+.xy-tool-trace > summary{display:flex;align-items:center;gap:7px;min-height:37px;padding:8px 11px;font-weight:600}
+.xy-tool-trace > summary > small{margin-left:auto;color:var(--muted,#718277);font-size:10px;white-space:nowrap}
+.xy-tool-trace-glyph{display:grid;place-items:center;width:20px;height:20px;border-radius:7px;background:color-mix(in srgb,var(--theme-accent,#527460) 12%,transparent);color:var(--theme-accent,#527460)}
+.xy-tool-trace-body{padding:0 9px 9px;display:grid;gap:6px}
+.xy-tool-step{min-width:0;border:1px solid rgba(83,114,94,.12);border-radius:10px;background:rgba(255,255,255,.42)}
+.xy-tool-step > summary{display:flex;align-items:center;gap:7px;padding:8px;min-width:0}
+.xy-tool-step-index{display:inline-grid;place-items:center;flex:none;width:17px;height:17px;border-radius:50%;background:rgba(97,129,107,.11);font-size:10px;font-variant-numeric:tabular-nums}
+.xy-tool-step-name{min-width:0;flex:1;overflow-wrap:anywhere;font-size:11px}
+.xy-tool-step-state{flex:none;font-size:10px;color:var(--theme-accent,#42694d)}
+.xy-tool-step-state[data-state="error"]{color:#b55e52}
+.xy-tool-step-state[data-state="running"]{color:#9b7840}
+.xy-tool-step-detail{display:flex;gap:8px;flex-wrap:wrap;padding:0 8px 9px;color:var(--muted,#6e8074)}
+.xy-tool-step-detail small{font-size:10px}
+.xy-tool-field{width:100%;min-width:0}
+.xy-tool-field b{display:block;font-weight:550;font-size:10px;margin:4px 0}
+.xy-tool-field pre{box-sizing:border-box;margin:0;max-height:140px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:10px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:inherit;background:rgba(86,114,94,.055);padding:7px;border-radius:7px;user-select:text}
+#typing .xy-tool-live{max-width:100%;margin-top:8px}
+#typing .xy-tool-live .xy-tool-trace{width:100%}
+html[data-theme-mode="dark"] .message.assistant .xy-tool-trace{
+  color:#e6ede7;
+  border-color:rgba(185,210,190,.14);
+  background:linear-gradient(135deg,rgba(48,62,53,.82),rgba(32,42,37,.9));
+  box-shadow:0 7px 18px rgba(0,0,0,.11),inset 0 1px rgba(255,255,255,.05)
+}
+html[data-theme-mode="dark"] .xy-tool-step{background:rgba(255,255,255,.035);border-color:rgba(255,255,255,.09)}
+html[data-theme-mode="dark"] .xy-tool-field pre{background:rgba(0,0,0,.14)}
+@media (hover:hover) and (min-width:780px){
+ .message.assistant .xy-tool-trace{backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+}
+@media (max-width:680px){
+ .message.assistant .xy-tool-trace{width:100%;border-radius:13px}
+}
