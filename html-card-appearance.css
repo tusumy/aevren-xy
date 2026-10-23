@@ -1,0 +1,61 @@
+/* Separate HTML/status-card surface finish. Defaults to off: author styling stays untouched. */
+.xy-html-glass-settings{margin:12px 0;padding:15px;border-radius:18px;border:1px solid var(--line,#d8ddd2)}
+.xy-html-glass-heading{font-weight:650;font-size:13px;margin:0 0 5px}
+.xy-html-glass-description{color:var(--muted,#7a8077);font-size:11px;line-height:1.6;margin:0 0 12px}
+.xy-html-glass-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.xy-html-glass-options button{background:var(--surface,#fff);border:1px solid var(--line,#cad5ca);border-radius:12px;min-height:38px;padding:7px 2px;color:var(--ink,#385748);font:12px/1.3 inherit;cursor:pointer}
+.xy-html-glass-options button[aria-pressed="true"]{border-color:var(--theme-accent,#65876e);background:color-mix(in srgb,var(--theme-accent,#769d7d) 18%,var(--surface,#fff))}
+.xy-html-glass-options button:focus-visible{outline:2px solid var(--theme-accent,#73957b);outline-offset:2px}
+.xy-html-glass-tuning{display:grid;gap:10px;margin-top:13px}
+.xy-html-glass-tuning label{display:grid;grid-template-columns:1fr auto;gap:7px;font-size:11px;align-items:center}
+.xy-html-glass-tuning label input{grid-column:1/-1;width:100%;accent-color:var(--theme-accent,#648a6b)}
+.xy-html-glass-tuning.is-disabled{opacity:.42}
+html[data-theme-mode="dark"] .xy-html-glass-settings{background:rgba(26,40,32,.7);border-color:rgba(193,225,198,.2)}
+html[data-theme-mode="dark"] .xy-html-glass-options button{background:#26372d;color:#eaf4ea;border-color:#607668}
+/* Don't blur large HTML iframes or entire text-heavy status cards. */
+html[data-xy-card-glass]:not([data-xy-card-glass="off"])
+:is(.xy-html-widget .xy-html-bar,.xy-jn-cover,.xy-jn-tabs){
+ background:
+ radial-gradient(110% 85% at 15% -10%,rgba(255,255,255,.32),transparent 65%),
+ rgba(250,255,251,var(--xy-card-surface-alpha,.35))!important;
+ border:1px solid rgba(255,255,255,.48)!important;
+ -webkit-backdrop-filter:blur(var(--xy-card-surface-blur,0px)) saturate(1.25)!important;
+ backdrop-filter:blur(var(--xy-card-surface-blur,0px)) saturate(1.25)!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 5px 16px rgba(35,48,41,.11)!important;
+}
+html[data-xy-card-glass="liquid"]
+:is(.xy-html-widget .xy-html-bar,.xy-jn-cover,.xy-jn-tabs){
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.75),inset 0 -1px 1px rgba(35,45,40,.12),0 6px 17px rgba(33,45,38,.11)!important;
+}
+html[data-xy-card-glass]:not([data-xy-card-glass="off"])
+:is(.xy-html-widget .xy-html-preview,.xy-jn-card){
+ background:rgba(250,255,251,var(--xy-card-surface-alpha,.35))!important;
+ border-color:rgba(195,221,202,.5)!important;
+ /* Intentionally not backdrop filtered: a tall card becomes costly to scroll. */
+ backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+}
+html[data-theme-mode="dark"][data-xy-card-glass]:not([data-xy-card-glass="off"])
+:is(.xy-html-widget .xy-html-bar,.xy-jn-cover,.xy-jn-tabs){
+ background:rgba(30,46,36,var(--xy-card-surface-alpha,.35))!important;
+ border-color:rgba(181,226,191,.28)!important;
+ color:#e9f3eb;
+}
+html[data-theme-mode="dark"][data-xy-card-glass]:not([data-xy-card-glass="off"])
+:is(.xy-html-widget .xy-html-preview,.xy-jn-card){
+ background:rgba(28,41,34,var(--xy-card-surface-alpha,.35))!important;
+}
+@media(max-width:760px){
+ .xy-html-glass-options button{min-height:44px}
+ html[data-xy-card-glass]:not([data-xy-card-glass="off"])
+ :is(.xy-html-widget .xy-html-bar,.xy-jn-cover,.xy-jn-tabs){
+  /* Mobile blur capped for smooth scrolling; slider stays fully adjustable for desktop. */
+  -webkit-backdrop-filter:blur(min(var(--xy-card-surface-blur,0px),8px)) saturate(1.15)!important;
+  backdrop-filter:blur(min(var(--xy-card-surface-blur,0px),8px)) saturate(1.15)!important;
+ }
+}
+@media(prefers-reduced-transparency:reduce){
+ html[data-xy-card-glass]:not([data-xy-card-glass="off"])
+ :is(.xy-html-widget .xy-html-bar,.xy-jn-cover,.xy-jn-tabs){
+  backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+ }
+}
