@@ -28,7 +28,7 @@ root.innerHTML=
 '<img class="xy-island-painting" id="xyIslandPainting" alt="樱花秋千、粉毛绿眸小娃娃、仙侠楼阁、云海瀑布与砚屿岛屿" draggable="false">'+
 '<div class="xy-island-foreground" aria-hidden="true"></div><div id="xyIslandPetals" aria-hidden="true"></div>'+
 '<div class="xy-island-busy" id="xyIslandLoading" role="status">云海正在散开……</div>'+
-'<div class="xy-island-controls"><button type="button" id="xyIslandReplay" aria-label="重播归岛动画">↻ 重播归岛</button><button type="button" id="xyIslandTip" aria-label="查看岛屿操作提示">✦ 怎么逛</button></div>'+
+'<div class="xy-island-controls"><button type="button" id="xyIslandTip" aria-label="查看岛屿操作提示">✦ 怎么逛</button></div>'+
 '<button type="button" class="xy-island-skip" id="xyIslandSkip">跳过开场　›</button>'+
 '<nav class="xy-island-labels" id="xyIslandLabels" aria-label="岛上功能入口"></nav>'+
 '<div class="xy-island-notice" id="xyIslandNotice" aria-live="polite">穿过树叶，去看看秋千……</div>'+
@@ -172,7 +172,7 @@ spots.addEventListener("click",e=>{
  const el=e.target.closest("[data-place]");if(!el||!ready)return;
  const p=places.find(x=>x.id===el.dataset.place);if(p)navigate(p.type,p);
 });
-root.querySelector("#xyIslandReplay").addEventListener("click",replay);
+
 root.querySelector("#xyIslandTip").addEventListener("click",()=>notify("点岛上的房屋、灯塔或下方小图标，进入对应页面",2600));
 skip.addEventListener("click",arrive);
 // Swipe the actual panorama with landmarks and hit areas in the same coordinate system.
@@ -294,7 +294,7 @@ function setArtwork(encoded){
  painting.addEventListener("load",()=>{
   loaded=true;world.classList.add("has-image");
   backdrop.style.backgroundImage='url("'+painting.src+'")';layout();
-  if(seen||reduced)arrive();else replay();
+  arrive();
  },{once:true});
  painting.addEventListener("error",failed,{once:true});
  painting.src="data:image/webp;base64,"+encoded.trim();
