@@ -123,7 +123,12 @@
     let observer=null;
     if(typeof IntersectionObserver==="function"){
       observer=new IntersectionObserver(entries=>{
-        for(const e of entries)e.target.classList.toggle("xy-bubble-glass-visible",e.isIntersecting);
+        for(const e of entries){
+          e.target.classList.toggle("xy-bubble-glass-visible",e.isIntersecting);
+          // Tall, text-heavy bubbles are expensive to backdrop-blur on Android.
+          // IntersectionObserver provides the rect without measuring layout again.
+          e.target.classList.toggle("xy-bubble-too-tall",e.boundingClientRect.height>400);
+        }
       },{root:scroller,rootMargin:"120px 0px 120px 0px",threshold:0});
     }
     const scan=()=>{
