@@ -109,6 +109,10 @@ class MainActivity : Activity() {
             javaScriptEnabled = true
             domStorageEnabled = true
             databaseEnabled = true
+            // Restore pinch-to-zoom for chats and HTML views without visible zoom buttons.
+            setSupportZoom(true)
+            builtInZoomControls = true
+            displayZoomControls = false
             mediaPlaybackRequiresUserGesture = false
             allowFileAccess = false
             allowContentAccess = true
