@@ -6,10 +6,14 @@ on:
       - 'api-hub.js'
       - 'api-hub.css'
       - 'api-compat.js'
+      - 'message-ui.js'
+      - 'tool-activity.js'
+      - 'tool-activity.css'
       - 'app.js'
       - 'index.html'
       - 'proxy-layer.js'
       - 'tests/api-hub.test.cjs'
+      - 'tests/tool-activity.test.cjs'
       - '.github/workflows/api-hub-test.yml'
   push:
     branches: [main]
@@ -36,7 +40,9 @@ jobs:
         run: |
           node --check api-hub.js
           node --check api-compat.js
+          node --check message-ui.js
+          node --check tool-activity.js
           node --check app.js
           node --check proxy-layer.js
-      - name: Route regression tests
-        run: node --test tests/api-hub.test.cjs
+      - name: Chat route and tool card regression tests
+        run: node --test tests/*.test.cjs
