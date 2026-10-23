@@ -1,12 +1,14 @@
 /* 砚屿 · MCP tool activity: bounded, redacted previews with no server dependency. */
 (()=>{
   "use strict";
-  const SECRET_KEY=/(?:^|[_-])(key|token|secret|password|credential|authorization|cookie|session|private|access[_-]?token|refresh[_-]?token)(?:$|[_-])/i;
+  const SECRET_KEY=/(?:api[-_]?key|secret|password|credential|authorization|cookie|session|private|access[-_]?token|refresh[-_]?token|auth|(?:^|[-_])(?:key|token)(?:$|[-_]))/i;
   const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const mask=value=>String(value??"")
     .replace(/\bBearer\s+[^\s,;"']+/gi,"Bearer [已隐藏]")
     .replace(/\bsk-[a-zA-Z0-9_-]{10,}\b/g,"[已隐藏]")
-    .replace(/([?&](?:api_?key|token|secret|password|authorization)=)[^&#\s]+/gi,"$1[已隐藏]");
+    .replace(/([?&](?:api_?key|token|secret|password|authorization)=)[^&#\s]+/gi,"$1[已隐藏]")
+    .replace(/\b((?:api[-_ ]?key|token|secret|password|authorization)\s*[:=]\s*)[^\s,;"']+/gi,"$1[已隐藏]")
+    .replace(/data:(?:image|audio|application)\/[a-z0-9.+-]+;base64,[a-z0-9+/=]+/gi,"[媒体数据已隐藏]");
 
   function redact(value,depth=0){
     if(value==null||typeof value==="number"||typeof value==="boolean")return value;
