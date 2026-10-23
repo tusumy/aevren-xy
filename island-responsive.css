@@ -102,8 +102,8 @@
 .xy-island-side-arrow[data-side="right"]{right:7px}
 .xy-island-world.is-intro .xy-island-mobile-arrows{opacity:0}
 @media(max-width:760px){.xy-island-mobile-arrows{display:block}
- #xyIslandHome .xy-island-world{touch-action:none!important;overscroll-behavior:contain}
- #xyIslandHome .xy-island-labels{touch-action:none}
+ #xyIslandHome .xy-island-world{touch-action:pan-y pinch-zoom!important;overscroll-behavior:contain}
+ #xyIslandHome .xy-island-labels{touch-action:pan-y pinch-zoom}
  #xyIslandHome .xy-island-controls,#xyIslandHome .xy-island-skip{touch-action:manipulation}
 }
 #panel.xy-island-location-panel .xy-island-room-banner{flex-shrink:0}
