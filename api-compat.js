@@ -348,6 +348,7 @@
     const target=completeChatEndpoint(ep.base);
 
     let routeId=null;
+    const toolTrace=[];
     try{
       for(let round=0;round<6;round++){
         const payload={model:ep.model,messages,stream:false};
@@ -385,7 +386,7 @@
             }catch(err){console.warn("[砚屿] 心音自动补生成失败：",String(err?.message||err))}
           }
           heart.text=window.xyStickerShelf?.normalizeReply?.(heart.text,c.characterId||window.xyCurrentCharacter?.()?.id)??heart.text;
-          c.messages.push({role:'assistant',text:heart.text,heartShort:heart.heartShort||'',heartFull:heart.heartFull||''});
+          c.messages.push({role:'assistant',text:heart.text,heartShort:heart.heartShort||'',heartFull:heart.heartFull||'',toolActivity:toolTrace.length?toolTrace:undefined});
           save();renderMessages();window.xyStudyAuto?.afterReply?.(c);return;
         }
 
@@ -395,14 +396,34 @@
           if(!hit)throw new Error('找不到 MCP 工具：'+tc.function?.name);
           let args={};
           try{args=JSON.parse(tc.function?.arguments||'{}')}catch{throw new Error('工具参数不是有效 JSON')}
-          const result=await callMcpTool(hit.server,hit.tool,args);
-          messages.push({role:'tool',tool_call_id:tc.id,content:JSON.stringify(result)});
+          const step={
+            name:String(hit.tool||tc.function?.name||'MCP 工具'),
+            server:String(hit.server?.name||'MCP'),
+            status:'running',
+            startedAt:Date.now(),
+            argsPreview:window.xyToolActivity?.preview?.(args)||''
+          };
+          toolTrace.push(step);
+          window.xyToolActivity?.renderLive?.(c,toolTrace);
+          try{
+            const result=await callMcpTool(hit.server,hit.tool,args);
+            step.status=result?.isError?'error':'done';
+            step.resultPreview=window.xyToolActivity?.preview?.(result)||'';
+            messages.push({role:'tool',tool_call_id:tc.id,content:JSON.stringify(result)});
+          }catch(error){
+            step.status='error';
+            step.resultPreview=window.xyToolActivity?.preview?.(String(error?.message||error))||'执行失败';
+            throw error;
+          }finally{
+            step.finishedAt=Date.now();
+            window.xyToolActivity?.renderLive?.(c,toolTrace);
+          }
         }
       }
       throw new Error('工具调用轮次过多');
     }catch(err){
       hideTyping();
-      c.messages.push({role:'assistant',text:'请求失败：'+err.message,localOnly:true});
+      c.messages.push({role:'assistant',text:'请求失败：'+err.message,localOnly:true,toolActivity:toolTrace.length?toolTrace:undefined});
       save();renderMessages();
     }finally{
       sending=false;$('#sendBtn').disabled=false;
