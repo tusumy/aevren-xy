@@ -182,6 +182,7 @@ function queuePan(value){
  panFrame=requestAnimationFrame(()=>{panFrame=0;setPan(pendingPan)});
 }
 world.addEventListener("pointerdown",e=>{
+ if(e.pointerType==="touch"&&!e.isPrimary){gesture=null;root.classList.remove("is-dragging");return}
  if(!ready||root.hidden||e.button!==0||e.target.closest(".xy-island-controls,.xy-island-skip"))return;
  gesture={id:e.pointerId,x:e.clientX,y:e.clientY,lastX:e.clientX,lastTime:performance.now(),start:panX,moved:false,velocity:0};
 });
