@@ -3,7 +3,7 @@
 .xy-html-glass-heading{font-weight:650;font-size:13px;margin:0 0 5px}
 .xy-html-glass-description{color:var(--muted,#7a8077);font-size:11px;line-height:1.6;margin:0 0 12px}
 .xy-html-glass-options{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.xy-html-glass-options button{background:var(--surface,#fff);border:1px solid var(--line,#cad5ca);border-radius:12px;min-height:38px;padding:7px 2px;color:var(--ink,#385748);font:12px/1.3 inherit;cursor:pointer}
+.xy-html-glass-options button{background:var(--surface,#fff);border:1px solid var(--line,#cad5ca);border-radius:12px;min-height:38px;padding:7px 2px;color:var(--ink,#385748);font-size:12px;line-height:1.3;font-family:inherit;cursor:pointer}
 .xy-html-glass-options button[aria-pressed="true"]{border-color:var(--theme-accent,#65876e);background:color-mix(in srgb,var(--theme-accent,#769d7d) 18%,var(--surface,#fff))}
 .xy-html-glass-options button:focus-visible{outline:2px solid var(--theme-accent,#73957b);outline-offset:2px}
 .xy-html-glass-tuning{display:grid;gap:10px;margin-top:13px}
