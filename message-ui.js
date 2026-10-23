@@ -95,8 +95,9 @@
       const split=parts.length>1?` split-piece ${first?"split-first":last?"split-last":"split-mid"}`:"";
       const ts=last&&stamp?`<span class="message-time" title="${esc(title)}">${esc(stamp)}</span>`:"";
       const attachments=first?media:"";
+      const toolCard=last&&isAssistant?(window.xyToolActivity?.renderSaved?.(m.toolActivity)||""):"";
       const text=part?`<span class="bubble-text">${window.xyChatMarkdown?.render?.(part)??(window.xyStickerShelf?.renderText?.(part)??esc(part))}</span>`:"";
-      return `<div class="message ${m.role}${split}" data-message="${index}" data-part="${i}"><div class="message-stack"><div class="bubble">${attachments}${text}</div>${ts}</div></div>`;
+      return `<div class="message ${m.role}${split}" data-message="${index}" data-part="${i}"><div class="message-stack"><div class="bubble">${attachments}${text}</div>${toolCard}${ts}</div></div>`;
     }).join("");
   }
 
