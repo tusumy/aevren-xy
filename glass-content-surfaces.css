@@ -1,1 +1,133 @@
-/* Glass and night-state integration for content cards. */
+
+/* The existing glass setting also controls heart and first-party HTML shells. */
+/* The sandboxed HTML iframe retains the author's own styling. */
+html:is([data-xy-glass="clear"],[data-xy-glass="frost"],[data-xy-glass="liquid"],[data-xy-bubble-finish="clear"],[data-xy-bubble-finish="frost"],[data-xy-bubble-finish="liquid"]){
+ --xy-card-ink:#34513e;
+ --xy-card-edge:rgba(255,255,255,.6);
+ --xy-card-tint:rgba(243,253,246,.31);
+ --xy-card-shadow:inset 0 1px 0 rgba(255,255,255,.62),0 8px 24px rgba(29,45,35,.12);
+}
+html[data-theme-mode="dark"]:is([data-xy-glass="clear"],[data-xy-glass="frost"],[data-xy-glass="liquid"],[data-xy-bubble-finish="clear"],[data-xy-bubble-finish="frost"],[data-xy-bubble-finish="liquid"]){
+ --xy-card-ink:#ecf6ef;--xy-card-edge:rgba(194,229,202,.27);--xy-card-tint:rgba(30,45,36,.82);
+ --xy-card-shadow:inset 0 1px 0 rgba(237,255,241,.15),0 11px 28px rgba(0,0,0,.3);
+}
+html:is([data-xy-glass="clear"],[data-xy-glass="frost"],[data-xy-glass="liquid"],[data-xy-bubble-finish="clear"],[data-xy-bubble-finish="frost"],[data-xy-bubble-finish="liquid"])
+:is(.message.assistant .xy-heart-note .xy-heart-pill,
+    .message.assistant .xy-heart-note .xy-heart-detail,
+    .xy-html-widget .xy-html-bar,.xy-html-widget .xy-html-preview,
+    .xy-jn-card,.xy-jn-tabs,.xy-html-overlay-pane){
+ background:radial-gradient(115% 80% at 16% -12%,rgba(255,255,255,.27),transparent 68%),
+ linear-gradient(145deg,rgba(255,255,255,.16),rgba(255,255,255,.015) 54%,rgba(255,255,255,.09)),
+ var(--xy-card-tint)!important;
+ border:1px solid var(--xy-card-edge)!important;
+ -webkit-backdrop-filter:blur(var(--xy-glass-blur,14px)) saturate(1.4)!important;
+ backdrop-filter:blur(var(--xy-glass-blur,14px)) saturate(1.4)!important;
+ box-shadow:var(--xy-card-shadow)!important;
+}
+html:is([data-xy-glass="liquid"],[data-xy-bubble-finish="liquid"])
+:is(.message.assistant .xy-heart-note .xy-heart-pill,
+    .message.assistant .xy-heart-note .xy-heart-detail,
+    .xy-html-widget .xy-html-bar,.xy-html-widget .xy-html-preview,
+    .xy-jn-card,.xy-html-overlay-pane){
+ -webkit-backdrop-filter:blur(4px) saturate(1.47)!important;
+ backdrop-filter:blur(4px) saturate(1.47)!important;
+ box-shadow:inset 0 1px 1px rgba(255,255,255,.7),inset 0 -1px 1px rgba(29,44,35,.2),0 10px 25px rgba(33,43,37,.14)!important;
+}
+html:is([data-xy-glass="clear"],[data-xy-glass="frost"],[data-xy-glass="liquid"],[data-xy-bubble-finish="clear"],[data-xy-bubble-finish="frost"],[data-xy-bubble-finish="liquid"])
+.message.assistant .xy-heart-note :is(.xy-heart-pill,.xy-heart-detail){
+ color:var(--xy-card-ink)!important;
+ -webkit-text-fill-color:var(--xy-card-ink)!important;
+ border-radius:16px;
+}
+html:is([data-xy-glass="clear"],[data-xy-glass="frost"],[data-xy-glass="liquid"],[data-xy-bubble-finish="clear"],[data-xy-bubble-finish="frost"],[data-xy-bubble-finish="liquid"])
+.message.assistant .xy-heart-note .xy-heart-brief{
+ color:inherit!important;-webkit-text-fill-color:inherit!important;
+}
+/* Selection, hover, focus and disabled feedback for touch and desktop. */
+.message.assistant .xy-heart-pill,.xy-html-widget button,.xy-jn-tabs button{
+ transition:transform .17s ease,border-color .17s ease,box-shadow .17s ease,background-color .17s ease;
+}
+.message.assistant .xy-heart-pill:hover,.xy-html-widget .xy-html-bar button:hover,.xy-jn-tabs button:hover{
+ transform:translateY(-1px);
+ border-color:var(--xy-ui-accent,var(--theme-accent,#729676))!important;
+}
+.message.assistant .xy-heart-pill:active,.xy-html-widget button:active{transform:scale(.985)}
+.message.assistant .xy-heart-pill[aria-expanded="true"],.xy-jn-card[open]{
+ border-color:var(--xy-ui-accent,var(--theme-accent,#729676))!important;
+}
+.message.assistant .xy-heart-pill:disabled,.xy-html-widget button:disabled{
+ opacity:.56;cursor:progress;transform:none;
+}
+.message.assistant .xy-heart-pill:focus-visible,
+.xy-html-widget button:focus-visible,.xy-jn-cover:focus-visible{
+ outline:2px solid var(--xy-ui-accent,var(--theme-accent,#79a683))!important;outline-offset:3px;
+}
+.xy-html-widget{isolation:isolate}
+.xy-html-widget .xy-html-preview{overflow:hidden}
+/* Night surfaces have their own contrast; iframe contents are not rewritten. */
+html[data-theme-mode="dark"] :is(.xy-html-widget,.xy-tavern-status-widget){color:#e8f2e9}
+html[data-theme-mode="dark"] .xy-html-overlay{background:rgba(5,11,9,.83)}
+html[data-theme-mode="dark"] .xy-html-overlay-pane{
+ color:#eaf4ed;background:rgba(26,37,29,.92);border-color:rgba(186,225,197,.27);
+}
+html[data-theme-mode="dark"] .xy-html-overlay-top{color:#eaf4ee}
+html[data-theme-mode="dark"] .xy-html-widget .xy-html-bar button:not([aria-expanded="true"]){
+ color:#e4f3e8;background:rgba(45,66,53,.8);border-color:rgba(176,211,183,.32);
+}
+html[data-theme-mode="dark"] .xy-html-widget .xy-html-bar button:hover:not([aria-expanded="true"]){background:#42664d}
+html[data-theme-mode="dark"] .xy-html-widget .xy-html-bar button[aria-expanded="true"]{
+ background:var(--theme-accent,#57866b)!important;color:#fff!important;
+}
+html[data-theme-mode="dark"] .xy-html-widget .xy-html-source{
+ background:rgba(18,30,22,.74);color:#e8f1e9;
+}
+html[data-theme-mode="dark"] .xy-jn-card{color:#f7e8ef}
+html[data-theme-mode="dark"] .xy-jn-tabs button[aria-selected="true"]{
+ background:rgba(142,83,112,.84)!important;color:#fff!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.2);
+}
+html[data-theme-mode="dark"] .xy-jn-tabs button:not([aria-selected="true"]){color:#e8c5d5}
+html[data-theme-mode="dark"] .xy-jn-cover-text strong{color:#ffd2e4}
+html[data-theme-mode="dark"] .xy-jn-cover-mood{color:#e3bed0}
+html[data-theme-mode="dark"] .xy-jn-field p{
+ color:#faeaf1!important;background:rgba(72,46,62,.72)!important;
+ border-color:rgba(231,174,198,.23);
+}
+/* Creative corner and group chat previously retained several light surfaces. */
+html[data-theme-mode="dark"] #panel.xy-creative-panel{
+ --surface:rgba(38,52,43,.94);--ink:#e9f3ea;--muted:#b0c7b7;
+ background:linear-gradient(160deg,#233028,#17221b)!important;
+ border-color:rgba(181,219,189,.21);
+}
+html[data-theme-mode="dark"] #panel.xy-creative-panel :is(#xyCreationView,#xyCreativeGroup){color:#e9f3eb}
+html[data-theme-mode="dark"] #panel.xy-creative-panel :is(.xy-c-listbtn,.xy-c-chapter,.xy-c-speech,.xy-c-head button){
+ background:rgba(41,57,46,.88);color:#e8f3ea;border-color:rgba(186,221,195,.26);
+}
+html[data-theme-mode="dark"] #panel.xy-creative-panel .xy-c-speech.mine{background:rgba(68,95,74,.95)}
+html[data-theme-mode="dark"] #panel.xy-creative-panel .xy-c-dialogue{
+ background:rgba(17,28,21,.49);border-color:rgba(187,224,191,.22);
+}
+html[data-theme-mode="dark"] #panel.xy-creative-panel :is(input:not([type="checkbox"]),textarea,select){
+ color:#e9f5ec;background:rgba(22,34,26,.93);border-color:rgba(171,212,183,.32);
+ color-scheme:dark;
+}
+html[data-theme-mode="dark"] #panel.xy-creative-panel :is(input,textarea)::placeholder{color:#a7bba9}
+html[data-theme-mode="dark"] #panel.xy-creative-panel :is(.xy-c-roles label,.xy-c-empty){
+ color:#e7f1e7;background:rgba(38,53,41,.87);border-color:rgba(188,224,196,.24);
+}
+html[data-theme-mode="dark"] #panel.xy-creative-panel .xy-c-actions button:nth-child(even){
+ color:#e9f4ea!important;background:#435b4b;
+}
+html[data-theme-mode="dark"] #panel.xy-creative-panel .xy-c-error{
+ color:#ffe0da;background:#653e3d;
+}
+html[data-theme-mode="dark"] #panel :is(.theme-mode-switch button.active,.xy-glass-choice[aria-pressed="true"]){
+ outline:1px solid var(--xy-ui-accent,#97c4a6);outline-offset:1px;
+}
+html[data-theme-mode="dark"] #panel :is(button,input,select,textarea):focus-visible{
+ outline-color:var(--xy-ui-accent,#9bc7a8)!important;
+}
+@media(prefers-reduced-motion:reduce){
+ .message.assistant .xy-heart-pill,.xy-html-widget button,.xy-jn-tabs button{transition:none}
+ .message.assistant .xy-heart-pill:hover,.xy-html-widget button:hover{transform:none}
+}
