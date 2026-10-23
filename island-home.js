@@ -4,7 +4,6 @@
 if(document.getElementById("xyIslandHome"))return;
 const ASSET="./island-scene.webp.b64", INTRO_KEY="xy.island.introSeen.v1";
 const places=[
-["swing",165,400,200,84,"秋千·重播","replay"],
 ["lighthouse",855,473,256,110,"灯塔·工具","toolhub"],
 ["study",725,654,250,92,"藏书阁","study"],
 ["creation",600,980,190,100,"创作角·设定书库","creation"],
