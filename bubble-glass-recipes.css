@@ -109,3 +109,11 @@ html[data-theme-mode="dark"] .xy-bubble-glass-option{background:rgba(255,255,255
 html[data-theme-mode="dark"] .xy-bubble-glass-option[aria-pressed="true"]{border-color:var(--xy-ui-accent,var(--theme-accent,#98b8a0))}
 @media(max-width:350px){.xy-bubble-glass-options{gap:4px}.xy-bubble-glass-option{font-size:9px}.xy-bubble-glass-preview{margin-left:3px;margin-right:3px}}
 @media(prefers-reduced-motion:reduce){.xy-bubble-glass-option{transition:none!important}}
+
+/* Android scroll performance: keep the chosen tint, but don't backdrop-filter giant paragraphs. */
+@media(max-width:760px){
+ html[data-xy-bubble-finish]:not([data-xy-bubble-finish="off"]) .messages .message .bubble.xy-bubble-too-tall{
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+ }
+}
