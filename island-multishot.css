@@ -1,0 +1,46 @@
+/* 砚屿 V5 · Five physically separate full-screen shots, not a pan over the home screen. */
+#xyIslandHome .xy-island-film.xy-cine-story{background:#dcd4e4;overflow:hidden}
+#xyIslandHome .xy-island-film.xy-cine-story::before,
+#xyIslandHome .xy-island-film.xy-cine-story::after{display:none!important}
+#xyIslandHome .xy-cine-shot{position:absolute;inset:0;overflow:hidden;opacity:0;visibility:hidden;pointer-events:none;transform:translateZ(0)}
+#xyIslandHome .xy-cine-art{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#xyIslandHome .xy-cine-shot::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#7b506b16,transparent 35%,transparent 75%,#546a7515)}
+#xyIslandHome .xy-cine-bough{position:absolute;width:150%;left:-19%;top:-9%;opacity:.86;filter:drop-shadow(0 6px 8px #584c6458)}
+#xyIslandHome .xy-cine-sprite{position:absolute;display:block;object-fit:contain;pointer-events:none;filter:drop-shadow(0 14px 12px #704c6060);will-change:transform}
+#xyIslandHome .xy-cine-sprite-swing{width:51%;left:24%;top:20%;transform-origin:50% 0}
+#xyIslandHome .xy-cine-sprite-fly{width:50%;left:20%;top:26%}
+#xyIslandHome .xy-cine-sprite-land{width:23%;left:42%;top:70%}
+#xyIslandHome .xy-cine-leaf-veil{position:absolute;inset:-12%;background:radial-gradient(ellipse 32% 26% at 3% 10%,#3c6050d0,transparent 94%),radial-gradient(ellipse 33% 32% at 91% 3%,#5a7458cf,transparent 94%),radial-gradient(ellipse 27% 23% at 86% 57%,#69817180,transparent 94%);filter:blur(4px)}
+#xyIslandHome .xy-cine-speed{position:absolute;left:-8%;top:61%;width:120%;height:6%;transform:rotate(-24deg);background:linear-gradient(90deg,transparent,#fffaf89f,#fadbea8c,transparent);filter:blur(13px)}
+#xyIslandHome .xy-cine-cloud-front{position:absolute;inset:-10%;background:radial-gradient(ellipse 35% 25% at 5% 57%,#fffefaed,transparent 95%),radial-gradient(ellipse 38% 33% at 100% 44%,#fffdf3e8,transparent 95%),radial-gradient(ellipse 75% 20% at 51% 103%,#fffefeef,transparent 97%);filter:blur(12px)}
+#xyIslandHome .xy-cine-island-bg{position:absolute;inset:0;background-image:var(--xy-cine-home);background-position:center;background-size:100% 100%;background-repeat:no-repeat}
+#xyIslandHome .xy-cine-landing-cloud{position:absolute;inset:0;background:radial-gradient(ellipse 90% 16% at 45% 91%,#fffef9ae,transparent 88%)}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-island-painting{animation:none!important;opacity:0!important}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot.is-arriving .xy-island-painting{opacity:1!important;transition:opacity .55s ease!important}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-island-foreground{animation:none!important;opacity:0!important}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-cine-leaf{animation:xyCineLeaf 8.4s both}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-cine-swing{animation:xyCineSwing 8.4s both}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-cine-jump{animation:xyCineJump 8.4s both}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-cine-cloud{animation:xyCineCloud 8.4s both}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-cine-land{animation:xyCineLand 8.4s both}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-cine-leaf-veil{animation:xyCineLeafReveal 8.4s both}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-cine-sprite-swing{animation:xyCineSitter 2.1s ease-in-out infinite alternate}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-cine-jump .xy-cine-sprite-fly{animation:xyCineDiver 8.4s cubic-bezier(.22,.7,.35,1) both}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-cine-cloud .xy-cine-sprite-fly{animation:xyCineFlier 8.4s both}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-cine-sprite-land{animation:xyCineLandingDoll 8.4s both}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-cine-cloud-front{animation:xyCineCloudPass 8.4s ease-out both}
+#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-cine-island-bg{animation:xyCineIslandApproach 8.4s ease-out both}
+@keyframes xyCineLeaf{0%,16%{opacity:1;visibility:visible}21%{opacity:0;visibility:visible}22%,100%{opacity:0;visibility:hidden}}
+@keyframes xyCineSwing{0%,13%{opacity:0;visibility:hidden}17%{opacity:1;visibility:visible}35%{opacity:1}41%{opacity:0;visibility:visible}42%,100%{opacity:0;visibility:hidden}}
+@keyframes xyCineJump{0%,35%{opacity:0;visibility:hidden}39%{opacity:1;visibility:visible}49%{opacity:1}56%{opacity:0;visibility:visible}57%,100%{opacity:0;visibility:hidden}}
+@keyframes xyCineCloud{0%,50%{opacity:0;visibility:hidden}56%{opacity:1;visibility:visible}71%{opacity:1}78%{opacity:0;visibility:visible}79%,100%{opacity:0;visibility:hidden}}
+@keyframes xyCineLand{0%,72%{opacity:0;visibility:hidden}79%{opacity:1;visibility:visible}100%{opacity:1;visibility:visible}}
+@keyframes xyCineLeafReveal{0%{opacity:1;transform:scale(1.28) translate(-7%,-4%)}16%{opacity:.35;transform:scale(1) translate(12%,0);filter:blur(11px)}23%,100%{opacity:0}}
+@keyframes xyCineSitter{0%{transform:rotate(-6deg) translateY(2%)}100%{transform:rotate(6deg) translateY(-2%)}}
+@keyframes xyCineDiver{0%,38%{transform:translate(-15%,-10%) rotate(-18deg) scale(.72)}48%{transform:translate(45%,37%) rotate(18deg) scale(1.08)}56%,100%{transform:translate(105%,138%) rotate(16deg) scale(.5)}}
+@keyframes xyCineFlier{0%,55%{transform:translate(-34%,-40%) rotate(-15deg) scale(1.2)}75%,100%{transform:translate(64%,120%) rotate(12deg) scale(.45)}}
+@keyframes xyCineLandingDoll{0%,76%{transform:translateY(-120%) scale(.58) rotate(11deg)}84%{transform:translateY(6%) scale(1.04) rotate(-3deg)}89%{transform:translateY(-6%) scale(.96)}95%,100%{transform:translateY(0) scale(1)}}
+@keyframes xyCineCloudPass{0%,50%{transform:translateX(-10%) scale(1.1)}75%,100%{transform:translateX(13%) scale(1.27)}}
+@keyframes xyCineIslandApproach{0%,73%{transform:scale(1.3) translateY(-7%)}100%{transform:scale(1) translateY(0)}}
+@media(max-width:760px){#xyIslandHome .xy-cine-bough{filter:none;opacity:.8}#xyIslandHome .xy-cine-cloud-front{filter:blur(6px)}#xyIslandHome .xy-cine-sprite{filter:drop-shadow(0 4px 7px #5e526660)}}
+@media(prefers-reduced-motion:reduce){#xyIslandHome .xy-island-film.xy-cine-story{display:none!important}#xyIslandHome .xy-island-world.is-intro.xy-cinema-multishot .xy-island-painting{opacity:1!important}}
