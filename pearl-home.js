@@ -29,12 +29,21 @@ const svg=(type,cls="")=>'<svg class="'+cls+'" viewBox="0 0 24 24" fill="none" s
 const root=document.createElement("section");
 root.id="xyIslandHome";
 root.className="xy-pearl-home";
-root.setAttribute("aria-label","砚屿 · 青苹果玻璃首页");
+root.setAttribute("aria-label","砚屿 · 首页");
 const tabs=[
   {label:"首页",icon:"home",route:"home"},
   {label:"对话",icon:"chat",route:"chat"},
   {label:"更多",icon:"toolbox",route:"toolhub"}
 ];
+const quickLinks=[
+ {label:"书房",icon:"book",route:"study"},
+ {label:"创作角",icon:"folder",route:"creation"},
+ {label:"生图",icon:"image",route:"imagine"}
+];
+const quickMarkup=quickLinks.map(item=>
+ '<button type="button" class="xy-pearl-quick" data-xy-home-route="'+item.route+'" aria-label="打开'+item.label+'">'+
+ '<span class="xy-pearl-quick-icon">'+svg(item.icon)+'</span><span>'+item.label+'</span></button>'
+).join("");
 const tabMarkup=tabs.map(item=>'<button type="button" class="xy-pearl-tab'+(item.route==="home"?' is-active':'')+'" data-xy-home-route="'+item.route+'" aria-label="'+item.label+'"'+(item.route==="home"?' aria-current="page"':'')+'>'+
 '<span class="xy-pearl-tab-icon">'+svg(item.icon)+'</span><span>'+item.label+'</span></button>').join("");
 root.innerHTML=
@@ -47,8 +56,10 @@ root.innerHTML=
  '<div class="xy-pearl-eyebrow">JUST FOR US</div><span class="xy-pearl-heart" aria-hidden="true">♡</span>'+
  '<h1><span id="xyPearlName">阿毛，</span><span class="xy-pearl-heading-line">今天想说什么？</span></h1>'+
  '<p>我在这里，听你慢慢讲。</p></div>'+
+ '<div class="xy-pearl-actions">'+
  '<button type="button" class="xy-pearl-enter" data-xy-home-route="chat" aria-label="进入对话">'+
  '<span><strong>进入对话</strong><small>Continue our conversation</small></span><span class="xy-pearl-enter-arrow" aria-hidden="true">↗</span></button>'+
+ '<div class="xy-pearl-shortcuts"><div class="xy-pearl-shortcuts-head"><span>常用入口</span><button type="button" class="xy-pearl-more-link" data-xy-home-route="toolhub">全部功能 ›</button></div>'+  '<div class="xy-pearl-quick-grid">'+quickMarkup+'</div></div></div>'+
  '</main></div><nav class="xy-pearl-bottom" aria-label="首页导航">'+tabMarkup+'</nav></div>';
 document.body.appendChild(root);
 function syncName(){const value=window.xyTavernMacros?.name?.();const name=typeof value==="string"&&value.trim()&&value.trim()!=="你"?value.trim():"阿毛";const label=root.querySelector("#xyPearlName");if(label)label.textContent=name+"，"}

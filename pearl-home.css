@@ -148,3 +148,46 @@ html[data-theme-mode="dark"] .xy-pearl-return{
  #xyIslandHome .xy-pearl-enter{min-height:75px}
 }
 @media(prefers-reduced-motion:reduce){#xyIslandHome button{transition:none!important}}
+
+/* Three understated direct entries restore the useful part of home.
+   The original full tool list remains in the existing More / Tool Hub. */
+#xyIslandHome .xy-pearl-actions{display:grid;gap:22px;min-width:0}
+#xyIslandHome .xy-pearl-shortcuts{min-width:0}
+#xyIslandHome .xy-pearl-shortcuts-head{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+ margin:0 3px 10px;font-size:12px;color:var(--yh-sub);
+}
+#xyIslandHome .xy-pearl-more-link{
+ background:transparent;border:0;padding:7px 1px;
+ color:var(--yh-primary);font-size:11px;font-weight:600;
+}
+#xyIslandHome .xy-pearl-quick-grid{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;
+ padding:8px 5px;border:1px solid var(--yh-line);border-radius:21px;
+ background:var(--yh-glass);backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);
+ box-shadow:0 8px 20px var(--yh-shadow),inset 0 1px 0 rgba(255,255,255,.26);
+}
+#xyIslandHome .xy-pearl-quick{
+ position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:7px;min-width:0;min-height:67px;border:0;border-radius:14px;
+ background:transparent;color:var(--yh-ink);font-size:12px;font-weight:550;
+}
+#xyIslandHome .xy-pearl-quick:not(:first-child)::before{
+ content:"";position:absolute;left:0;top:17px;bottom:17px;width:1px;background:var(--yh-line);
+}
+#xyIslandHome .xy-pearl-quick-icon{
+ display:grid;place-items:center;width:25px;height:25px;color:var(--yh-primary);
+}
+#xyIslandHome .xy-pearl-quick-icon svg{width:22px;height:22px}
+#xyIslandHome .xy-pearl-quick:hover{background:var(--yh-shade)}
+@media(max-height:690px){
+ #xyIslandHome .xy-pearl-home-content{padding-top:24px;padding-bottom:24px;gap:22px}
+ #xyIslandHome .xy-pearl-actions{gap:16px}
+ #xyIslandHome .xy-pearl-greeting h1{margin-bottom:9px;line-height:1.4}
+ #xyIslandHome .xy-pearl-quick{min-height:57px;gap:4px}
+ #xyIslandHome .xy-pearl-quick-grid{padding-top:5px;padding-bottom:5px}
+}
+@media(max-width:340px){
+ #xyIslandHome .xy-pearl-quick{font-size:11px}
+ #xyIslandHome .xy-pearl-shortcuts-head{font-size:11px}
+}

@@ -84,7 +84,7 @@ function mockHome() {
   return {calls,app,history,w,root};
 }
 
-test("home shows only greeting, one primary chat button, and the compact footer", () => {
+test("home keeps chat plus three compact entries, with other functions in More", () => {
   const h=mockHome();
   assert.equal(h.root.hidden,false);
   assert.equal(h.app.inert,true);
@@ -93,9 +93,14 @@ test("home shows only greeting, one primary chat button, and the compact footer"
   assert.match(h.root.innerHTML,/外观主题/);
   assert.match(h.root.innerHTML,/首页导航/);
   assert.equal((h.root.innerHTML.match(/class="xy-pearl-tab(?: is-active)?"/g)||[]).length,3);
-  for(const route of ["study","groupchat","imagine","creation","journal","call"]){
+  for(const route of ["study","creation","imagine"]){
+    assert.match(h.root.innerHTML,new RegExp('data-xy-home-route="'+route+'"'));
+  }
+  for(const route of ["groupchat","journal","call"]){
     assert.doesNotMatch(h.root.innerHTML,new RegExp('data-xy-home-route="'+route+'"'));
   }
+  assert.match(h.root.innerHTML,/常用入口/);
+  assert.match(h.root.innerHTML,/全部功能/);
   h.calls.tap("chat");
   assert.equal(h.root.hidden,true);
   assert.equal(h.app.inert,false);
@@ -104,9 +109,25 @@ test("home shows only greeting, one primary chat button, and the compact footer"
   h.history.back();
   assert.equal(h.root.hidden,false);
   assert.equal(h.app.inert,true);
+  h.calls.tap("study");
+  assert.deepEqual(h.calls.panels,["study"]);
+  h.history.back();
   h.calls.tap("toolhub");
-  assert.deepEqual(h.calls.panels,["toolhub"]);
+  assert.deepEqual(h.calls.panels,["study","toolhub"]);
   assert.equal(h.root.hidden,true);
+});
+
+test("More retains all previously available tools and routes", () => {
+  const hub=read("tool-hub.js");
+  for(const id of ["study","creation","groupchat","journal","imagine","voice","mcp","settings","theme","avatar","memory"]){
+    assert.ok(hub.includes('id:"'+id+'"'),"Missing Tool Hub item: "+id);
+  }
+  const home=mockHome();
+  home.calls.tap("creation");
+  assert.deepEqual(home.calls.panels,["creation"]);
+  home.history.back();
+  home.calls.tap("imagine");
+  assert.deepEqual(home.calls.panels,["creation","imagine"]);
 });
 
 test("appearance button reaches original theme settings without showing a theme chooser on home", () => {
