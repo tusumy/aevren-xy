@@ -1,0 +1,276 @@
+/* 砚屿 · 珍珠青苹果玻璃首页
+   True interactive homepage, replacing the previous island panorama.
+   All art is botanical-only; no people, avatars, pre-rendered buttons or screenshots. */
+html.xy-island-visible,html.xy-island-visible body{overflow:hidden!important}
+#xyIslandHome[hidden]{display:none!important}
+#xyIslandHome,#xyIslandHome *{box-sizing:border-box}
+#xyIslandHome{
+  --pearl-ink:#34402f;
+  --pearl-muted:#829076;
+  --pearl-line:rgba(252,255,246,.94);
+  position:fixed;inset:0;z-index:50000;isolation:isolate;overflow:hidden;
+  background:#e9efdd;color:var(--pearl-ink);
+  font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+}
+#xyIslandHome button{font:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#xyIslandHome svg{display:block;flex:none}
+#xyIslandHome .xy-pearl-floral-scene{
+  position:absolute;inset:-1%;z-index:-2;pointer-events:none;
+  background:#eaf0dc url("./pearl-florals.svg") center center/100% 100% no-repeat;
+  filter:saturate(.93);
+}
+#xyIslandHome .xy-pearl-floral-scene::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 33% at 50% 38%,rgba(251,253,244,.18),transparent 80%),
+             linear-gradient(90deg,rgba(232,241,219,.05),rgba(255,254,251,.18),rgba(238,242,220,.05));
+}
+#xyIslandHome .xy-pearl-shell{
+  position:relative;width:min(100%,560px);height:100%;min-height:0;margin:auto;
+  display:flex;flex-direction:column;overflow:hidden;
+  background:linear-gradient(90deg,rgba(246,248,232,.04),rgba(255,255,250,.11) 50%,rgba(242,247,233,.04));
+}
+#xyIslandHome .xy-pearl-scroll{
+  flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+  padding:calc(15px + env(safe-area-inset-top,0px)) clamp(15px,4vw,25px) 17px;
+}
+#xyIslandHome .xy-pearl-scroll::-webkit-scrollbar{display:none}
+#xyIslandHome .xy-pearl-head{
+  display:grid;grid-template-columns:46px minmax(0,1fr) 46px;align-items:start;gap:10px;
+}
+#xyIslandHome .xy-pearl-round{
+  display:grid;place-items:center;width:45px;height:45px;min-height:45px;
+  border:1.5px solid rgba(233,245,222,.91);border-radius:50%;
+  background:linear-gradient(148deg,rgba(255,255,250,.86),rgba(226,236,209,.75));
+  color:#6d8262;
+  box-shadow:inset 0 0 0 3px rgba(255,255,250,.6),inset 0 2px 2px white,0 5px 15px rgba(75,101,63,.16);
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+#xyIslandHome .xy-pearl-round svg{width:23px;height:23px}
+#xyIslandHome button:focus-visible{outline:3px solid #718d64;outline-offset:3px}
+#xyIslandHome button:active{transform:translateY(1px) scale(.987)}
+#xyIslandHome .xy-pearl-round:hover{transform:translateY(-1px)}
+#xyIslandHome .xy-pearl-brand{text-align:center;min-width:0;position:relative;padding-top:2px}
+#xyIslandHome .xy-pearl-paw{
+  display:block;font-size:17px;line-height:1;color:#dba4b1;
+  margin-bottom:3px;text-shadow:0 1px 0 #fff;
+}
+#xyIslandHome .xy-pearl-brand h1{
+  margin:0;font-size:clamp(33px,9vw,52px);font-family:Georgia,"Noto Serif SC","Songti SC",serif;
+  line-height:1.22;letter-spacing:.09em;font-weight:600;color:#35462f;
+  text-shadow:0 2px 1px rgba(255,255,255,.94),0 6px 15px rgba(73,104,64,.15);
+}
+#xyIslandHome .xy-pearl-brand-en{
+  margin-top:5px;font:500 9px/1.5 Georgia,serif;color:#708265;letter-spacing:.23em;
+}
+#xyIslandHome .xy-pearl-brand-bow{display:block;margin-top:1px;color:#98a887;font-size:20px;line-height:1.2}
+#xyIslandHome .xy-pearl-breathing-space{
+  display:grid;place-items:center;height:clamp(76px,12.6dvh,168px);
+}
+#xyIslandHome .xy-pearl-breathing-space span{
+  color:#dc9eaf;transform:rotate(-11deg);font:400 35px/1 Georgia,serif;
+  text-shadow:1px 2px 0 white,0 4px 14px rgba(183,114,134,.22);
+}
+#xyIslandHome .xy-pearl-panel{
+  position:relative;padding:20px clamp(10px,2.8vw,22px) 17px;
+  border:2px solid rgba(255,255,251,.91);border-radius:37px;
+  background:linear-gradient(140deg,rgba(250,255,246,.70),rgba(229,239,216,.73) 45%,rgba(248,227,232,.36) 92%);
+  backdrop-filter:blur(17px) saturate(1.35);-webkit-backdrop-filter:blur(17px) saturate(1.35);
+  box-shadow:inset 0 3px 3px rgba(255,255,255,.97),
+             inset 1px -3px 5px rgba(153,179,129,.13),
+             0 14px 36px rgba(91,110,75,.14),
+             0 0 0 4px rgba(248,251,238,.22);
+}
+#xyIslandHome .xy-pearl-panel::before{
+  content:"୨୧";position:absolute;top:-17px;left:50%;transform:translateX(-50%);
+  color:#e5aebe;text-shadow:0 2px 1px #fff,0 4px 7px rgba(188,138,157,.33);
+  font:700 30px/1 Georgia,serif;letter-spacing:-.18em;pointer-events:none;
+}
+#xyIslandHome .xy-pearl-welcome{
+  font-size:clamp(10px,2.75vw,12px);text-align:center;letter-spacing:.07em;
+  margin:0 0 14px;color:#788269;
+}
+#xyIslandHome .xy-pearl-main-call{
+  width:100%;min-height:clamp(79px,10dvh,105px);padding:10px clamp(10px,3vw,22px);
+  display:flex;align-items:center;justify-content:center;gap:clamp(9px,3vw,24px);
+  border:2px solid #f9fff0;border-radius:999px;
+  background:radial-gradient(ellipse at 49% 7%,rgba(255,255,255,.98),transparent 62%),
+    linear-gradient(143deg,rgba(231,244,213,.94),rgba(255,239,243,.92) 42%,rgba(225,237,211,.94) 79%,rgba(252,247,228,.91));
+  color:#344c31;
+  box-shadow:inset 0 4px 3px rgba(255,255,255,.99),
+      inset 0 -5px 8px rgba(116,149,100,.22),
+      0 3px 0 rgba(125,150,102,.55),0 7px 20px rgba(80,110,76,.19),
+      0 0 0 4px rgba(236,246,227,.61);
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+#xyIslandHome .xy-pearl-main-call svg{width:clamp(28px,7vw,43px);height:clamp(28px,7vw,43px);stroke-width:1.8}
+#xyIslandHome .xy-pearl-main-call strong{
+  white-space:nowrap;font-family:Georgia,"Noto Serif SC","Songti SC",serif;
+  font-size:clamp(24px,6.5vw,39px);line-height:1.15;font-weight:600;letter-spacing:.035em;
+}
+#xyIslandHome .xy-pearl-main-heart{
+  font:400 clamp(22px,4.8vw,31px)/1 Georgia,serif;color:#db9cac;
+}
+#xyIslandHome .xy-pearl-main-call:hover{
+  box-shadow:inset 0 4px 3px rgba(255,255,255,.99),inset 0 -4px 8px rgba(116,149,100,.17),
+     0 3px 0 rgba(125,150,102,.55),0 10px 27px rgba(80,110,76,.22),0 0 0 4px rgba(236,246,227,.75);
+}
+#xyIslandHome .xy-pearl-after-call{
+  border:1px solid rgba(249,255,241,.78);border-radius:999px;
+  background:linear-gradient(95deg,rgba(251,252,241,.50),rgba(244,248,226,.28));
+  color:#7f9173;padding:7px 8px;font-size:10px;letter-spacing:.03em;
+  text-align:center;margin:13px auto 14px;width:fit-content;max-width:100%;
+}
+#xyIslandHome .xy-pearl-after-call span{color:#d5a2ad}
+#xyIslandHome .xy-pearl-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(10px,2.5vw,15px)}
+#xyIslandHome .xy-pearl-tile{
+  position:relative;min-width:0;min-height:clamp(110px,14.5dvh,151px);
+  display:grid;grid-template-columns:minmax(26px,42px) minmax(0,1fr) 22px;
+  gap:clamp(3px,1vw,8px);align-items:center;text-align:left;
+  padding:23px clamp(8px,2vw,14px) 14px;
+  border:1.5px solid #fffdf7;border-radius:25px;
+  background:radial-gradient(ellipse at 25% 0%,rgba(255,255,255,.96),transparent 70%),
+    linear-gradient(138deg,rgba(255,254,245,.76),rgba(230,241,216,.72) 65%,rgba(254,232,239,.55));
+  color:var(--pearl-ink);
+  box-shadow:inset 0 3px 2px rgba(255,255,255,.92),
+    inset 0 -3px 5px rgba(137,163,117,.12),0 5px 0 rgba(144,164,129,.28),
+    0 8px 23px rgba(83,105,71,.13);
+  transition:transform .18s ease,box-shadow .18s ease;
+}
+#xyIslandHome .xy-pearl-tile:hover,#xyIslandHome .xy-pearl-wide:hover{transform:translateY(-2px)}
+#xyIslandHome .xy-pearl-tile::before{
+  content:"✿";position:absolute;right:11px;top:6px;
+  color:#a6b793;font:400 18px/1 Georgia,serif;opacity:.87;
+}
+#xyIslandHome .xy-pearl-number{
+  position:absolute;left:13px;top:9px;color:#a4ac9a;
+  font:400 13px/1 Georgia,serif;letter-spacing:.035em;
+}
+#xyIslandHome .xy-pearl-tile-icon svg{width:100%;max-width:43px;height:auto;aspect-ratio:1;stroke:#d597aa;stroke-width:1.5;filter:drop-shadow(0 2px 1px rgba(255,255,255,.9))}
+#xyIslandHome .xy-pearl-tile:nth-child(2n) .xy-pearl-tile-icon svg{stroke:#91a786}
+#xyIslandHome .xy-pearl-tile-copy{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+#xyIslandHome .xy-pearl-tile-copy strong{
+  white-space:nowrap;font:600 clamp(17px,4.65vw,27px)/1.35 Georgia,"Noto Serif SC","Songti SC",serif;
+  letter-spacing:.03em;color:#2f402e;
+}
+#xyIslandHome .xy-pearl-tile-copy small{white-space:nowrap;color:#829079;font:400 clamp(8px,1.9vw,11px)/1.3 Georgia,serif;letter-spacing:.1em}
+#xyIslandHome .xy-pearl-tile-arrow{
+  width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(140deg,#e6edd7,#bfcdb4);border:1px solid rgba(255,255,255,.78);
+  color:#fff;box-shadow:0 2px 4px rgba(99,119,86,.19);
+}
+#xyIslandHome .xy-pearl-tile-arrow svg{width:14px;height:14px;stroke-width:2.3}
+#xyIslandHome .xy-pearl-wide-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}
+#xyIslandHome .xy-pearl-wide{
+  min-width:0;min-height:65px;display:flex;align-items:center;gap:8px;
+  padding:8px 10px;text-align:left;border-radius:25px;
+  border:1.5px solid rgba(255,255,250,.92);
+  background:linear-gradient(127deg,rgba(252,255,244,.82),rgba(227,241,219,.7) 59%,rgba(252,222,229,.45));
+  color:#718768;box-shadow:inset 0 3px 2px rgba(255,255,255,.9),
+  inset 0 -2px 3px rgba(142,166,130,.12),0 5px 11px rgba(95,111,80,.13);
+  transition:transform .18s ease;
+}
+#xyIslandHome .xy-pearl-wide>svg:first-child{width:24px;height:24px;color:#d59cad}
+#xyIslandHome .xy-pearl-wide span{min-width:0;flex:1;display:grid;gap:3px}
+#xyIslandHome .xy-pearl-wide strong{font:600 clamp(12px,3vw,16px)/1.2 "Noto Serif SC","Songti SC",serif;color:#394c33;white-space:nowrap}
+#xyIslandHome .xy-pearl-wide small{font:400 8px/1.4 Georgia,serif;letter-spacing:.035em;color:#809174;white-space:nowrap}
+#xyIslandHome .xy-pearl-wide-arrow{width:14px;height:14px}
+#xyIslandHome .xy-pearl-quote{
+  display:flex;align-items:center;gap:14px;
+  margin:20px 5px 7px;padding:13px 18px;border-radius:40px;
+  border:1px solid rgba(255,255,253,.92);
+  background:linear-gradient(122deg,rgba(255,255,250,.82),rgba(245,248,228,.70) 70%,rgba(255,232,238,.46));
+  box-shadow:inset 0 2px 2px #fff,0 7px 19px rgba(112,131,91,.12);
+}
+#xyIslandHome .xy-pearl-quote-flower{font-size:35px;color:#dca7b5;line-height:1}
+#xyIslandHome .xy-pearl-quote div{min-width:0;flex:1}
+#xyIslandHome .xy-pearl-quote small{display:block;font-size:9px;color:#75886a}
+#xyIslandHome .xy-pearl-quote p{font:italic clamp(14px,3.7vw,19px)/1.3 Georgia,serif;color:#58664c;margin:4px 0 0;white-space:nowrap}
+#xyIslandHome .xy-pearl-quote-heart{font-size:27px;color:#d8a0af}
+#xyIslandHome .xy-pearl-signature{text-align:center;margin:12px 0 6px;font:400 9px/1.4 Georgia,serif;color:#839879;letter-spacing:.25em}
+#xyIslandHome .xy-pearl-bottom{
+  flex:none;position:relative;z-index:2;display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;
+  margin:3px clamp(10px,3vw,18px) max(8px,env(safe-area-inset-bottom,0px));
+  padding:9px 6px 8px;border:1.5px solid rgba(255,255,251,.95);border-radius:34px;
+  background:linear-gradient(140deg,rgba(255,255,247,.86),rgba(227,239,211,.83) 63%,rgba(252,228,234,.65));
+  backdrop-filter:blur(14px) saturate(1.3);-webkit-backdrop-filter:blur(14px) saturate(1.3);
+  box-shadow:inset 0 3px 3px rgba(255,255,255,.96),inset 0 -2px 4px rgba(142,167,125,.12),0 4px 18px rgba(77,100,66,.16);
+}
+#xyIslandHome .xy-pearl-tab{
+  min-width:0;min-height:51px;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:5px;color:#75856b;
+  border:0;border-radius:22px;background:transparent;
+  font-size:10px;line-height:1.1;letter-spacing:.03em;
+}
+#xyIslandHome .xy-pearl-tab svg{width:23px;height:23px;stroke-width:1.7}
+#xyIslandHome .xy-pearl-tab.is-active{
+  color:#527c4d;background:linear-gradient(140deg,rgba(252,220,226,.72),rgba(248,253,237,.85));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 4px 10px rgba(134,114,112,.12);
+}
+#xyIslandHome .xy-pearl-tab span{display:block}
+
+/* Nighttime counterpart: keep green glass, pale ink and blush light. */
+html[data-theme-mode="dark"] #xyIslandHome{
+ --pearl-ink:#e8f2e2;--pearl-muted:#bccbb7;
+ background:#1b3023;color:#e8f2e2;
+}
+html[data-theme-mode="dark"] #xyIslandHome .xy-pearl-floral-scene{
+ background-color:#23382a;filter:brightness(.38) saturate(.83);
+}
+html[data-theme-mode="dark"] #xyIslandHome .xy-pearl-shell{
+ background:linear-gradient(90deg,rgba(18,35,26,.40),rgba(31,49,36,.46),rgba(20,33,25,.38));
+}
+html[data-theme-mode="dark"] #xyIslandHome .xy-pearl-brand h1{color:#f0f7e9;text-shadow:0 3px 13px #15241c}
+html[data-theme-mode="dark"] #xyIslandHome .xy-pearl-brand-en,
+html[data-theme-mode="dark"] #xyIslandHome .xy-pearl-brand-bow{color:#c1d0b4}
+html[data-theme-mode="dark"] #xyIslandHome :is(.xy-pearl-round,.xy-pearl-panel,.xy-pearl-tile,.xy-pearl-wide,.xy-pearl-quote,.xy-pearl-bottom){
+ background:linear-gradient(138deg,rgba(61,84,62,.91),rgba(41,65,47,.90) 65%,rgba(90,61,74,.35))!important;
+ border-color:rgba(204,232,191,.42)!important;
+ box-shadow:inset 0 2px 1px rgba(234,253,224,.18),0 9px 20px rgba(5,20,9,.26)!important;
+}
+html[data-theme-mode="dark"] #xyIslandHome .xy-pearl-main-call{
+ background:radial-gradient(ellipse at 35% 0%,rgba(255,240,245,.17),transparent 65%),
+   linear-gradient(140deg,#557450,#364e3b 62%,#665062)!important;
+ border-color:rgba(217,241,206,.55)!important;color:#f4f9ec;
+ box-shadow:inset 0 2px 2px rgba(255,255,255,.23),0 3px 0 #2c4c35,0 7px 20px rgba(0,0,0,.36)!important;
+}
+html[data-theme-mode="dark"] #xyIslandHome :is(.xy-pearl-welcome,.xy-pearl-after-call,.xy-pearl-quote small,.xy-pearl-signature,.xy-pearl-tile-copy small,.xy-pearl-wide small){color:#bbceb1}
+html[data-theme-mode="dark"] #xyIslandHome :is(.xy-pearl-tile-copy strong,.xy-pearl-wide strong,.xy-pearl-quote p){color:#f2f8ee}
+html[data-theme-mode="dark"] #xyIslandHome .xy-pearl-tile-arrow{background:linear-gradient(145deg,#829e76,#536d52)}
+html[data-theme-mode="dark"] #xyIslandHome .xy-pearl-tab{color:#d5e5cd}
+html[data-theme-mode="dark"] #xyIslandHome .xy-pearl-tab.is-active{
+ background:linear-gradient(145deg,rgba(146,95,111,.5),rgba(90,121,87,.7));color:#fff;
+}
+html[data-theme-mode="dark"] #xyIslandHome .xy-pearl-round{color:#dcecd2}
+
+/* Return-to-home control in the existing conversation header. */
+.xy-pearl-return{
+  display:grid;place-items:center;border-radius:12px;
+  width:37px;height:37px;min-height:37px;
+  background:linear-gradient(140deg,#f9fbf1,#dbe8d2);
+  border:1px solid rgba(211,231,200,.83);
+  color:#50744b;font-size:22px;cursor:pointer;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 3px 10px rgba(56,76,54,.10);
+}
+html[data-theme-mode="dark"] .xy-pearl-return{background:linear-gradient(135deg,#36533e,#263b2c);color:#d7e8ce;border-color:rgba(199,228,191,.28)}
+/* Most phones use a slightly tighter card system; scroll handles short heights. */
+@media(max-width:430px){
+ #xyIslandHome .xy-pearl-scroll{padding-left:13px;padding-right:13px}
+ #xyIslandHome .xy-pearl-panel{border-radius:31px;padding:17px 9px 14px}
+ #xyIslandHome .xy-pearl-tile{border-radius:22px;grid-template-columns:32px minmax(0,1fr) 18px;gap:4px;padding-left:10px;padding-right:8px}
+ #xyIslandHome .xy-pearl-tile-arrow{width:19px;height:19px}
+ #xyIslandHome .xy-pearl-tile-arrow svg{width:12px;height:12px}
+ #xyIslandHome .xy-pearl-wide{padding:7px 8px;gap:6px}
+ #xyIslandHome .xy-pearl-wide>svg:first-child{width:19px;height:19px}
+ #xyIslandHome .xy-pearl-bottom{margin-left:9px;margin-right:9px;border-radius:28px}
+}
+@media(max-height:680px){
+ #xyIslandHome .xy-pearl-breathing-space{height:46px}
+ #xyIslandHome .xy-pearl-tile{min-height:101px}
+ #xyIslandHome .xy-pearl-main-call{min-height:76px}
+}
+@media(prefers-reduced-motion:reduce){
+ #xyIslandHome button{transition:none!important}
+}
