@@ -5,21 +5,21 @@ const path = require("node:path");
 const vm = require("node:vm");
 const read = p => fs.readFileSync(path.join(__dirname, "..", p), "utf8");
 
-test("real dashboard replaces the island artwork and loads a responsive botanical layout", () => {
-  const html=read("index.html"),css=read("pearl-home.css"),scene=read("pearl-florals.svg");
-  assert.match(html,/pearl-home\.css\?v=/);
-  assert.match(html,/pearl-home\.js\?v=/);
+test("minimal homepage is image-free, accessible and uses three navigation tabs", () => {
+  const html=read("index.html"), css=read("pearl-home.css");
+  assert.match(html,/pearl-home\\.css\\?v=/);
+  assert.match(html,/pearl-home\\.js\\?v=/);
+  assert.match(html,/theme-curated\\.css\\?v=/);
   for(const retired of ["island-art.js","island-home.js","island-locations.js","island-home.css","island-responsive.css","island-cinematic.css"]){
-    assert.doesNotMatch(html,new RegExp('(?:src|href)="./'+retired.replaceAll(".","\\.")+'[?]'));
+    assert.doesNotMatch(html,new RegExp('(?:src|href)="./'+retired.replaceAll(".","\\\\.")+'[?]'));
   }
-  assert.match(css,/\.xy-pearl-grid\{display:grid/);
-  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(css,/\.xy-pearl-bottom\{/);
+  assert.match(css,/\\.xy-pearl-home-content\\{/);
+  assert.match(css,/grid-template-columns:repeat\\(3,minmax\\(0,1fr\\)\\)/);
+  assert.match(css,/data-xy-palette="mist"/);
+  assert.match(css,/data-xy-palette="rose"/);
+  assert.match(css,/data-xy-palette="night"/);
   assert.match(css,/data-theme-mode="dark"/);
-  assert.match(css,/@media\(max-width:430px\)/);
-  assert.match(scene,/<svg[^>]+viewBox="0 0 864 1536"/);
-  assert.doesNotMatch(scene,/<image\b|<foreignObject\b|data:image\/|island_splash|xyIslandPaintingData/i);
-  assert.match(scene,/<linearGradient\b/);
+  assert.doesNotMatch(css,/pearl-florals\\.svg|island-scene/);
 });
 
 test("Android splash unlocks when the new home has rendered and never uses the island bitmap", () => {
