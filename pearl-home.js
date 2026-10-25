@@ -48,7 +48,7 @@ const tabs=[
   {label:"更多",icon:"toolbox",route:"toolhub"}
 ];
 const tabMarkup=tabs.map(item=>'<button type="button" class="xy-pearl-tab'+(item.route==="home"?' is-active':'')+'" data-xy-home-route="'+item.route+'" aria-label="'+item.label+'"'+(item.route==="home"?' aria-current="page"':'')+'>'+
-svg(item.icon)+'<span>'+item.label+'</span></button>').join("");
+'<span class="xy-pearl-tab-icon">'+svg(item.icon)+'</span><span>'+item.label+'</span></button>').join("");
 root.innerHTML=
  '<div class="xy-pearl-ambient" aria-hidden="true"></div>'+
  '<div class="xy-pearl-shell">'+
