@@ -8,6 +8,10 @@ on:
       - 'api-compat.js'
       - 'app.js'
       - 'index.html'
+      - 'pearl-home.js'
+      - 'pearl-home.css'
+      - 'pearl-florals.svg'
+      - 'tests/pearl-home.test.cjs'
       - 'proxy-layer.js'
       - 'tests/api-hub.test.cjs'
       - '.github/workflows/api-hub-test.yml'
@@ -35,8 +39,9 @@ jobs:
       - name: Syntax check
         run: |
           node --check api-hub.js
+          node --check pearl-home.js
           node --check api-compat.js
           node --check app.js
           node --check proxy-layer.js
       - name: Route regression tests
-        run: node --test tests/api-hub.test.cjs
+        run: node --test tests/api-hub.test.cjs tests/pearl-home.test.cjs
