@@ -5,7 +5,10 @@
     cream:{bgColor:'#f5efe6',userBubble:'#eee1d5',assistantBubble:'#faf5ee',accent:'#745c48',bgImage:'',overlay:.18,blur:0},
     dusk:{bgColor:'#e9e5ee',userBubble:'#ded7e8',assistantBubble:'#f4f0f7',accent:'#55466e',bgImage:'',overlay:.20,blur:0},
     ink:{bgColor:'#e8eceb',userBubble:'#d7dfdd',assistantBubble:'#f0f3f2',accent:'#344a47',bgImage:'',overlay:.20,blur:0},
-    apple:{bgColor:'#e4ebd8',userBubble:'#c8d6b6',assistantBubble:'#fff9f0',accent:'#627a56',bgImage:'',overlay:.10,blur:0,bubbleGlass:true,bubbleSkin:'glass'}
+    apple:{bgColor:'#f3f8ed',userBubble:'#dce8d3',assistantBubble:'#fafff6',accent:'#5e8260',bgImage:'',overlay:.12,blur:0,mode:'light',bubbleGlass:true,bubbleSkin:'glass'},
+    mist:{bgColor:'#eff5f1',userBubble:'#d7e8df',assistantBubble:'#f8fdf9',accent:'#568c83',bgImage:'',overlay:.12,blur:0,mode:'light',bubbleGlass:true,bubbleSkin:'glass'},
+    rose:{bgColor:'#fcf5f4',userBubble:'#f4e1e0',assistantBubble:'#fffcfb',accent:'#aa7187',bgImage:'',overlay:.10,blur:0,mode:'light',bubbleGlass:true,bubbleSkin:'glass'},
+    night:{bgColor:'#15231d',userBubble:'#344d3e',assistantBubble:'#263a2d',accent:'#b7cfaa',bgImage:'',overlay:.17,blur:0,mode:'dark',bubbleGlass:true,bubbleSkin:'glass'}
   };
   const SWATCHES=['#ffffff','#f3f1eb','#d9e7dd','#c7ddd2','#edf2ed','#f0dfd5','#ded7e8','#d7dfdd','#b8ccd1','#365d4a','#745c48','#55466e','#344a47','#222827','#000000','#ff6b6b'];
   const valid=v=>/^#[0-9a-fA-F]{6}$/.test(String(v||'').trim());
@@ -51,7 +54,7 @@
   }
   function applyTheme(){
     const root=document.documentElement,mode=resolvedMode();
-    root.dataset.themeMode=mode;root.dataset.xyPalette=theme.preset==='apple'?'apple':'default';root.style.colorScheme=mode;
+    root.dataset.themeMode=mode;root.dataset.xyPalette=['apple','mist','rose','night'].includes(theme.preset)?theme.preset:'default';root.style.colorScheme=mode;
     root.style.setProperty('--theme-bg',theme.bgColor);
     root.style.setProperty('--theme-user-bubble',theme.userBubble);
     root.style.setProperty('--theme-assistant-bubble',theme.assistantBubble);
