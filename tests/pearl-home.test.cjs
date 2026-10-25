@@ -81,16 +81,18 @@ function mockHome() {
   return {calls,app,history,w,root};
 }
 
-test("every key dashboard action is interactive and chat return restores home", () => {
+test("home shows only greeting, one primary chat button, and the compact footer", () => {
   const h=mockHome();
   assert.equal(h.root.hidden,false);
   assert.equal(h.app.inert,true);
-  assert.match(h.root.innerHTML,/data-xy-home-route="study"/);
-  assert.match(h.root.innerHTML,/data-xy-home-route="groupchat"/);
-  assert.match(h.root.innerHTML,/data-xy-home-route="imagine"/);
-  assert.match(h.root.innerHTML,/data-xy-home-route="creation"/);
-  assert.match(h.root.innerHTML,/data-xy-home-route="journal"/);
-  assert.match(h.root.innerHTML,/data-xy-home-route="toolhub"/);
+  assert.match(h.root.innerHTML,/今天想说什么/);
+  assert.match(h.root.innerHTML,/进入对话/);
+  assert.match(h.root.innerHTML,/外观主题/);
+  assert.match(h.root.innerHTML,/首页导航/);
+  assert.equal((h.root.innerHTML.match(/class="xy-pearl-tab(?: is-active)?"/g)||[]).length,3);
+  for(const route of ["study","groupchat","imagine","creation","journal","call"]){
+    assert.doesNotMatch(h.root.innerHTML,new RegExp('data-xy-home-route="'+route+'"'));
+  }
   h.calls.tap("chat");
   assert.equal(h.root.hidden,true);
   assert.equal(h.app.inert,false);
@@ -99,8 +101,15 @@ test("every key dashboard action is interactive and chat return restores home", 
   h.history.back();
   assert.equal(h.root.hidden,false);
   assert.equal(h.app.inert,true);
-  h.calls.tap("study");
-  assert.deepEqual(h.calls.panels,["study"]);
+  h.calls.tap("toolhub");
+  assert.deepEqual(h.calls.panels,["toolhub"]);
+  assert.equal(h.root.hidden,true);
+});
+
+test("appearance button reaches original theme settings without showing a theme chooser on home", () => {
+  const h=mockHome();
+  h.calls.tap("theme");
+  assert.deepEqual(h.calls.panels,["theme"]);
   assert.equal(h.root.hidden,true);
 });
 
