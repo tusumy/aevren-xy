@@ -1,0 +1,126 @@
+/* 砚屿 · 青苹果奶霜玻璃 — isolated theme preset, no image or character artwork.
+   Uses layered CSS color, pearl highlights and blush reflections; other presets are untouched. */
+html[data-xy-palette="apple"][data-theme-mode="light"]{
+  --ink:#303e2f;--muted:#737d6c;--line:rgba(112,137,96,.18);--soft:#e9efdd;
+  --glass:rgba(255,251,245,.53);--glass-strong:rgba(255,252,247,.76);
+  --glass-edge:rgba(255,255,248,.91);--shadow:0 14px 38px rgba(88,110,74,.13);
+  background:#e4ebd8;
+}
+html[data-xy-palette="apple"][data-theme-mode="light"] #themeBackdrop{
+  background-image:
+    radial-gradient(ellipse at 15% 12%,rgba(255,251,242,.99),transparent 36%),
+    radial-gradient(ellipse at 90% 22%,rgba(242,205,214,.68),transparent 35%),
+    radial-gradient(ellipse at 25% 76%,rgba(207,226,182,.68),transparent 48%),
+    linear-gradient(153deg,#fff9f0 0%,#e4ebd8 48%,#d6e2c9 100%)!important;
+  background-color:#e4ebd8!important;
+  filter:blur(var(--theme-blur,0px));
+}
+html[data-xy-palette="apple"][data-theme-mode="light"] #themeBackdrop::after{
+  background:linear-gradient(135deg,rgba(255,255,249,.08),rgba(255,240,244,.07))!important;
+}
+html[data-xy-palette="apple"][data-theme-mode="light"] .sidebar,
+html[data-xy-palette="apple"][data-theme-mode="light"] .main header,
+html[data-xy-palette="apple"][data-theme-mode="light"] .panel{
+  background:linear-gradient(142deg,rgba(255,253,247,.80),rgba(234,243,221,.62) 62%,rgba(252,224,231,.37))!important;
+  border-color:rgba(255,255,248,.9)!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 8px 30px rgba(99,120,89,.09);
+}
+html[data-xy-palette="apple"][data-theme-mode="light"] :is(
+  .composer,.new-chat,.memory-card,.journal-card,.setting-card,.theme-setting-card,
+  .endpoint-card,.character-card,.theme-presets button,.theme-mode-switch button,
+  .theme-small-btn,.theme-upload-button
+){
+  background:linear-gradient(132deg,rgba(255,255,249,.85) 0%,rgba(244,248,235,.68) 44%,rgba(255,231,236,.42) 100%)!important;
+  border:1px solid rgba(255,255,251,.93)!important;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.92),inset 0 -2px 4px rgba(172,189,146,.14),0 8px 22px rgba(99,120,89,.11)!important;
+}
+html[data-xy-palette="apple"][data-theme-mode="light"] :is(.composer,.new-chat,.memory-card,.journal-card,.setting-card,.theme-setting-card,.endpoint-card,.character-card){
+  border-radius:18px;
+}
+html[data-xy-palette="apple"][data-theme-mode="light"] .composer:focus-within{
+  border-color:rgba(132,164,108,.58)!important;
+  box-shadow:0 0 0 3px rgba(212,228,195,.62),inset 0 1px 0 white,0 11px 28px rgba(88,110,74,.16)!important;
+}
+html[data-xy-palette="apple"][data-theme-mode="light"] .user .bubble{
+  background:linear-gradient(135deg,rgba(240,250,222,.81),rgba(200,214,182,.71) 65%,rgba(248,223,226,.62))!important;
+  color:#30402d!important;border:1px solid rgba(255,255,247,.96)!important;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.83),0 7px 19px rgba(92,115,74,.14)!important;
+}
+html[data-xy-palette="apple"][data-theme-mode="light"] .assistant .bubble{
+  background:linear-gradient(140deg,rgba(255,253,246,.90),rgba(246,249,234,.68) 58%,rgba(251,223,231,.54))!important;
+  color:#34422f!important;border:1px solid rgba(255,255,250,.96)!important;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.94),0 7px 19px rgba(92,115,74,.10)!important;
+}
+html[data-xy-palette="apple"][data-theme-mode="light"] .send,
+html[data-xy-palette="apple"][data-theme-mode="light"] .brand-mark{
+  background:linear-gradient(145deg,#819c73,#506c49)!important;color:#fff!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 5px 15px rgba(78,102,67,.21)!important;
+}
+html[data-xy-palette="apple"][data-theme-mode="light"] :is(.chat-item.active,.nav-btn:hover,.chat-item:hover){
+  background:rgba(248,253,236,.76)!important;color:#394b33!important;
+}
+html[data-xy-palette="apple"] .theme-presets button[data-theme-preset="apple"]{
+  position:relative;grid-column:span 2;
+  background:linear-gradient(115deg,#f7f8e7 4%,#c8d6b6 55%,#f2d7da 100%)!important;
+  color:#394a34!important;border:1px solid rgba(255,255,245,.9)!important;
+  font-weight:600;letter-spacing:.02em;
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.86),0 5px 15px rgba(94,110,80,.14)!important;
+}
+html[data-xy-palette="apple"] .theme-presets button[data-theme-preset="apple"][aria-pressed="true"]{
+  outline:2px solid #719164;outline-offset:2px;
+}
+.xy-apple-theme-note{margin:-3px 2px 12px;font-size:10px;line-height:1.55;color:var(--muted,#78816d)}
+/* Night palette: dark moss glass with restrained pink highlights, not a faded light screenshot. */
+html[data-xy-palette="apple"][data-theme-mode="dark"]{
+  --ink:#edf5e7;--muted:#becbb6;--line:rgba(199,224,188,.20);
+  --glass:rgba(40,58,45,.65);--glass-strong:rgba(47,65,52,.82);
+  --glass-edge:rgba(217,239,206,.2);background:#17251c;
+}
+html[data-xy-palette="apple"][data-theme-mode="dark"] #themeBackdrop{
+  background-image:
+    radial-gradient(ellipse at 86% 12%,rgba(112,64,83,.26),transparent 42%),
+    radial-gradient(ellipse at 8% 80%,rgba(81,119,74,.35),transparent 48%),
+    linear-gradient(160deg,#293a2c,#1b2d22 55%,#23372b)!important;
+  background-color:#1b2d22!important;
+  filter:blur(var(--theme-blur,0px))!important;
+}
+html[data-xy-palette="apple"][data-theme-mode="dark"] #themeBackdrop::after{
+  background:linear-gradient(120deg,rgba(13,24,17,.16),rgba(43,33,42,.15))!important;
+}
+html[data-xy-palette="apple"][data-theme-mode="dark"] :is(.sidebar,.main header,.panel){
+  background:linear-gradient(140deg,rgba(32,51,38,.94),rgba(35,46,39,.91) 70%,rgba(62,44,52,.76))!important;
+  border-color:rgba(210,230,194,.2)!important;
+}
+html[data-xy-palette="apple"][data-theme-mode="dark"] :is(
+  .composer,.new-chat,.memory-card,.journal-card,.setting-card,.theme-setting-card,
+  .endpoint-card,.character-card,.theme-presets button:not([data-theme-preset="apple"]),
+  .theme-mode-switch button,.theme-small-btn,.theme-upload-button
+){
+  background:linear-gradient(134deg,rgba(56,78,59,.83),rgba(40,60,45,.79) 65%,rgba(89,59,70,.26))!important;
+  border:1px solid rgba(216,237,199,.24)!important;
+  box-shadow:inset 0 1px 0 rgba(241,255,235,.16),0 9px 22px rgba(0,0,0,.21)!important;
+  color:#edf4e9;
+}
+html[data-xy-palette="apple"][data-theme-mode="dark"] .user .bubble{
+  background:linear-gradient(140deg,rgba(73,102,70,.97),rgba(51,77,56,.96))!important;
+  color:#f7fbef!important;border-color:rgba(211,234,196,.30)!important;
+}
+html[data-xy-palette="apple"][data-theme-mode="dark"] .assistant .bubble{
+  background:linear-gradient(145deg,rgba(52,68,54,.95),rgba(58,53,57,.90))!important;
+  color:#f0f4e9!important;border-color:rgba(231,240,211,.25)!important;
+}
+html[data-xy-palette="apple"][data-theme-mode="dark"] :is(.theme-setting-card label,.xy-theme-color-row,.setting-note,.xy-apple-theme-note){
+  color:#c3d0bb!important;
+}
+html[data-xy-palette="apple"][data-theme-mode="dark"] :is(.chat-item.active,.chat-item:hover,.nav-btn:hover){
+  background:rgba(136,164,113,.23)!important;color:#f1f7ea!important;
+}
+/* Keep phone layouts readable and inexpensive to render. */
+@media(max-width:760px){
+  html[data-xy-palette="apple"] .theme-presets{grid-template-columns:repeat(2,minmax(0,1fr))}
+  html[data-xy-palette="apple"] .theme-presets button[data-theme-preset="apple"]{grid-column:span 2}
+  html[data-xy-palette="apple"] :is(.composer,.panel,.sidebar){backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+}
+@media(prefers-reduced-motion:reduce){
+  html[data-xy-palette="apple"] :is(.composer,.theme-presets button){transition:none!important}
+}
