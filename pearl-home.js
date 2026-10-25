@@ -8,14 +8,6 @@ const originalInert=Boolean(originalApp?.inert);
 let fromHome=false;
 const NAV_ROOT="xyIslandRoot";
 const allowed=new Set(["chat","study","imagine","creation","groupchat","journal","toolhub","settings","voice","theme","memory"]);
-const cards=[
-  {label:"聊天",english:"CHAT",icon:"chat",route:"chat",number:"01"},
-  {label:"书房",english:"LIBRARY",icon:"book",route:"study",number:"02"},
-  {label:"生图",english:"IMAGE",icon:"image",route:"imagine",number:"03"},
-  {label:"语音",english:"VOICE",icon:"phone",route:"call",number:"04"},
-  {label:"创作角",english:"CREATION",icon:"folder",route:"creation",number:"05"},
-  {label:"群聊",english:"GROUP",icon:"group",route:"groupchat",number:"06"}
-];
 const icons={
   heart:'<path d="M20.8 5.9a4.7 4.7 0 0 0-6.7 0L12 8 9.9 5.9a4.7 4.7 0 1 0-6.7 6.7L12 21l8.8-8.4a4.7 4.7 0 0 0 0-6.7Z"/>',
   gear:'<circle cx="12" cy="12" r="3.2"/><path d="m10 2.7-.6 2.1-2.1.9-1.9-1.1-2.7 2.7 1.1 1.9-.9 2.1-2.1.6v3.8l2.1.6.9 2.1-1.1 1.9 2.7 2.7 1.9-1.1 2.1.9.6 2.1h3.8l.6-2.1 2.1-.9 1.9 1.1 2.7-2.7-1.1-1.9.9-2.1 2.1-.6v-3.8l-2.1-.6-.9-2.1 1.1-1.9-2.7-2.7-1.9 1.1-2.1-.9-.6-2.1Z" transform="translate(1 -1) scale(.92)"/>',
@@ -38,10 +30,6 @@ const root=document.createElement("section");
 root.id="xyIslandHome";
 root.className="xy-pearl-home";
 root.setAttribute("aria-label","砚屿 · 青苹果玻璃首页");
-const cardMarkup=cards.map(item=>'<button type="button" class="xy-pearl-tile" data-xy-home-route="'+item.route+'" aria-label="'+item.label+'">'+
-  '<span class="xy-pearl-number">'+item.number+'</span><span class="xy-pearl-tile-icon">'+svg(item.icon)+'</span>'+
-  '<span class="xy-pearl-tile-copy"><strong>'+item.label+'</strong><small>'+item.english+'</small></span>'+
-  '<span class="xy-pearl-tile-arrow">'+svg("arrow")+'</span></button>').join("");
 const tabs=[
   {label:"首页",icon:"home",route:"home"},
   {label:"对话",icon:"chat",route:"chat"},
