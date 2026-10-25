@@ -1,0 +1,36 @@
+/* Four quiet, coherent visual themes; color choices belong in Settings, never on home. */
+.xy-theme-curated{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0 14px}
+.xy-theme-curated-choice{
+ min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px;
+ padding:9px 10px 12px;border-radius:17px;text-align:left;cursor:pointer;
+ border:1px solid rgba(115,135,116,.14);background:rgba(255,255,255,.55);
+ color:var(--ink,#324333);box-shadow:0 5px 16px rgba(65,85,62,.05);
+}
+.xy-theme-curated-swatch{
+ display:block;width:100%;height:45px;border-radius:11px;
+ border:1px solid rgba(255,255,255,.58);margin-bottom:4px;
+ background:linear-gradient(120deg,#fafff6,#dce8d3 58%,#f3f8ed);
+}
+.xy-theme-curated-choice[data-curated-look="mist"] .xy-theme-curated-swatch{background:linear-gradient(130deg,#f8fdf9,#d7e8df 65%,#eff5f1)}
+.xy-theme-curated-choice[data-curated-look="rose"] .xy-theme-curated-swatch{background:linear-gradient(130deg,#fffcfb,#f4e1e0 65%,#fcf5f4)}
+.xy-theme-curated-choice[data-curated-look="night"] .xy-theme-curated-swatch{background:linear-gradient(130deg,#20352b,#294135 65%,#15231d)}
+.xy-theme-curated-choice strong{font-size:13px;font-weight:650;line-height:1.4}
+.xy-theme-curated-choice small{font-size:10px;color:var(--muted,#839181)}
+.xy-theme-curated-choice[aria-pressed="true"]{
+ border-color:var(--xy-ui-accent,var(--theme-accent,#5e8260));
+ box-shadow:0 0 0 1px var(--xy-ui-accent,var(--theme-accent,#5e8260)),0 6px 18px rgba(65,85,62,.10);
+}
+.xy-theme-curated-choice:focus-visible{outline:2px solid var(--xy-ui-accent,#5e8260);outline-offset:2px}
+.xy-theme-basics{margin:0 0 13px;padding:0 3px;color:var(--muted,#71836f)}
+.xy-theme-basics summary{cursor:pointer;padding:9px 4px;font-size:11px;list-style-position:inside}
+.xy-theme-basics .theme-presets{padding-top:8px}
+html[data-theme-mode="dark"] .xy-theme-curated-choice{
+ background:rgba(42,57,47,.73);color:#eaf1e9;border-color:rgba(192,218,187,.17);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+}
+html[data-theme-mode="dark"] .xy-theme-curated-choice small{color:#a8b6a8}
+html[data-theme-mode="dark"] .xy-theme-curated-choice[aria-pressed="true"]{
+ border-color:var(--xy-ui-accent,#b7cfaa);
+ box-shadow:0 0 0 1px var(--xy-ui-accent,#b7cfaa);
+}
+@media(max-width:320px){.xy-theme-curated{gap:7px}.xy-theme-curated-choice{padding:8px}}

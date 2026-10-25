@@ -8,14 +8,6 @@ const originalInert=Boolean(originalApp?.inert);
 let fromHome=false;
 const NAV_ROOT="xyIslandRoot";
 const allowed=new Set(["chat","study","imagine","creation","groupchat","journal","toolhub","settings","voice","theme","memory"]);
-const cards=[
-  {label:"聊天",english:"CHAT",icon:"chat",route:"chat",number:"01"},
-  {label:"书房",english:"LIBRARY",icon:"book",route:"study",number:"02"},
-  {label:"生图",english:"IMAGE",icon:"image",route:"imagine",number:"03"},
-  {label:"语音",english:"VOICE",icon:"phone",route:"call",number:"04"},
-  {label:"创作角",english:"CREATION",icon:"folder",route:"creation",number:"05"},
-  {label:"群聊",english:"GROUP",icon:"group",route:"groupchat",number:"06"}
-];
 const icons={
   heart:'<path d="M20.8 5.9a4.7 4.7 0 0 0-6.7 0L12 8 9.9 5.9a4.7 4.7 0 1 0-6.7 6.7L12 21l8.8-8.4a4.7 4.7 0 0 0 0-6.7Z"/>',
   gear:'<circle cx="12" cy="12" r="3.2"/><path d="m10 2.7-.6 2.1-2.1.9-1.9-1.1-2.7 2.7 1.1 1.9-.9 2.1-2.1.6v3.8l2.1.6.9 2.1-1.1 1.9 2.7 2.7 1.9-1.1 2.1.9.6 2.1h3.8l.6-2.1 2.1-.9 1.9 1.1 2.7-2.7-1.1-1.9.9-2.1 2.1-.6v-3.8l-2.1-.6-.9-2.1 1.1-1.9-2.7-2.7-1.9 1.1-2.1-.9-.6-2.1Z" transform="translate(1 -1) scale(.92)"/>',
@@ -38,45 +30,29 @@ const root=document.createElement("section");
 root.id="xyIslandHome";
 root.className="xy-pearl-home";
 root.setAttribute("aria-label","砚屿 · 青苹果玻璃首页");
-const cardMarkup=cards.map(item=>'<button type="button" class="xy-pearl-tile" data-xy-home-route="'+item.route+'" aria-label="'+item.label+'">'+
-  '<span class="xy-pearl-number">'+item.number+'</span><span class="xy-pearl-tile-icon">'+svg(item.icon)+'</span>'+
-  '<span class="xy-pearl-tile-copy"><strong>'+item.label+'</strong><small>'+item.english+'</small></span>'+
-  '<span class="xy-pearl-tile-arrow">'+svg("arrow")+'</span></button>').join("");
 const tabs=[
   {label:"首页",icon:"home",route:"home"},
   {label:"对话",icon:"chat",route:"chat"},
-  {label:"工具",icon:"toolbox",route:"toolhub"},
-  {label:"资源",icon:"book",route:"study"},
-  {label:"我",icon:"user",route:"settings"}
+  {label:"更多",icon:"toolbox",route:"toolhub"}
 ];
 const tabMarkup=tabs.map(item=>'<button type="button" class="xy-pearl-tab'+(item.route==="home"?' is-active':'')+'" data-xy-home-route="'+item.route+'" aria-label="'+item.label+'"'+(item.route==="home"?' aria-current="page"':'')+'>'+
-svg(item.icon)+'<span>'+item.label+'</span></button>').join("");
+'<span class="xy-pearl-tab-icon">'+svg(item.icon)+'</span><span>'+item.label+'</span></button>').join("");
 root.innerHTML=
- '<div class="xy-pearl-floral-scene" aria-hidden="true"></div>'+
+ '<div class="xy-pearl-ambient" aria-hidden="true"></div>'+
  '<div class="xy-pearl-shell">'+
- '<div class="xy-pearl-scroll" id="xyPearlScroll">'+
- '<header class="xy-pearl-head">'+
- '<button class="xy-pearl-round" data-xy-home-route="journal" type="button" aria-label="我的记录">'+svg("heart")+'</button>'+
- '<div class="xy-pearl-brand"><span class="xy-pearl-paw">✿</span><h1>砚屿</h1><div class="xy-pearl-brand-en">O N L Y　O U R S</div><span class="xy-pearl-brand-bow">୨୧</span></div>'+
- '<button class="xy-pearl-round" data-xy-home-route="settings" type="button" aria-label="设置">'+svg("gear")+'</button>'+
- '</header>'+
- '<div class="xy-pearl-breathing-space" aria-hidden="true"><span>♡</span></div>'+
- '<section class="xy-pearl-panel" aria-label="主要功能">'+
- '<p class="xy-pearl-welcome">想和我说话的时候，就点这里 ♡</p>'+
- '<button class="xy-pearl-main-call" type="button" data-xy-home-route="call" aria-label="开始语音通话">'+
- svg("mic")+'<strong>说点什么…</strong><span class="xy-pearl-main-heart">♡</span></button>'+
- '<p class="xy-pearl-after-call"><span>♡</span>　语音、故事，还有我们的日常　<span>♡</span></p>'+
- '<div class="xy-pearl-grid">'+cardMarkup+'</div>'+
- '<div class="xy-pearl-wide-row">'+
- '<button class="xy-pearl-wide" data-xy-home-route="journal" type="button">'+svg("journal")+'<span><strong>我的记录</strong><small>OUR MOMENTS</small></span>'+svg("arrow","xy-pearl-wide-arrow")+'</button>'+
- '<button class="xy-pearl-wide" data-xy-home-route="toolhub" type="button">'+svg("heart")+'<span><strong>更多功能</strong><small>MORE</small></span>'+svg("arrow","xy-pearl-wide-arrow")+'</button>'+
- '</div></section>'+
- '<div class="xy-pearl-quote"><span class="xy-pearl-quote-flower">✿</span><div><small>玄砚 · ONLY OURS</small><p>So needy. Come here.</p></div><span class="xy-pearl-quote-heart">♡</span></div>'+
- '<div class="xy-pearl-signature">♡　·　ONLY OURS　·　♡</div>'+
- '</div>'+
- '<nav class="xy-pearl-bottom" aria-label="首页导航">'+tabMarkup+'</nav>'+
- '</div>';
+ '<div class="xy-pearl-inner" id="xyPearlScroll">'+
+ '<header class="xy-pearl-top"><div class="xy-pearl-brand"><div class="xy-pearl-mark">砚</div><div><strong>砚屿</strong><small>ONLY OURS</small></div></div>'+
+ '<button type="button" class="xy-pearl-theme" data-xy-home-route="theme" aria-label="外观主题">'+svg("gear")+'</button></header>'+
+ '<main class="xy-pearl-home-content"><div class="xy-pearl-greeting">'+
+ '<div class="xy-pearl-eyebrow">JUST FOR US</div><span class="xy-pearl-heart" aria-hidden="true">♡</span>'+
+ '<h1><span id="xyPearlName">阿毛，</span><span class="xy-pearl-heading-line">今天想说什么？</span></h1>'+
+ '<p>我在这里，听你慢慢讲。</p></div>'+
+ '<button type="button" class="xy-pearl-enter" data-xy-home-route="chat" aria-label="进入对话">'+
+ '<span><strong>进入对话</strong><small>Continue our conversation</small></span><span class="xy-pearl-enter-arrow" aria-hidden="true">↗</span></button>'+
+ '</main></div><nav class="xy-pearl-bottom" aria-label="首页导航">'+tabMarkup+'</nav></div>';
 document.body.appendChild(root);
+function syncName(){const value=window.xyTavernMacros?.name?.();const name=typeof value==="string"&&value.trim()&&value.trim()!=="你"?value.trim():"阿毛";const label=root.querySelector("#xyPearlName");if(label)label.textContent=name+"，"}
+syncName();window.addEventListener("xy-user-profile-change",syncName);
 
 function ensureHomeRoot(){
  const h=history.state||{};

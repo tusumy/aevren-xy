@@ -5,7 +5,10 @@
     cream:{bgColor:'#f5efe6',userBubble:'#eee1d5',assistantBubble:'#faf5ee',accent:'#745c48',bgImage:'',overlay:.18,blur:0},
     dusk:{bgColor:'#e9e5ee',userBubble:'#ded7e8',assistantBubble:'#f4f0f7',accent:'#55466e',bgImage:'',overlay:.20,blur:0},
     ink:{bgColor:'#e8eceb',userBubble:'#d7dfdd',assistantBubble:'#f0f3f2',accent:'#344a47',bgImage:'',overlay:.20,blur:0},
-    apple:{bgColor:'#e4ebd8',userBubble:'#c8d6b6',assistantBubble:'#fff9f0',accent:'#627a56',bgImage:'',overlay:.10,blur:0,bubbleGlass:true,bubbleSkin:'glass'}
+    apple:{bgColor:'#f3f8ed',userBubble:'#dce8d3',assistantBubble:'#fafff6',accent:'#5e8260',bgImage:'',overlay:.12,blur:0,mode:'light',bubbleGlass:true,bubbleSkin:'glass'},
+    mist:{bgColor:'#eff5f1',userBubble:'#d7e8df',assistantBubble:'#f8fdf9',accent:'#568c83',bgImage:'',overlay:.12,blur:0,mode:'light',bubbleGlass:true,bubbleSkin:'glass'},
+    rose:{bgColor:'#fcf5f4',userBubble:'#f4e1e0',assistantBubble:'#fffcfb',accent:'#aa7187',bgImage:'',overlay:.10,blur:0,mode:'light',bubbleGlass:true,bubbleSkin:'glass'},
+    night:{bgColor:'#15231d',userBubble:'#344d3e',assistantBubble:'#263a2d',accent:'#b7cfaa',bgImage:'',overlay:.17,blur:0,mode:'dark',bubbleGlass:true,bubbleSkin:'glass'}
   };
   const SWATCHES=['#ffffff','#f3f1eb','#d9e7dd','#c7ddd2','#edf2ed','#f0dfd5','#ded7e8','#d7dfdd','#b8ccd1','#365d4a','#745c48','#55466e','#344a47','#222827','#000000','#ff6b6b'];
   const valid=v=>/^#[0-9a-fA-F]{6}$/.test(String(v||'').trim());
@@ -51,7 +54,7 @@
   }
   function applyTheme(){
     const root=document.documentElement,mode=resolvedMode();
-    root.dataset.themeMode=mode;root.dataset.xyPalette=theme.preset==='apple'?'apple':'default';root.style.colorScheme=mode;
+    root.dataset.themeMode=mode;root.dataset.xyPalette=['apple','mist','rose','night'].includes(theme.preset)?theme.preset:'default';root.style.colorScheme=mode;
     root.style.setProperty('--theme-bg',theme.bgColor);
     root.style.setProperty('--theme-user-bubble',theme.userBubble);
     root.style.setProperty('--theme-assistant-bubble',theme.assistantBubble);
@@ -123,8 +126,10 @@
     if(eyebrow)eyebrow.textContent='THEME';if(title)title.textContent='主题';if(!body)return;
     body.innerHTML=`<p class="setting-note">气泡颜色以你的设置为基准，并会随浅色/深色模式自动调整明暗；背景图会一直保留。</p>
       <div class="theme-mode-switch"><button data-theme-mode="light" class="${theme.mode==='light'?'active':''}">☀ 浅色</button><button data-theme-mode="dark" class="${theme.mode==='dark'?'active':''}">☾ 深色</button><button data-theme-mode="system" class="${theme.mode==='system'?'active':''}">◐ 跟随系统 · <span id="xySystemModeNow">${systemDark()?'深色':'浅色'}</span></button></div>
-      <div class="theme-presets"><button data-theme-preset="mint">薄荷</button><button data-theme-preset="cream">奶油</button><button data-theme-preset="dusk">雾紫</button><button data-theme-preset="ink">青墨</button><button data-theme-preset="apple" aria-pressed="${theme.preset==='apple'}">青苹果玻璃</button></div>
-      <p class="xy-apple-theme-note">青苹果绿 · 珍珠玻璃 · 淡粉光泽｜纯 CSS，无人物壁纸</p>
+      <div class="xy-theme-curated" role="group" aria-label="精选主题">
+      ${[["apple","青苹果","浅绿 · 留白"],["mist","雾薄荷","冷青 · 轻盈"],["rose","樱雾","柔粉 · 陶瓷"],["night","墨绿夜","森林 · 深色"]].map(([id,name,desc])=>`<button type="button" class="xy-theme-curated-choice" data-theme-preset="${id}" data-curated-look="${id}" aria-pressed="${theme.preset===id}"><span class="xy-theme-curated-swatch" aria-hidden="true"></span><strong>${name}</strong><small>${desc}</small></button>`).join("")}
+      </div>
+      <details class="xy-theme-basics"><summary>更多基础配色</summary><div class="theme-presets"><button data-theme-preset="mint">薄荷</button><button data-theme-preset="cream">奶油</button><button data-theme-preset="dusk">雾紫</button><button data-theme-preset="ink">青墨</button></div></details>
       <div class="theme-setting-card">${colorField('背景颜色','bgColor')}${colorField('你的气泡','userBubble')}${colorField('我的气泡','assistantBubble')}${colorField('强调色','accent')}</div>
       <div class="theme-setting-card xy-bubble-skin-section"><p class="xy-bubble-skin-title">聊天气泡皮肤</p><p class="xy-bubble-skin-desc">只换轮廓和小装饰，保留你的气泡颜色、毛玻璃与壁纸。</p><div class="xy-bubble-skin-grid" role="group" aria-label="聊天气泡皮肤">${[['glass','原版玻璃'],['bear','小熊扒边'],['cat','小猫探头'],['comic','漫画对话框']].map(([id,label])=>`<button type="button" class="xy-bubble-skin-choice" data-bubble-skin="${id}" aria-pressed="${skinOf(theme.bubbleSkin)===id}"><span class="xy-skin-thumb" aria-hidden="true"></span><span class="xy-skin-label">${label}</span></button>`).join('')}</div></div>
       <div class="theme-setting-card"><label class="theme-stack"><span>气泡磨砂玻璃 <b id="themeBubbleGlassValue">${theme.bubbleGlass?'已开启':'已关闭'}</b></span><input id="themeBubbleGlass" type="checkbox" ${theme.bubbleGlass?'checked':''}></label><label class="theme-stack"><span>聊天字号 <b id="themeFontValue">${Math.round(Number(theme.fontScale||.95)*100)}%</b></span><input class="xy-theme-range" id="themeFontScale" type="range" min="0.8" max="1.2" step="0.05" value="${Number(theme.fontScale||.95)}"></label><label class="theme-stack"><span>气泡间距 <b id="themeBubbleGapValue">${Math.round(Number(theme.bubbleGap??18))}px</b></span><input class="xy-theme-range" id="themeBubbleGap" type="range" min="8" max="48" step="1" value="${Number(theme.bubbleGap??18)}"></label></div>
@@ -145,7 +150,7 @@
     body.querySelectorAll('[data-color-swatch]').forEach(btn=>btn.addEventListener('click',()=>{const key=btn.dataset.colorSwatch,value=btn.dataset.color;if(setColor(key,value)){const input=body.querySelector(`[data-color-input="${key}"]`),preview=body.querySelector(`[data-color-preview="${key}"]`),p=body.querySelector(`[data-color-palette="${key}"]`);if(input)input.value=theme[key];if(preview)preview.style.background=theme[key];if(p)p.hidden=true}}));
     body.querySelectorAll('[data-color-input]').forEach(input=>{const commit=()=>{const key=input.dataset.colorInput;if(setColor(key,input.value)){input.value=theme[key];const p=body.querySelector(`[data-color-preview="${key}"]`);if(p)p.style.background=theme[key]}else input.value=theme[key]};input.addEventListener('change',commit);input.addEventListener('blur',commit)});
     body.querySelectorAll('[data-theme-mode]').forEach(btn=>btn.addEventListener('click',()=>{theme.mode=btn.dataset.themeMode;persist();applyTheme();themePanel()}));
-    body.querySelectorAll('[data-theme-preset]').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.themePreset,preset=PRESETS[id];if(!preset)return;const bgImage=id==='apple'?'':theme.bgImage;theme={...theme,...preset,bgImage,preset:id};persist();applyTheme();themePanel()}));
+    body.querySelectorAll('[data-theme-preset]').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.themePreset,preset=PRESETS[id];if(!preset)return;const bgImage=theme.bgImage;theme={...theme,...preset,bgImage,preset:id};persist();applyTheme();themePanel()}));
     const glass=body.querySelector('#themeBubbleGlass');
     glass?.addEventListener('change',()=>{theme.bubbleGlass=!!glass.checked;persist();applyTheme();const label=body.querySelector('#themeBubbleGlassValue');if(label)label.textContent=theme.bubbleGlass?'已开启':'已关闭'});
     const font=body.querySelector('#themeFontScale');

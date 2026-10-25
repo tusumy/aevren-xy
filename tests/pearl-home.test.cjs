@@ -5,21 +5,24 @@ const path = require("node:path");
 const vm = require("node:vm");
 const read = p => fs.readFileSync(path.join(__dirname, "..", p), "utf8");
 
-test("real dashboard replaces the island artwork and loads a responsive botanical layout", () => {
-  const html=read("index.html"),css=read("pearl-home.css"),scene=read("pearl-florals.svg");
-  assert.match(html,/pearl-home\.css\?v=/);
-  assert.match(html,/pearl-home\.js\?v=/);
+test("minimal home has three nav tabs, four palettes and no island artwork", () => {
+  const html=read("index.html");
+  const css=read("pearl-home.css");
+  const theme=read("theme-core.js");
+  assert.ok(html.includes("pearl-home.css?v="));
+  assert.ok(html.includes("pearl-home.js?v="));
+  assert.ok(html.includes("theme-curated.css?v="));
   for(const retired of ["island-art.js","island-home.js","island-locations.js","island-home.css","island-responsive.css","island-cinematic.css"]){
-    assert.doesNotMatch(html,new RegExp('(?:src|href)="./'+retired.replaceAll(".","\\.")+'[?]'));
+    assert.ok(!html.includes('"./'+retired+'?'),"old island must not be loaded: "+retired);
   }
-  assert.match(css,/\.xy-pearl-grid\{display:grid/);
-  assert.match(css,/grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(css,/\.xy-pearl-bottom\{/);
-  assert.match(css,/data-theme-mode="dark"/);
-  assert.match(css,/@media\(max-width:430px\)/);
-  assert.match(scene,/<svg[^>]+viewBox="0 0 864 1536"/);
-  assert.doesNotMatch(scene,/<image\b|<foreignObject\b|data:image\/|island_splash|xyIslandPaintingData/i);
-  assert.match(scene,/<linearGradient\b/);
+  assert.ok(css.includes(".xy-pearl-home-content{"));
+  assert.ok(css.includes("grid-template-columns:repeat(3,minmax(0,1fr))"));
+  for(const look of ["apple","mist","rose","night"])assert.ok(theme.includes(look+":{"),"missing preset "+look);
+  assert.ok(css.includes('data-xy-palette="mist"'));
+  assert.ok(css.includes('data-xy-palette="rose"'));
+  assert.ok(css.includes('data-xy-palette="night"'));
+  assert.ok(css.includes('data-theme-mode="dark"'));
+  assert.ok(!css.includes("pearl-florals.svg"));
 });
 
 test("Android splash unlocks when the new home has rendered and never uses the island bitmap", () => {
@@ -81,16 +84,18 @@ function mockHome() {
   return {calls,app,history,w,root};
 }
 
-test("every key dashboard action is interactive and chat return restores home", () => {
+test("home shows only greeting, one primary chat button, and the compact footer", () => {
   const h=mockHome();
   assert.equal(h.root.hidden,false);
   assert.equal(h.app.inert,true);
-  assert.match(h.root.innerHTML,/data-xy-home-route="study"/);
-  assert.match(h.root.innerHTML,/data-xy-home-route="groupchat"/);
-  assert.match(h.root.innerHTML,/data-xy-home-route="imagine"/);
-  assert.match(h.root.innerHTML,/data-xy-home-route="creation"/);
-  assert.match(h.root.innerHTML,/data-xy-home-route="journal"/);
-  assert.match(h.root.innerHTML,/data-xy-home-route="toolhub"/);
+  assert.match(h.root.innerHTML,/今天想说什么/);
+  assert.match(h.root.innerHTML,/进入对话/);
+  assert.match(h.root.innerHTML,/外观主题/);
+  assert.match(h.root.innerHTML,/首页导航/);
+  assert.equal((h.root.innerHTML.match(/class="xy-pearl-tab(?: is-active)?"/g)||[]).length,3);
+  for(const route of ["study","groupchat","imagine","creation","journal","call"]){
+    assert.doesNotMatch(h.root.innerHTML,new RegExp('data-xy-home-route="'+route+'"'));
+  }
   h.calls.tap("chat");
   assert.equal(h.root.hidden,true);
   assert.equal(h.app.inert,false);
@@ -99,8 +104,15 @@ test("every key dashboard action is interactive and chat return restores home", 
   h.history.back();
   assert.equal(h.root.hidden,false);
   assert.equal(h.app.inert,true);
-  h.calls.tap("study");
-  assert.deepEqual(h.calls.panels,["study"]);
+  h.calls.tap("toolhub");
+  assert.deepEqual(h.calls.panels,["toolhub"]);
+  assert.equal(h.root.hidden,true);
+});
+
+test("appearance button reaches original theme settings without showing a theme chooser on home", () => {
+  const h=mockHome();
+  h.calls.tap("theme");
+  assert.deepEqual(h.calls.panels,["theme"]);
   assert.equal(h.root.hidden,true);
 });
 
