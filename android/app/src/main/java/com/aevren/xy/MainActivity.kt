@@ -84,12 +84,11 @@ class MainActivity : Activity() {
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
 
         val root = FrameLayout(this)
-        // The animated HTML splash is the single branded startup screen.
-        // Keep the native root neutral while WebView loads.
-        root.setBackgroundColor(Color.rgb(223, 234, 230))
+        // Keep a botanical glass curtain visible until the new interactive homepage is painted.
+        root.setBackgroundColor(Color.rgb(233, 239, 221))
 
         webView = WebView(this)
-        webView.setBackgroundColor(0xFFDFEAE6.toInt())
+        webView.setBackgroundColor(0xFFE9EFDD.toInt())
         webView.layoutParams = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.MATCH_PARENT,
             FrameLayout.LayoutParams.MATCH_PARENT
@@ -216,7 +215,7 @@ class MainActivity : Activity() {
         if (splashCheckBusy || splashClosing || nativeSplash == null) return
         splashCheckBusy = true
         webView.evaluateJavascript(
-            "(document.readyState === 'complete' && !!document.querySelector('#xyIslandWorld.has-image'))"
+            "(document.readyState === 'complete' && !!document.querySelector('#xyIslandHome:not([hidden]) .xy-pearl-shell'))"
         ) { answer ->
             splashCheckBusy = false
             if (splashClosing || nativeSplash == null) return@evaluateJavascript
