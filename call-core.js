@@ -460,7 +460,7 @@
     const recordChat=callChat,recordCharacter={...currentCallCharacter()},recordStartedAt=startedAt,recordEndedAt=Date.now();
     const transcript=callLines.slice();
     callGeneration++;phase="idle";processing=false;callUseNative=false;forceRecordedStt=false;
-    if(ambience){ambience.stop();ambience=null}ambienceEvents=[];
+    if(ambience){ambience.stop();ambience=null}ambienceEvents=[];recordingHearingSummary="";
     window.AevrenVoice?.onRecognitionProgress?.(null);clearTimeout(nativeAutoTimer);nativeAutoTimer=null;stopListening();try{window.AevrenVoice?.cancelNativeRecognition?.()}catch{}callNativeRecognizing=false;if(callNativeRecording){try{window.AevrenVoice?.stopNativeCapture?.()}catch{}callNativeRecording=false}if(callRecorder?.state==="recording"){try{callRecorder.onstop=null;callRecorder.stop()}catch{}}callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];clearInterval(timerId);timerId=null;window.AevrenVoice?.stop?.();
     if(wasConnected&&recordChat?.messages){
       recordChat.messages.push({role:"system",kind:"call",text:"☎ 与"+String(recordCharacter.name||"角色")+"通话 · "+duration,
