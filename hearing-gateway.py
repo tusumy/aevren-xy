@@ -7,7 +7,7 @@ import os
 from urllib.parse import urlparse
 
 import httpx
-from fastapi import FastAPI, File, Header, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -61,10 +61,10 @@ async def ears_listen(file: UploadFile = File(...), authorization: str = Header(
 @app.post("/seven/analyze")
 async def seven_analyze(
     audio: UploadFile = File(...),
-    transcript: str = "",
-    transcript_source: str = "none",
-    stt: str = "none",
-    whisper_model: str = "small",
+    transcript: str = Form(""),
+    transcript_source: str = Form("none"),
+    stt: str = Form("none"),
+    whisper_model: str = Form("small"),
     authorization: str = Header(default=""),
 ):
     authorize(authorization)
