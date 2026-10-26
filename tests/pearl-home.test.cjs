@@ -44,6 +44,7 @@ function mockHome() {
     hidden:false,innerHTML:"",className:"",id:"",
     setAttribute(){},contains(){return true},
     querySelector(selector){return selector==="#xyPearlScroll"?scroll:null},
+    querySelectorAll(){return []},
     addEventListener(type,callback){if(type==="click")calls.click=callback}
   };
   const header={querySelector(){return null},insertBefore(){}};
