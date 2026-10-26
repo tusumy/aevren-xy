@@ -18,7 +18,8 @@ async function upload(base,path,field,blob,extra={}){
   data.append(field,blob,"voice."+suffix(blob));
   Object.entries(extra).forEach(([k,v])=>data.append(k,v));
   const signal=AbortSignal.timeout(90000);
-  const response=await fetch(valid(base)+path,{method:"POST",body:data,signal,credentials:"omit"});
+  const headers={};if(config().accessKey)headers.Authorization="Bearer "+config().accessKey;
+  const response=await fetch(valid(base)+path,{method:"POST",body:data,signal,headers,credentials:"omit"});
   const json=await response.json().catch(()=>null);
   if(!response.ok||!json||json.ok===false)throw Error(limit(json?.error||"HTTP "+response.status,160));
   return json;
