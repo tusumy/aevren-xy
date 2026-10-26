@@ -287,7 +287,12 @@
       processing=true;statusEl.textContent="正在听懂…";
       const detected=await window.xyAcousticEvents?.analyzeBlob?.(blob).catch(()=>[])||[];
       ambienceEvents=[...new Set([...ambienceEvents,...detected])].slice(0,3);
-      const text=await window.AevrenVoice.transcribeBlob(blob);
+      let heard=null;
+      try{heard=await window.xyVoiceHearing?.listen?.(blob)||null}
+      catch(error){console.warn("ears service unavailable",error)}
+      if(heard?.blocked){processing=false;statusEl.textContent="声纹未通过，不再转写";return}
+      const text=heard?.transcript||await window.AevrenVoice.transcribeBlob(blob);
+      recordingHearingSummary=heard?.summary||"";
       processing=false;
       if(phase!=="connected")return;
       if(text){statusEl.textContent="录音已转写 · 正在发给角色";await handleUserText(text)}
