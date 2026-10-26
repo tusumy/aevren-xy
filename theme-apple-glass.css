@@ -1,12 +1,14 @@
 /* 砚屿 · 青苹果奶霜玻璃 — isolated theme preset, no image or character artwork.
-   Uses layered CSS color, pearl highlights and blush reflections; other presets are untouched. */
+   Uses layered CSS color, pearl highlights and blush reflections; other presets are untouched.
+   Preset gradients apply only without a user-selected wallpaper/background color.
+   The normal theme overlay slider remains in control of the backdrop. */
 html[data-xy-palette="apple"][data-theme-mode="light"]{
   --ink:#303e2f;--muted:#737d6c;--line:rgba(112,137,96,.18);--soft:#e9efdd;
   --glass:rgba(255,251,245,.53);--glass-strong:rgba(255,252,247,.76);
   --glass-edge:rgba(255,255,248,.91);--shadow:0 14px 38px rgba(88,110,74,.13);
   background:#e4ebd8;
 }
-html[data-xy-palette="apple"][data-theme-mode="light"] #themeBackdrop{
+html[data-xy-palette="apple"][data-theme-mode="light"][data-xy-custom-background="0"] #themeBackdrop{
   background-image:
     radial-gradient(ellipse at 15% 12%,rgba(255,251,242,.99),transparent 36%),
     radial-gradient(ellipse at 90% 22%,rgba(242,205,214,.68),transparent 35%),
@@ -15,9 +17,7 @@ html[data-xy-palette="apple"][data-theme-mode="light"] #themeBackdrop{
   background-color:#e4ebd8!important;
   filter:blur(var(--theme-blur,0px));
 }
-html[data-xy-palette="apple"][data-theme-mode="light"] #themeBackdrop::after{
-  background:linear-gradient(135deg,rgba(255,255,249,.08),rgba(255,240,244,.07))!important;
-}
+
 html[data-xy-palette="apple"][data-theme-mode="light"] .sidebar,
 html[data-xy-palette="apple"][data-theme-mode="light"] .main header,
 html[data-xy-palette="apple"][data-theme-mode="light"] .panel{
@@ -76,7 +76,7 @@ html[data-xy-palette="apple"][data-theme-mode="dark"]{
   --glass:rgba(40,58,45,.65);--glass-strong:rgba(47,65,52,.82);
   --glass-edge:rgba(217,239,206,.2);background:#17251c;
 }
-html[data-xy-palette="apple"][data-theme-mode="dark"] #themeBackdrop{
+html[data-xy-palette="apple"][data-theme-mode="dark"][data-xy-custom-background="0"] #themeBackdrop{
   background-image:
     radial-gradient(ellipse at 86% 12%,rgba(112,64,83,.26),transparent 42%),
     radial-gradient(ellipse at 8% 80%,rgba(81,119,74,.35),transparent 48%),
@@ -84,9 +84,7 @@ html[data-xy-palette="apple"][data-theme-mode="dark"] #themeBackdrop{
   background-color:#1b2d22!important;
   filter:blur(var(--theme-blur,0px))!important;
 }
-html[data-xy-palette="apple"][data-theme-mode="dark"] #themeBackdrop::after{
-  background:linear-gradient(120deg,rgba(13,24,17,.16),rgba(43,33,42,.15))!important;
-}
+
 html[data-xy-palette="apple"][data-theme-mode="dark"] :is(.sidebar,.main header,.panel){
   background:linear-gradient(140deg,rgba(32,51,38,.94),rgba(35,46,39,.91) 70%,rgba(62,44,52,.76))!important;
   border-color:rgba(210,230,194,.2)!important;
