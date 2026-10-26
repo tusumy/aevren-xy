@@ -5,7 +5,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 const read = p => fs.readFileSync(path.join(__dirname, "..", p), "utf8");
 
-test("minimal home has three nav tabs, four palettes and no island artwork", () => {
+test("design preview stays intact with four space cards and five nav tabs", () => {
   const html=read("index.html");
   const css=read("pearl-home.css");
   const theme=read("theme-core.js");
@@ -15,8 +15,13 @@ test("minimal home has three nav tabs, four palettes and no island artwork", () 
   for(const retired of ["island-art.js","island-home.js","island-locations.js","island-home.css","island-responsive.css","island-cinematic.css"]){
     assert.ok(!html.includes('"./'+retired+'?'),"old island must not be loaded: "+retired);
   }
-  assert.ok(css.includes(".xy-pearl-home-content{"));
-  assert.ok(css.includes("grid-template-columns:repeat(3,minmax(0,1fr))"));
+  assert.ok(css.includes(".xy-pearl-hero{"));
+  assert.ok(css.includes(".xy-pearl-looks{"));
+  assert.ok(css.includes(".xy-pearl-spaces{"));
+  assert.ok(css.includes(".xy-pearl-moment{"));
+  assert.ok(css.includes("min-height:98px"));
+  assert.ok(css.includes("grid-template-columns:repeat(2,minmax(0,1fr))"));
+  assert.ok(css.includes("grid-template-columns:repeat(5,minmax(0,1fr))"));
   for(const look of ["apple","mist","rose","night"])assert.ok(theme.includes(look+":{"),"missing preset "+look);
   assert.ok(css.includes('data-xy-palette="mist"'));
   assert.ok(css.includes('data-xy-palette="rose"'));
@@ -44,13 +49,14 @@ function mockHome() {
     hidden:false,innerHTML:"",className:"",id:"",
     setAttribute(){},contains(){return true},
     querySelector(selector){return selector==="#xyPearlScroll"?scroll:null},
+    querySelectorAll(){return []},
     addEventListener(type,callback){if(type==="click")calls.click=callback}
   };
   const header={querySelector(){return null},insertBefore(){}};
   const input={focus(){calls.focused++}};
   const doc={
     body:{appendChild(node){calls.root=node}},
-    documentElement:{classList:cls()},
+    documentElement:{classList:cls(),dataset:{xyPalette:"apple"}},
     querySelector(selector){
       if(selector===".app")return app;
       if(selector===".main > header")return header;
@@ -80,41 +86,31 @@ function mockHome() {
     openPanel(type){calls.panels.push(type);history.pushState({...history.state,xyOverlay:true})}
   });
   vm.runInContext(read("pearl-home.js"),ctx,{filename:"pearl-home.js"});
-  calls.tap=route=>calls.click({target:{closest(){return {dataset:{xyHomeRoute:route}}}}});
+  calls.tap=route=>calls.click({target:{closest(selector){return selector.includes("data-xy-look")?null:{dataset:{xyHomeRoute:route}}}}});
   return {calls,app,history,w,root};
 }
 
-test("home keeps chat plus three compact entries, with other functions in More", () => {
-  const h=mockHome();
-  assert.equal(h.root.hidden,false);
-  assert.equal(h.app.inert,true);
-  assert.match(h.root.innerHTML,/今天想说什么/);
-  assert.match(h.root.innerHTML,/进入对话/);
-  assert.match(h.root.innerHTML,/外观主题/);
-  assert.match(h.root.innerHTML,/首页导航/);
-  assert.equal((h.root.innerHTML.match(/class="xy-pearl-tab(?: is-active)?"/g)||[]).length,3);
-  for(const route of ["study","creation","imagine"]){
-    assert.match(h.root.innerHTML,new RegExp('data-xy-home-route="'+route+'"'));
-  }
-  for(const route of ["groupchat","journal","call"]){
-    assert.doesNotMatch(h.root.innerHTML,new RegExp('data-xy-home-route="'+route+'"'));
-  }
-  assert.match(h.root.innerHTML,/常用入口/);
-  assert.match(h.root.innerHTML,/全部功能/);
-  h.calls.tap("chat");
-  assert.equal(h.root.hidden,true);
-  assert.equal(h.app.inert,false);
-  assert.equal(h.history.state.xyIslandPage,"chat");
-  assert.equal(h.calls.focused,1);
-  h.history.back();
-  assert.equal(h.root.hidden,false);
-  assert.equal(h.app.inert,true);
-  h.calls.tap("study");
-  assert.deepEqual(h.calls.panels,["study"]);
-  h.history.back();
-  h.calls.tap("toolhub");
-  assert.deepEqual(h.calls.panels,["study","toolhub"]);
-  assert.equal(h.root.hidden,true);
+test("home includes hero, chat, call, four smaller space tools and all five tabs", () => {
+ const h=mockHome();
+ assert.equal(h.root.hidden,false);
+ assert.equal(h.app.inert,true);
+ for(const word of ["我们的空间","继续我们的对话","语音通话","Keep exploring","今天也有好多话想跟你说"]){
+   assert.ok(h.root.innerHTML.includes(word),"missing "+word);
+ }
+ assert.equal((h.root.innerHTML.match(/class="xy-pearl-tile"/g)||[]).length,4);
+ assert.equal((h.root.innerHTML.match(/class="xy-pearl-tab(?: is-active)?"/g)||[]).length,5);
+ assert.equal((h.root.innerHTML.match(/class="xy-pearl-look"/g)||[]).length,4);
+ for(const route of ["study","imagine","creation","groupchat","journal","toolhub","settings","call"]){
+   assert.ok(h.root.innerHTML.includes('data-xy-home-route="'+route+'"'),"missing "+route);
+ }
+ h.calls.tap("chat");
+ assert.equal(h.root.hidden,true);
+ assert.equal(h.history.state.xyIslandPage,"chat");
+ assert.equal(h.calls.focused,1);
+ h.history.back();
+ assert.equal(h.root.hidden,false);
+ h.calls.tap("study");
+ assert.deepEqual(h.calls.panels,["study"]);
 });
 
 test("More retains all previously available tools and routes", () => {
@@ -130,11 +126,14 @@ test("More retains all previously available tools and routes", () => {
   assert.deepEqual(home.calls.panels,["creation","imagine"]);
 });
 
-test("appearance button reaches original theme settings without showing a theme chooser on home", () => {
-  const h=mockHome();
-  h.calls.tap("theme");
-  assert.deepEqual(h.calls.panels,["theme"]);
-  assert.equal(h.root.hidden,true);
+test("appearance swatches match available persistent palettes", () => {
+ const h=mockHome();
+ for(const name of ["青苹果","雾薄荷","樱雾","墨绿夜"]){
+   assert.ok(h.root.innerHTML.includes(name),"missing home theme "+name);
+ }
+ const theme=read("theme-core.js");
+ assert.ok(theme.includes("window.xyThemePresets="));
+ assert.ok(theme.includes("persist();applyTheme();return true"));
 });
 
 test("speech CTA opens the existing native-capable call layer", () => {

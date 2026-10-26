@@ -95,6 +95,7 @@
     root.dataset.bubbleGlass=theme.bubbleGlass?'1':'0';
     root.dataset.bubbleSkin=skinOf(theme.bubbleSkin);
     const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.content=mode==='dark'?'#171b19':theme.bgColor;
+    window.dispatchEvent(new CustomEvent('xy-theme-changed',{detail:{preset:theme.preset||'default',mode}}));
   }
   const escHtml=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   function colorField(label,key){
@@ -150,7 +151,7 @@
     body.querySelectorAll('[data-color-swatch]').forEach(btn=>btn.addEventListener('click',()=>{const key=btn.dataset.colorSwatch,value=btn.dataset.color;if(setColor(key,value)){const input=body.querySelector(`[data-color-input="${key}"]`),preview=body.querySelector(`[data-color-preview="${key}"]`),p=body.querySelector(`[data-color-palette="${key}"]`);if(input)input.value=theme[key];if(preview)preview.style.background=theme[key];if(p)p.hidden=true}}));
     body.querySelectorAll('[data-color-input]').forEach(input=>{const commit=()=>{const key=input.dataset.colorInput;if(setColor(key,input.value)){input.value=theme[key];const p=body.querySelector(`[data-color-preview="${key}"]`);if(p)p.style.background=theme[key]}else input.value=theme[key]};input.addEventListener('change',commit);input.addEventListener('blur',commit)});
     body.querySelectorAll('[data-theme-mode]').forEach(btn=>btn.addEventListener('click',()=>{theme.mode=btn.dataset.themeMode;persist();applyTheme();themePanel()}));
-    body.querySelectorAll('[data-theme-preset]').forEach(btn=>btn.addEventListener('click',()=>{const id=btn.dataset.themePreset,preset=PRESETS[id];if(!preset)return;const bgImage=theme.bgImage;theme={...theme,...preset,bgImage,preset:id};persist();applyTheme();themePanel()}));
+    body.querySelectorAll('[data-theme-preset]').forEach(btn=>btn.addEventListener('click',()=>{if(window.xyThemePresets.set(btn.dataset.themePreset))themePanel()}));
     const glass=body.querySelector('#themeBubbleGlass');
     glass?.addEventListener('change',()=>{theme.bubbleGlass=!!glass.checked;persist();applyTheme();const label=body.querySelector('#themeBubbleGlassValue');if(label)label.textContent=theme.bubbleGlass?'已开启':'已关闭'});
     const font=body.querySelector('#themeFontScale');
@@ -170,6 +171,16 @@
     body.querySelector('#resetTheme')?.addEventListener('click',()=>{theme={...DEFAULT_THEME};persist();applyTheme();themePanel()});
   }
 
+  // The home preview swatches use the same persisted preset workflow as appearance settings.
+  window.xyThemePresets={
+    current:()=>theme.preset||'default',
+    set(id){
+      const preset=PRESETS[id];
+      if(!preset)return false;
+      theme={...theme,...preset,bgImage:theme.bgImage,preset:id};
+      persist();applyTheme();return true;
+    }
+  };
   const previousOpenPanel=openPanel;
   openPanel=function(type){if(type==='theme'){themePanel();return}return previousOpenPanel(type)};
   function refreshSystemTheme(){

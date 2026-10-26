@@ -1,193 +1,235 @@
-/* 砚屿极简首页：内容克制，主题只改变质感，不堆功能卡片。 */
+/* 砚屿 · 参考稿 01 · 视觉忠实还原。
+   Only "我们的空间" is reduced: four compact tiles instead of six large cards.
+   Every other prominent region and five-way navigation remain present. */
 html.xy-island-visible,html.xy-island-visible body{overflow:hidden!important}
 #xyIslandHome[hidden]{display:none!important}
 #xyIslandHome,#xyIslandHome *{box-sizing:border-box}
 #xyIslandHome{
  --yh-bg:#f3f8ed;--yh-shade:#e0ebd6;--yh-cloud:#fafff6;
- --yh-ink:#314535;--yh-sub:#758675;--yh-primary:#5e8260;--yh-petal:#dbacba;
+ --yh-ink:#314535;--yh-sub:#758675;--yh-hint:#93a38e;
+ --yh-primary:#5e8260;--yh-petal:#dbacba;
  --yh-line:rgba(79,112,82,.15);--yh-card:rgba(255,255,252,.78);
- --yh-shadow:rgba(53,80,61,.10);--yh-glass:rgba(250,255,248,.76);--yh-on:#fff;
- position:fixed;inset:0;z-index:50000;isolation:isolate;overflow:hidden;
+ --yh-shadow:rgba(53,80,61,.10);--yh-glass:rgba(250,255,248,.76);
+ --yh-on:#fff;--yh-type:rgba(230,238,220,.67);
+ position:fixed;inset:0;isolation:isolate;z-index:50000;overflow:hidden;
  background:var(--yh-bg);color:var(--yh-ink);
- font-family:Inter,"Noto Sans SC","PingFang SC",system-ui,sans-serif;
+ font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC",system-ui,sans-serif;
+ -webkit-font-smoothing:antialiased;
 }
 html[data-xy-palette="mist"] #xyIslandHome{
  --yh-bg:#eff5f1;--yh-shade:#d7e8df;--yh-cloud:#f8fdf9;
- --yh-ink:#2e5351;--yh-sub:#738e89;--yh-primary:#568c83;--yh-petal:#c5d6c9;
+ --yh-ink:#2e5351;--yh-sub:#738e89;--yh-hint:#95ada5;
+ --yh-primary:#568c83;--yh-petal:#c5d6c9;
  --yh-line:rgba(69,124,110,.13);--yh-card:rgba(249,253,251,.80);
  --yh-shadow:rgba(48,99,85,.10);--yh-glass:rgba(248,255,251,.79);
+ --yh-type:rgba(220,239,231,.72);
 }
 html[data-xy-palette="rose"] #xyIslandHome{
  --yh-bg:#fcf5f4;--yh-shade:#f4e1e0;--yh-cloud:#fffcfb;
- --yh-ink:#56424a;--yh-sub:#967b83;--yh-primary:#aa7187;--yh-petal:#dd9faf;
+ --yh-ink:#56424a;--yh-sub:#967b83;--yh-hint:#ad9296;
+ --yh-primary:#aa7187;--yh-petal:#dd9faf;
  --yh-line:rgba(133,77,99,.13);--yh-card:rgba(255,255,253,.84);
  --yh-shadow:rgba(118,78,97,.11);--yh-glass:rgba(255,251,251,.80);
+ --yh-type:rgba(249,234,234,.75);
 }
 html[data-xy-palette="night"] #xyIslandHome,
 html[data-theme-mode="dark"]:not([data-xy-palette="night"]) #xyIslandHome{
  --yh-bg:#15231d;--yh-shade:#294135;--yh-cloud:#20352b;
- --yh-ink:#f2eee0;--yh-sub:#a6bbae;--yh-primary:#b7cfaa;--yh-petal:#987485;
- --yh-line:rgba(197,225,195,.14);--yh-card:rgba(37,56,45,.88);
- --yh-shadow:rgba(0,0,0,.25);--yh-glass:rgba(29,49,38,.89);--yh-on:#183023;
+ --yh-ink:#f2eee0;--yh-sub:#a6bbae;--yh-hint:#91a699;
+ --yh-primary:#b7cfaa;--yh-petal:#c9a49e;
+ --yh-line:rgba(195,219,196,.16);--yh-card:rgba(35,56,45,.91);
+ --yh-shadow:rgba(3,10,5,.30);--yh-glass:rgba(27,44,35,.92);
+ --yh-on:#183326;--yh-type:rgba(46,71,55,.82);
 }
-#xyIslandHome button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+#xyIslandHome button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 #xyIslandHome button:focus-visible{outline:2px solid var(--yh-primary);outline-offset:3px}
+#xyIslandHome button:active{transform:translateY(1px)}
 #xyIslandHome svg{display:block;flex:none}
 #xyIslandHome .xy-pearl-ambient{
  position:absolute;inset:0;z-index:-1;pointer-events:none;
- background:radial-gradient(ellipse 65% 32% at 88% 9%,var(--yh-cloud),transparent 85%),
- radial-gradient(ellipse 80% 53% at 2% 93%,var(--yh-shade),transparent 75%),
- linear-gradient(165deg,var(--yh-bg),var(--yh-shade));
+ background:
+ radial-gradient(ellipse 70% 40% at 106% 10%,var(--yh-shade),transparent 80%),
+ radial-gradient(ellipse 65% 35% at -16% 50%,var(--yh-shade),transparent 78%),
+ radial-gradient(ellipse 95% 60% at 62% 110%,var(--yh-shade),transparent 85%),
+ var(--yh-bg);
+}
+#xyIslandHome .xy-pearl-ambient::after{
+ content:"";position:absolute;inset:0;opacity:.55;
+ background-image:url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="280" height="360" viewBox="0 0 280 360"%3E%3Cpath d="M282 10C251 28 239 76 242 123M241 76c-27-3-34-26-36-37 28-4 39 12 36 37ZM241 108c17-12 39-10 44 1-18 15-32 15-44-1ZM-10 265c33-13 47-39 50-73M30 216C5 216-6 200-7 191c23-4 37 4 37 25ZM29 222c20-16 31-10 40-2-13 19-26 20-40 2Z" fill="none" stroke="%238FA98D" stroke-width="1.3" opacity=".25"/%3E%3C/svg%3E');
+ background-size:280px 360px;
 }
 #xyIslandHome .xy-pearl-shell{
- position:relative;display:flex;flex-direction:column;
- height:100%;width:min(100%,480px);margin:auto;min-height:0;
- background:linear-gradient(145deg,transparent,rgba(255,255,255,.035));
+ position:relative;display:flex;flex-direction:column;height:100%;
+ width:min(100%,480px);margin:auto;min-height:0;
+ background:linear-gradient(140deg,rgba(255,255,255,.09),transparent 60%);
 }
-#xyIslandHome .xy-pearl-inner{
- flex:1;min-height:0;display:flex;flex-direction:column;
- overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
- padding:calc(16px + env(safe-area-inset-top,0px)) clamp(20px,5vw,27px) 12px;
- scrollbar-width:none;
+#xyIslandHome .xy-pearl-scroll{
+ flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;
+ -webkit-overflow-scrolling:touch;scrollbar-width:none;
+ padding:calc(17px + env(safe-area-inset-top,0px)) clamp(16px,5vw,24px) 23px;
 }
-#xyIslandHome .xy-pearl-inner::-webkit-scrollbar{display:none}
-#xyIslandHome .xy-pearl-top{display:flex;align-items:center;justify-content:space-between;gap:14px}
-#xyIslandHome .xy-pearl-brand{display:flex;align-items:center;gap:10px}
-#xyIslandHome .xy-pearl-mark{
- width:38px;height:38px;display:grid;place-items:center;border-radius:14px;
- color:var(--yh-on);background:var(--yh-primary);
- font:500 24px/1 Georgia,serif;box-shadow:0 5px 14px var(--yh-shadow);
+#xyIslandHome .xy-pearl-scroll::-webkit-scrollbar{display:none}
+#xyIslandHome .xy-pearl-topline{
+ font:650 10px/1.4 Georgia,serif;letter-spacing:.23em;color:var(--yh-primary);
+ margin:0 0 18px 2px;
 }
-#xyIslandHome .xy-pearl-brand strong{
- display:block;color:var(--yh-ink);font:600 18px/1.2 Georgia,"Noto Serif SC",serif;letter-spacing:.07em;
+#xyIslandHome .xy-pearl-looks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+#xyIslandHome .xy-pearl-look{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:7px;min-height:59px;min-width:0;padding:8px 2px;
+ border-radius:15px;border:1px solid var(--yh-line);
+ background:var(--yh-card);box-shadow:0 5px 16px var(--yh-shadow);
+ color:var(--yh-ink);transition:border-color .18s,box-shadow .18s;
 }
-#xyIslandHome .xy-pearl-brand small{
- display:block;margin-top:4px;color:var(--yh-sub);font:500 9px/1.3 Georgia,serif;letter-spacing:.16em;
+#xyIslandHome .xy-pearl-look strong{
+ font-size:clamp(10px,2.7vw,12px);font-weight:650;white-space:nowrap;
+ letter-spacing:.01em;
 }
-#xyIslandHome .xy-pearl-theme{
- width:37px;height:37px;display:grid;place-items:center;flex:none;border-radius:13px;
- border:1px solid var(--yh-line);background:var(--yh-card);color:var(--yh-ink);
- box-shadow:0 3px 12px var(--yh-shadow);
+#xyIslandHome .xy-pearl-look.is-current{
+ border-color:var(--yh-primary);
+ outline:2px solid var(--yh-primary);outline-offset:1px;
+ box-shadow:0 5px 18px var(--yh-shadow),inset 0 0 0 1px rgba(255,255,255,.35);
 }
-#xyIslandHome .xy-pearl-theme svg{width:18px;height:18px}
-#xyIslandHome .xy-pearl-home-content{
- flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-between;
- padding:clamp(45px,9dvh,110px) 1px clamp(32px,7dvh,80px);gap:40px;
+#xyIslandHome .xy-pearl-swatches{display:flex;gap:4px;justify-content:center}
+#xyIslandHome .xy-pearl-swatches i{width:13px;height:13px;display:block;border-radius:50%;border:1px solid rgba(60,90,64,.09)}
+#xyIslandHome .xy-pearl-hero{
+ position:relative;padding-top:clamp(25px,4.3dvh,42px);
+ min-height:clamp(115px,16dvh,143px);
 }
-#xyIslandHome .xy-pearl-greeting{position:relative;padding-top:5px}
-#xyIslandHome .xy-pearl-eyebrow{
- font:600 10px/1.5 Georgia,serif;letter-spacing:.31em;color:var(--yh-primary);
- margin:0 0 34px;
+#xyIslandHome .xy-pearl-micro{
+ font-size:10px;letter-spacing:.20em;font-weight:650;color:var(--yh-primary);
+ margin:0 0 12px;
 }
-#xyIslandHome .xy-pearl-heart{
- position:absolute;top:-3px;right:10px;font:400 61px/1 Georgia,serif;
- color:var(--yh-petal);opacity:.64;transform:rotate(12deg);pointer-events:none;
+#xyIslandHome .xy-pearl-hero h1{
+ font:500 clamp(21px,5.95vw,29px)/1.45 Georgia,"Noto Serif SC","Songti SC",serif;
+ letter-spacing:.015em;margin:0 0 9px;position:relative;z-index:1;
+ color:var(--yh-ink);
 }
-#xyIslandHome .xy-pearl-greeting h1{
- position:relative;z-index:1;margin:0 0 16px;
- color:var(--yh-ink);font:500 clamp(32px,8.7vw,43px)/1.66 Georgia,"Noto Serif SC","Songti SC",serif;
- letter-spacing:.015em;
+#xyIslandHome .xy-pearl-hero p{margin:0;font-size:12px;color:var(--yh-sub);line-height:1.7;letter-spacing:.02em}
+#xyIslandHome .xy-pearl-hero-decor{
+ position:absolute;right:0;top:15px;color:var(--yh-petal);
+ font:400 78px/1 Georgia,serif;opacity:.57;
+ transform:rotate(-14deg);pointer-events:none;
 }
-#xyIslandHome .xy-pearl-greeting h1 span:first-child{display:block}
-#xyIslandHome .xy-pearl-heading-line{display:block;color:var(--yh-primary)}
-#xyIslandHome .xy-pearl-greeting p{
- margin:0;color:var(--yh-sub);font-size:13px;line-height:1.8;letter-spacing:.03em;
+#xyIslandHome .xy-pearl-hero-decor::before{
+ content:"✦";font-size:21px;position:absolute;right:54px;top:24px;opacity:.65;
 }
-#xyIslandHome .xy-pearl-enter{
- width:100%;min-height:83px;display:flex;align-items:center;justify-content:space-between;
- gap:14px;text-align:left;padding:17px 19px 17px 23px;
- border-radius:24px;border:1px solid var(--yh-line);
- background:var(--yh-card);color:var(--yh-ink);
- box-shadow:0 12px 30px var(--yh-shadow),inset 0 1px 0 rgba(255,255,255,.40);
- backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
- transition:transform .17s ease,box-shadow .17s ease;
+#xyIslandHome .xy-pearl-actions{display:flex;align-items:stretch;gap:10px;margin-top:4px}
+#xyIslandHome .xy-pearl-primary{
+ flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;
+ min-width:0;min-height:68px;text-align:left;padding:12px 14px 12px 18px;
+ border-radius:19px;border:0;background:var(--yh-primary)!important;
+ box-shadow:0 10px 19px var(--yh-shadow);color:var(--yh-on)!important;
 }
-#xyIslandHome .xy-pearl-enter:hover{transform:translateY(-2px);box-shadow:0 15px 32px var(--yh-shadow)}
-#xyIslandHome .xy-pearl-enter:active{transform:translateY(1px)}
-#xyIslandHome .xy-pearl-enter strong{display:block;font-size:18px;font-weight:650;letter-spacing:.03em}
-#xyIslandHome .xy-pearl-enter small{
- display:block;margin-top:6px;color:var(--yh-sub);font:italic 11px/1.3 Georgia,serif;
+#xyIslandHome .xy-pearl-primary span:first-child{min-width:0;flex:1}
+#xyIslandHome .xy-pearl-primary strong{display:block;font-size:14px;font-weight:650;letter-spacing:.02em;white-space:nowrap}
+#xyIslandHome .xy-pearl-primary small{display:block;margin-top:6px;font:italic 10px/1.35 Georgia,serif;opacity:.85;white-space:nowrap}
+#xyIslandHome .xy-pearl-action-arrow{font:400 28px/1 Georgia,serif}
+#xyIslandHome .xy-pearl-secondary{
+ flex:none;min-width:85px;min-height:68px;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;gap:5px;border-radius:19px;
+ border:1px solid var(--yh-line);background:var(--yh-card);
+ box-shadow:0 6px 18px var(--yh-shadow);
 }
-#xyIslandHome .xy-pearl-enter-arrow{
- display:grid;place-items:center;flex:none;width:43px;height:43px;border-radius:50%;
- background:var(--yh-primary);color:var(--yh-on);font:400 27px/1 Georgia,serif;
+#xyIslandHome .xy-pearl-secondary svg{width:22px;height:22px}
+#xyIslandHome .xy-pearl-secondary span{font-size:11px}
+#xyIslandHome .xy-pearl-spaces{margin-top:27px}
+#xyIslandHome .xy-pearl-sectionbar{
+ display:flex;align-items:center;justify-content:space-between;gap:8px;
+ margin:0 0 12px;min-width:0;
 }
+#xyIslandHome .xy-pearl-sectionbar h2{
+ font-size:18px;font-weight:650;letter-spacing:.05em;margin:0;white-space:nowrap;
+}
+#xyIslandHome .xy-pearl-explore{
+ flex:none;text-align:right;background:transparent;border:0;
+ padding:7px 1px;color:var(--yh-sub);font:italic 11px/1.3 Georgia,serif;
+}
+#xyIslandHome .xy-pearl-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#xyIslandHome .xy-pearl-tile{
+ position:relative;min-width:0;min-height:98px;overflow:hidden;
+ display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;
+ padding:12px 14px 11px;text-align:left;
+ border:1px solid var(--yh-line);border-radius:20px;
+ background:var(--yh-card);box-shadow:0 6px 15px var(--yh-shadow);
+ backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);
+ transition:transform .18s,box-shadow .18s;
+}
+#xyIslandHome .xy-pearl-tile:nth-child(4n+2){
+ background:linear-gradient(130deg,var(--yh-card),var(--yh-type));
+}
+#xyIslandHome .xy-pearl-tile::before{
+ content:"";position:absolute;inset:0;pointer-events:none;
+ background:linear-gradient(153deg,rgba(255,255,255,.17),transparent 62%);
+}
+#xyIslandHome .xy-pearl-tile:hover{
+ transform:translateY(-2px);
+ box-shadow:0 10px 20px var(--yh-shadow);
+}
+#xyIslandHome .xy-pearl-glyph{
+ display:grid;place-items:center;width:27px;height:27px;flex:none;
+ border-radius:10px;background:var(--yh-type);color:var(--yh-primary);
+}
+#xyIslandHome .xy-pearl-glyph svg{width:17px;height:17px}
+#xyIslandHome .xy-pearl-card-text{position:relative;z-index:1}
+#xyIslandHome .xy-pearl-card-text strong{display:block;font-size:13px;font-weight:650;letter-spacing:.02em}
+#xyIslandHome .xy-pearl-card-text small{display:block;font-size:10px;margin-top:4px;color:var(--yh-sub)}
+#xyIslandHome .xy-pearl-card-arrow{
+ position:absolute;right:13px;bottom:12px;font:400 15px/1 Georgia,serif;color:var(--yh-hint);
+}
+#xyIslandHome .xy-pearl-moment{
+ width:100%;min-height:70px;display:flex;align-items:center;gap:13px;text-align:left;
+ margin-top:23px;padding:15px 18px;border:1px solid var(--yh-line);
+ border-radius:21px;background:var(--yh-glass);
+ box-shadow:0 5px 16px var(--yh-shadow);
+}
+#xyIslandHome .xy-pearl-moment-symbol{
+ font:400 26px/1 Georgia,serif;color:var(--yh-petal);
+}
+#xyIslandHome .xy-pearl-moment > span:nth-child(2){flex:1;min-width:0}
+#xyIslandHome .xy-pearl-moment strong{display:block;font-size:12px;font-weight:500;white-space:nowrap}
+#xyIslandHome .xy-pearl-moment small{display:block;margin-top:5px;font:italic 12px/1.3 Georgia,serif;color:var(--yh-sub)}
+#xyIslandHome .xy-pearl-moment-heart{font:400 25px/1 Georgia,serif;color:var(--yh-petal)}
 #xyIslandHome .xy-pearl-bottom{
- position:relative;z-index:2;flex:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
- padding:7px 28px calc(12px + env(safe-area-inset-bottom,0px));
+ flex:none;position:relative;z-index:1;display:grid;
+ grid-template-columns:repeat(5,minmax(0,1fr));gap:1px;
+ padding:7px 9px calc(10px + env(safe-area-inset-bottom,0px));
  border-top:1px solid var(--yh-line);background:var(--yh-glass);
  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
- box-shadow:0 -10px 30px var(--yh-shadow);
+ box-shadow:0 -9px 26px var(--yh-shadow);
 }
 #xyIslandHome .xy-pearl-tab{
- min-width:0;min-height:51px;display:flex;align-items:center;justify-content:center;
- flex-direction:column;gap:6px;padding:5px;border:0;background:transparent;
- color:var(--yh-sub);font-size:10px;line-height:1.1;
+ min-width:0;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:6px;border:0;border-radius:14px;padding:5px 2px;
+ background:transparent;color:var(--yh-sub);font-size:10px;line-height:1.3;
 }
-#xyIslandHome .xy-pearl-tab .xy-pearl-tab-icon{display:grid;place-items:center;width:44px;height:27px;border-radius:999px}
+#xyIslandHome .xy-pearl-tab-icon{
+ display:grid;place-items:center;width:43px;height:26px;border-radius:999px;
+}
 #xyIslandHome .xy-pearl-tab svg{width:21px;height:21px}
-#xyIslandHome .xy-pearl-tab.is-active{color:var(--yh-primary);font-weight:700}
-#xyIslandHome .xy-pearl-tab.is-active .xy-pearl-tab-icon{background:var(--yh-shade)}
+#xyIslandHome .xy-pearl-tab.is-active{font-weight:700;color:var(--yh-primary)}
+#xyIslandHome .xy-pearl-tab.is-active .xy-pearl-tab-icon{background:var(--yh-type)}
 .xy-pearl-return{
  display:grid;place-items:center;width:36px;height:36px;min-height:36px;
  border:1px solid var(--theme-accent,#5e8260);border-radius:12px;
- background:color-mix(in srgb,var(--theme-accent,#5e8260) 14%,white);
- color:var(--theme-accent,#5e8260);font-size:22px;cursor:pointer;
+ background:rgba(245,253,243,.88);color:var(--theme-accent,#5e8260);
+ font-size:22px;cursor:pointer;
 }
-html[data-theme-mode="dark"] .xy-pearl-return{
- color:#e9f1e5;background:rgba(48,76,54,.78);border-color:rgba(180,209,173,.28);
+html[data-theme-mode="dark"] .xy-pearl-return{background:#263b2c;color:#d7e8ce;border-color:rgba(180,209,173,.28)}
+@media(min-width:650px){#xyIslandHome .xy-pearl-shell{box-shadow:0 0 60px var(--yh-shadow)}}
+@media(max-width:360px){
+ #xyIslandHome .xy-pearl-scroll{padding-left:14px;padding-right:14px}
+ #xyIslandHome .xy-pearl-primary{padding-left:12px;padding-right:10px}
+ #xyIslandHome .xy-pearl-primary strong{font-size:13px}
+ #xyIslandHome .xy-pearl-primary small{font-size:9px}
+ #xyIslandHome .xy-pearl-secondary{min-width:78px}
+ #xyIslandHome .xy-pearl-look{gap:5px}
+ #xyIslandHome .xy-pearl-swatches i{width:11px;height:11px}
 }
-@media(min-width:650px){#xyIslandHome .xy-pearl-shell{box-shadow:0 0 55px var(--yh-shadow)}}
-@media(max-height:650px){
- #xyIslandHome .xy-pearl-home-content{padding-top:22px;padding-bottom:27px;gap:25px}
- #xyIslandHome .xy-pearl-eyebrow{margin-bottom:15px}
- #xyIslandHome .xy-pearl-greeting h1{line-height:1.42}
-}
-@media(max-width:340px){
- #xyIslandHome .xy-pearl-greeting h1{font-size:29px}
- #xyIslandHome .xy-pearl-enter{min-height:75px}
+@media(max-height:720px){
+ #xyIslandHome .xy-pearl-hero{padding-top:20px;min-height:112px}
+ #xyIslandHome .xy-pearl-spaces{margin-top:22px}
+ #xyIslandHome .xy-pearl-tile{min-height:89px}
+ #xyIslandHome .xy-pearl-moment{margin-top:16px}
 }
 @media(prefers-reduced-motion:reduce){#xyIslandHome button{transition:none!important}}
-
-/* Three understated direct entries restore the useful part of home.
-   The original full tool list remains in the existing More / Tool Hub. */
-#xyIslandHome .xy-pearl-actions{display:grid;gap:22px;min-width:0}
-#xyIslandHome .xy-pearl-shortcuts{min-width:0}
-#xyIslandHome .xy-pearl-shortcuts-head{
- display:flex;align-items:center;justify-content:space-between;gap:10px;
- margin:0 3px 10px;font-size:12px;color:var(--yh-sub);
-}
-#xyIslandHome .xy-pearl-more-link{
- background:transparent;border:0;padding:7px 1px;
- color:var(--yh-primary);font-size:11px;font-weight:600;
-}
-#xyIslandHome .xy-pearl-quick-grid{
- display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;
- padding:8px 5px;border:1px solid var(--yh-line);border-radius:21px;
- background:var(--yh-glass);backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);
- box-shadow:0 8px 20px var(--yh-shadow),inset 0 1px 0 rgba(255,255,255,.26);
-}
-#xyIslandHome .xy-pearl-quick{
- position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
- gap:7px;min-width:0;min-height:67px;border:0;border-radius:14px;
- background:transparent;color:var(--yh-ink);font-size:12px;font-weight:550;
-}
-#xyIslandHome .xy-pearl-quick:not(:first-child)::before{
- content:"";position:absolute;left:0;top:17px;bottom:17px;width:1px;background:var(--yh-line);
-}
-#xyIslandHome .xy-pearl-quick-icon{
- display:grid;place-items:center;width:25px;height:25px;color:var(--yh-primary);
-}
-#xyIslandHome .xy-pearl-quick-icon svg{width:22px;height:22px}
-#xyIslandHome .xy-pearl-quick:hover{background:var(--yh-shade)}
-@media(max-height:690px){
- #xyIslandHome .xy-pearl-home-content{padding-top:24px;padding-bottom:24px;gap:22px}
- #xyIslandHome .xy-pearl-actions{gap:16px}
- #xyIslandHome .xy-pearl-greeting h1{margin-bottom:9px;line-height:1.4}
- #xyIslandHome .xy-pearl-quick{min-height:57px;gap:4px}
- #xyIslandHome .xy-pearl-quick-grid{padding-top:5px;padding-bottom:5px}
-}
-@media(max-width:340px){
- #xyIslandHome .xy-pearl-quick{font-size:11px}
- #xyIslandHome .xy-pearl-shortcuts-head{font-size:11px}
-}
