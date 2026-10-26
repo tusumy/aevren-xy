@@ -41,7 +41,7 @@ async function deepen(blob,transcript){
   if(!c.seven||!c.sevenUrl)return null;
   const text=limit(transcript,8000);
   const r=await upload(c.sevenUrl,"/analyze","audio",blob,{transcript:text,transcript_source:text?"yanyu":"none",stt:text?"none":"whisper",whisper_model:"small"});
-  return {summary:r.card?"Seven Ears 声学分析（非情绪判断）："+limit(r.card,1100):"",transcript:text||limit(r.data?.transcript?.text||"",8000)};
+  return {summary:r.card?"Seven Ears 声学分析（非情绪判断）："+limit(r.card,1100):"",transcript:text||limit(typeof r.data?.transcript==="string"?r.data.transcript:r.data?.transcript?.text||"",8000)};
 }
 const combined=(a,b)=>[a?.summary,b?.summary].filter(Boolean).join("\n").slice(0,1600);
 window.xyVoiceHearing={config,listen,deepen,combined};
