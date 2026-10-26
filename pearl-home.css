@@ -212,3 +212,19 @@ html[data-theme-mode="dark"] .xy-pearl-return{background:#263b2c;color:#d7e8ce;b
  #xyIslandHome .xy-pearl-moment{margin-top:16px}
 }
 @media(prefers-reduced-motion:reduce){#xyIslandHome button{transition:none!important}}
+
+/* User-selected backdrop overrides a preset's decorative homepage gradient.
+   No wallpaper: preserve the chosen background color; wallpaper: show it. */
+html[data-xy-custom-background="1"] #xyIslandHome{
+ background:var(--theme-bg,#f3f8ed)!important;
+}
+html[data-xy-custom-background="1"] #xyIslandHome .xy-pearl-ambient{
+ background:transparent;
+ background-image:var(--xy-theme-custom-bg-image,none)!important;
+ background-position:center;
+ background-size:cover;
+ background-repeat:no-repeat;
+}
+html[data-xy-custom-background="1"] #xyIslandHome .xy-pearl-ambient::after{
+ display:none;
+}
