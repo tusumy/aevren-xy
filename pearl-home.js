@@ -14,12 +14,6 @@ const cards=[
   {label:"创作角",description:"故事与设定",icon:"folder",route:"creation"},
   {label:"群聊",description:"一起讲故事",icon:"group",route:"groupchat"}
 ];
-const looks=[
- {id:"apple",name:"青苹果",colors:["#f3f8ed","#dce8d3","#638967"]},
- {id:"mist",name:"雾薄荷",colors:["#eff5f1","#d7e8df","#568c83"]},
- {id:"rose",name:"樱雾",colors:["#fcf5f4","#f4e1e0","#aa7187"]},
- {id:"night",name:"墨绿夜",colors:["#15231d","#294135","#b7cfaa"]}
-];
 const icons={
   heart:'<path d="M20.8 5.9a4.7 4.7 0 0 0-6.7 0L12 8 9.9 5.9a4.7 4.7 0 1 0-6.7 6.7L12 21l8.8-8.4a4.7 4.7 0 0 0 0-6.7Z"/>',
   gear:'<circle cx="12" cy="12" r="3.2"/><path d="m10 2.7-.6 2.1-2.1.9-1.9-1.1-2.7 2.7 1.1 1.9-.9 2.1-2.1.6v3.8l2.1.6.9 2.1-1.1 1.9 2.7 2.7 1.9-1.1 2.1.9.6 2.1h3.8l.6-2.1 2.1-.9 1.9 1.1 2.7-2.7-1.1-1.9.9-2.1 2.1-.6v-3.8l-2.1-.6-.9-2.1 1.1-1.9-2.7-2.7-1.9 1.1-2.1-.9-.6-2.1Z" transform="translate(1 -1) scale(.92)"/>',
@@ -41,17 +35,12 @@ const svg=(type,cls="")=>'<svg class="'+cls+'" viewBox="0 0 24 24" fill="none" s
 const root=document.createElement("section");
 root.id="xyIslandHome";
 root.className="xy-pearl-home";
-root.setAttribute("aria-label","砚屿 · 主题首页");
+root.setAttribute("aria-label","砚屿 · 首页");
 const cardMarkup=cards.map(item=>
  '<button type="button" class="xy-pearl-tile" data-xy-home-route="'+item.route+'" aria-label="'+item.label+'">'+
  '<span class="xy-pearl-glyph">'+svg(item.icon)+'</span>'+
  '<span class="xy-pearl-card-text"><strong>'+item.label+'</strong><small>'+item.description+'</small></span>'+
  '<span class="xy-pearl-card-arrow" aria-hidden="true">↗</span></button>'
-).join("");
-const lookMarkup=looks.map(item=>
- '<button type="button" class="xy-pearl-look" data-xy-look="'+item.id+'" aria-label="使用'+item.name+'主题" aria-pressed="false">'+
- '<span class="xy-pearl-swatches" aria-hidden="true">'+item.colors.map(c=>'<i style="background:'+c+'"></i>').join("")+'</span>'+
- '<strong>'+item.name+'</strong></button>'
 ).join("");
 const tabs=[
  {label:"首页",icon:"home",route:"home"},
@@ -69,7 +58,6 @@ root.innerHTML=
  '<div class="xy-pearl-shell">'+
  '<div class="xy-pearl-scroll" id="xyPearlScroll">'+
  '<div class="xy-pearl-topline">AEVREN XY / ONLY OURS</div>'+
- '<div class="xy-pearl-looks" role="group" aria-label="选择首页主题">'+lookMarkup+'</div>'+
  '<section class="xy-pearl-hero">'+
  '<span class="xy-pearl-hero-decor" aria-hidden="true">♡</span>'+
  '<div class="xy-pearl-micro">OUR LITTLE CORNER</div>'+
@@ -97,17 +85,8 @@ function syncName(){
   const name=typeof value==="string"&&value.trim()&&value.trim()!=="你"?value.trim():"阿毛";
   const label=root.querySelector("#xyPearlName");if(label)label.textContent=name;
 }
-function syncLook(){
-  const chosen=document.documentElement.dataset.xyPalette||"apple";
-  root.querySelectorAll("[data-xy-look]").forEach(btn=>{
-    const selected=btn.dataset.xyLook===chosen;
-    btn.classList.toggle("is-current",selected);
-    btn.setAttribute("aria-pressed",String(selected));
-  });
-}
-syncName();syncLook();
+syncName();
 window.addEventListener("xy-user-profile-change",syncName);
-window.addEventListener("xy-theme-changed",syncLook);
 
 
 function ensureHomeRoot(){
@@ -173,13 +152,6 @@ function startCall(){
  }else if(typeof openPanel==="function")openPanel("voice");
 }
 root.addEventListener("click",event=>{
- const look=event.target.closest("button[data-xy-look]");
- if(look&&root.contains(look)){
-   const choose=window.xyThemePresets?.set;
-   if(typeof choose==="function")choose(look.dataset.xyLook);
-   else navigate("theme");
-   return;
- }
  const btn=event.target.closest("button[data-xy-home-route]");
  if(!btn||!root.contains(btn))return;
  navigate(btn.dataset.xyHomeRoute);
