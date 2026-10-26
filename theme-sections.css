@@ -1,0 +1,83 @@
+/* Collapsible appearance sections, scoped strictly to the Theme panel. */
+#panelBody .xy-theme-top-details{
+ border:1px solid var(--line,rgba(92,120,92,.17));
+ border-radius:15px;
+ background:var(--glass,rgba(255,255,255,.40));
+ margin:0 0 10px;
+ padding:0;
+ box-shadow:0 4px 16px rgba(51,78,59,.045);
+}
+#panelBody .xy-theme-top-details > summary{
+ list-style:none;display:flex;align-items:center;justify-content:space-between;
+ padding:13px 15px;min-height:44px;cursor:pointer;
+ font-size:13px;font-weight:650;line-height:1.4;
+ color:var(--ink,#344e40);
+ -webkit-tap-highlight-color:transparent;
+}
+#panelBody .xy-theme-top-details > summary::-webkit-details-marker{display:none}
+#panelBody .xy-theme-top-details > summary::after{
+ content:"⌄";margin-left:10px;
+ color:var(--muted,#809283);font-size:18px;line-height:1;
+ transform:rotate(-90deg);transition:transform .16s ease;
+}
+#panelBody .xy-theme-top-details[open] > summary::after{transform:rotate(0deg)}
+#panelBody .xy-theme-top-details > :not(summary){margin:0 12px 12px}
+#panelBody .xy-theme-top-details .theme-mode-switch{display:grid}
+#panelBody .xy-theme-top-details .xy-theme-curated{display:grid}
+#panelBody .theme-setting-card.xy-theme-section{
+ padding:0!important;overflow:hidden;
+ border-radius:16px;margin-bottom:10px;
+}
+#panelBody .xy-theme-section-toggle{
+ display:flex;align-items:center;justify-content:space-between;gap:14px;
+ width:100%;min-height:48px;padding:14px 15px;
+ background:transparent;border:0;border-radius:15px;
+ text-align:left;cursor:pointer;
+ color:var(--ink,#344e40);font:650 13px/1.45 inherit;
+ -webkit-tap-highlight-color:transparent;
+}
+#panelBody .xy-theme-section-toggle:focus-visible,
+#panelBody .xy-theme-top-details > summary:focus-visible{
+ outline:2px solid var(--theme-accent,#5e8260);
+ outline-offset:-3px;
+}
+#panelBody .xy-theme-section-title{flex:1;min-width:0;font-size:13px;font-weight:650}
+#panelBody .xy-theme-section-chevron{
+ flex:none;color:var(--muted,#839188);
+ font:400 18px/1 system-ui,sans-serif;
+ transform:rotate(0deg);transition:transform .16s ease;
+}
+#panelBody .xy-theme-section[data-xy-folded="true"] > .xy-theme-section-toggle .xy-theme-section-chevron{
+ transform:rotate(-90deg);
+}
+#panelBody .xy-theme-section[data-xy-folded="true"] > :not(.xy-theme-section-toggle){
+ display:none!important;
+}
+#panelBody .xy-theme-section[data-xy-folded="true"]{
+ min-height:0!important;
+}
+#panelBody .xy-theme-section[data-xy-folded="false"] > :not(.xy-theme-section-toggle){
+ margin-left:13px;margin-right:13px;
+}
+#panelBody .xy-theme-section[data-xy-folded="false"] > :last-child{
+ margin-bottom:13px;
+}
+#panelBody .xy-theme-section[data-xy-folded="false"] > .xy-theme-section-toggle{
+ border-radius:15px 15px 0 0;
+ margin-bottom:6px;
+}
+#panelBody .xy-theme-section[data-xy-folded="false"] > .xy-theme-section-toggle::before{
+ content:"";position:absolute;
+}
+html[data-theme-mode="dark"] #panelBody .xy-theme-top-details,
+html[data-theme-mode="dark"] #panelBody .xy-theme-section{
+ border-color:rgba(220,239,215,.17);
+ background:rgba(38,55,44,.65);
+}
+html[data-theme-mode="dark"] #panelBody .xy-theme-top-details > summary,
+html[data-theme-mode="dark"] #panelBody .xy-theme-section-toggle{
+ color:#eef5eb;
+}
+@media(prefers-reduced-motion:reduce){
+ #panelBody .xy-theme-section-chevron,#panelBody .xy-theme-top-details > summary::after{transition:none}
+}
