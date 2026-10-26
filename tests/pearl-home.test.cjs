@@ -16,7 +16,7 @@ test("design preview stays intact with four space cards and five nav tabs", () =
     assert.ok(!html.includes('"./'+retired+'?'),"old island must not be loaded: "+retired);
   }
   assert.ok(css.includes(".xy-pearl-hero{"));
-  assert.ok(css.includes(".xy-pearl-looks{"));
+  assert.ok(!css.includes(".xy-pearl-looks{"),"home must not style a preview theme picker");
   assert.ok(css.includes(".xy-pearl-spaces{"));
   assert.ok(css.includes(".xy-pearl-moment{"));
   assert.ok(css.includes("min-height:98px"));
@@ -86,7 +86,7 @@ function mockHome() {
     openPanel(type){calls.panels.push(type);history.pushState({...history.state,xyOverlay:true})}
   });
   vm.runInContext(read("pearl-home.js"),ctx,{filename:"pearl-home.js"});
-  calls.tap=route=>calls.click({target:{closest(selector){return selector.includes("data-xy-look")?null:{dataset:{xyHomeRoute:route}}}}});
+  calls.tap=route=>calls.click({target:{closest(){return {dataset:{xyHomeRoute:route}}}}});
   return {calls,app,history,w,root};
 }
 
@@ -99,7 +99,8 @@ test("home includes hero, chat, call, four smaller space tools and all five tabs
  }
  assert.equal((h.root.innerHTML.match(/class="xy-pearl-tile"/g)||[]).length,4);
  assert.equal((h.root.innerHTML.match(/class="xy-pearl-tab(?: is-active)?"/g)||[]).length,5);
- assert.equal((h.root.innerHTML.match(/class="xy-pearl-look"/g)||[]).length,4);
+ assert.equal((h.root.innerHTML.match(/class="xy-pearl-look"/g)||[]).length,0);
+  assert.ok(!h.root.innerHTML.includes("data-xy-look"),"preview theme selector must not exist on home");
  for(const route of ["study","imagine","creation","groupchat","journal","toolhub","settings","call"]){
    assert.ok(h.root.innerHTML.includes('data-xy-home-route="'+route+'"'),"missing "+route);
  }
@@ -126,14 +127,19 @@ test("More retains all previously available tools and routes", () => {
   assert.deepEqual(home.calls.panels,["creation","imagine"]);
 });
 
-test("appearance swatches match available persistent palettes", () => {
- const h=mockHome();
- for(const name of ["青苹果","雾薄荷","樱雾","墨绿夜"]){
-   assert.ok(h.root.innerHTML.includes(name),"missing home theme "+name);
- }
- const theme=read("theme-core.js");
- assert.ok(theme.includes("window.xyThemePresets="));
- assert.ok(theme.includes("persist();applyTheme();return true"));
+test("palette buttons belong in Appearance settings, never on the home page", () => {
+  const h=mockHome();
+  assert.ok(!h.root.innerHTML.includes("xy-pearl-looks"));
+  assert.ok(!h.root.innerHTML.includes("data-xy-look"));
+  const theme=read("theme-core.js");
+  const themeCss=read("theme-curated.css");
+  for(const name of ["青苹果","雾薄荷","樱雾","墨绿夜"]){
+    assert.ok(theme.includes(name),"Missing appearance setting: "+name);
+    assert.ok(!h.root.innerHTML.includes(name),"Theme palette leaked onto home: "+name);
+  }
+  assert.ok(theme.includes("xy-theme-curated"));
+  assert.ok(themeCss.includes(".xy-theme-curated"));
+  assert.ok(theme.includes("window.xyThemePresets="));
 });
 
 test("speech CTA opens the existing native-capable call layer", () => {
