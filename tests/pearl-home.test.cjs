@@ -86,7 +86,7 @@ function mockHome() {
     openPanel(type){calls.panels.push(type);history.pushState({...history.state,xyOverlay:true})}
   });
   vm.runInContext(read("pearl-home.js"),ctx,{filename:"pearl-home.js"});
-  calls.tap=route=>calls.click({target:{closest(){return {dataset:{xyHomeRoute:route}}}}});
+  calls.tap=route=>calls.click({target:{closest(selector){return selector.includes("data-xy-look")?null:{dataset:{xyHomeRoute:route}}}}});
   return {calls,app,history,w,root};
 }
 
