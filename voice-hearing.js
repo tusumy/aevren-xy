@@ -2,7 +2,7 @@
 "use strict";
 // Optional integration; only finished recordings are submitted.
 const KEY="xy.voice.hearing.v1";
-const defaults={ears:false,seven:false,earsUrl:"",sevenUrl:""};
+const defaults={ears:false,seven:false,earsUrl:"",sevenUrl:"",accessKey:""};
 const config=()=>{try{return {...defaults,...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch{return {...defaults}}};
 const limit=(x,n=400)=>String(x??"").trim().slice(0,n);
 function valid(raw){
