@@ -115,7 +115,7 @@
       name:String(incoming.name||active.name||"玄砚")
     };
     syncCallCharacter();
-    callChat=currentChat();callLines=[];ambienceEvents=[];missedSpeech=0;nativeBusyRetries=0;forceRecordedStt=false;startedAt=0;
+    callChat=currentChat();callLines=[];ambienceEvents=[];recordingHearingSummary="";missedSpeech=0;nativeBusyRetries=0;forceRecordedStt=false;startedAt=0;
     callGeneration++;phase="ringing";processing=false;overlay.hidden=false;overlay.classList.add("show","ringing");overlay.classList.remove("connected");
     transcriptEl.innerHTML="";statusEl.textContent="语音来电";timeEl.textContent="00:00";acceptBtn.hidden=false;hangupBtn.hidden=false;
     fallbackWrap.hidden=true;pushBtn.hidden=true;
