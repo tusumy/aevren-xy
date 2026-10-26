@@ -5,7 +5,7 @@
   let overlay,statusEl,timeEl,transcriptEl,acceptBtn,hangupBtn,fallbackWrap,fallbackInput,pushBtn;
   let callCharacter=null,callUseNative=false,nativeAutoTimer=null,callGeneration=0,callChat=null,callLines=[],missedSpeech=0,nativeBusyRetries=0;
   let forceRecordedStt=false;
-  let ambience=null,ambienceEvents=[];
+  let ambience=null,ambienceEvents=[],recordingHearingSummary="";
   let ringtoneContext=null,ringtoneTimer=null;
   function stopRingtone(){
     if(ringtoneTimer){clearInterval(ringtoneTimer);ringtoneTimer=null}
