@@ -55,6 +55,12 @@
   function applyTheme(){
     const root=document.documentElement,mode=resolvedMode();
     root.dataset.themeMode=mode;root.dataset.xyPalette=['apple','mist','rose','night'].includes(theme.preset)?theme.preset:'default';root.style.colorScheme=mode;
+    // Preset backgrounds are starting values, never a lock on the user's wallpaper
+    // or manually chosen background color. The same flag serves the homepage.
+    const baseColor=PRESETS[theme.preset]?.bgColor||DEFAULT_THEME.bgColor;
+    const customBackground=!!theme.bgImage||norm(theme.bgColor)!==norm(baseColor);
+    root.dataset.xyCustomBackground=customBackground?'1':'0';
+    root.style.setProperty('--xy-theme-custom-bg-image',theme.bgImage?`url(${JSON.stringify(theme.bgImage)})`:'none');
     root.style.setProperty('--theme-bg',theme.bgColor);
     root.style.setProperty('--theme-user-bubble',theme.userBubble);
     root.style.setProperty('--theme-assistant-bubble',theme.assistantBubble);
