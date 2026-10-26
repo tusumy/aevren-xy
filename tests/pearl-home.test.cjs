@@ -5,7 +5,7 @@ const path = require("node:path");
 const vm = require("node:vm");
 const read = p => fs.readFileSync(path.join(__dirname, "..", p), "utf8");
 
-test("minimal home has three nav tabs, four palettes and no island artwork", () => {
+test("design preview stays intact with four space cards and five nav tabs", () => {
   const html=read("index.html");
   const css=read("pearl-home.css");
   const theme=read("theme-core.js");
@@ -15,8 +15,13 @@ test("minimal home has three nav tabs, four palettes and no island artwork", () 
   for(const retired of ["island-art.js","island-home.js","island-locations.js","island-home.css","island-responsive.css","island-cinematic.css"]){
     assert.ok(!html.includes('"./'+retired+'?'),"old island must not be loaded: "+retired);
   }
-  assert.ok(css.includes(".xy-pearl-home-content{"));
-  assert.ok(css.includes("grid-template-columns:repeat(3,minmax(0,1fr))"));
+  assert.ok(css.includes(".xy-pearl-hero{"));
+  assert.ok(css.includes(".xy-pearl-looks{"));
+  assert.ok(css.includes(".xy-pearl-spaces{"));
+  assert.ok(css.includes(".xy-pearl-moment{"));
+  assert.ok(css.includes("min-height:98px"));
+  assert.ok(css.includes("grid-template-columns:repeat(2,minmax(0,1fr))"));
+  assert.ok(css.includes("grid-template-columns:repeat(5,minmax(0,1fr))"));
   for(const look of ["apple","mist","rose","night"])assert.ok(theme.includes(look+":{"),"missing preset "+look);
   assert.ok(css.includes('data-xy-palette="mist"'));
   assert.ok(css.includes('data-xy-palette="rose"'));
