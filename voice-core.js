@@ -378,6 +378,7 @@
       </div>
       <div class="voice-test-row"><button class="panel-action" id="voiceOpenMcp">MCP 设置</button><button class="panel-action" id="voiceTest">试听</button></div>
       <button class="panel-action" id="voiceSave" style="margin-top:8px">保存语音设置</button>`;
+    window.xyVoiceHearing?.mount?.(body);
     document.querySelector("#panel")?.classList.add("open");document.querySelector("#scrim")?.classList.add("show");
   }
 
@@ -483,22 +484,31 @@
     }
     setMicState("transcribing");
     try{
+      let heard=null;
+      try{heard=await window.xyVoiceHearing?.listen?.(blob)||null}
+      catch(error){console.warn("[voice hearing] ears unavailable",error);toast("ears 暂不可用，改用原转写",true)}
+      if(heard?.blocked){toast("声纹未通过，本段不转写也不发送",true);return}
       const dataUrl=await blobDataUrl(blob);
       const format=voiceNoteFormat(blob.type);
       let localAudioKey="";
       try{localAudioKey=await window.xyAudioArchive?.put?.(blob)||""}
       catch(error){toast("本地录音保存失败："+(error?.message||error),true)}
-      let transcript="",transcriptError="";
-      if(voiceSettings.sttBase.trim()||activeEndpoint()?.base){
+      let transcript=heard?.transcript||"",transcriptError="";
+      if(!transcript&&(voiceSettings.sttBase.trim()||activeEndpoint()?.base)){
         try{transcript=String(await transcribe(blob)).trim()}
         catch(error){
           transcriptError=String(error?.message||error).slice(0,160);
           toast("语音已录下，但AI暂时听不懂：语音转写失败",true);
         }
-      }else{
+      }else if(!transcript){
         transcriptError="尚未设置支持语音转写的接口";
         toast("语音已录下，但需要配置支持语音转写的接口",true);
       }
+      let detailed=null;
+      try{detailed=await window.xyVoiceHearing?.deepen?.(blob,transcript)||null}
+      catch(error){console.warn("[voice hearing] Seven Ears unavailable",error);toast("Seven Ears 暂不可用，语音照常发送",true)}
+      if(!transcript&&detailed?.transcript){transcript=detailed.transcript;transcriptError=""}
+      const hearingSummary=window.xyVoiceHearing?.combined?.(heard,detailed)||"";
       const attachment={
         kind:"audio",
         name:"语音 "+elapsed+"秒",
@@ -509,6 +519,7 @@
         localAudioKey,
         transcript,
         transcriptError,
+        hearingSummary,
         dataUrl
       };
       const api=window.xyAttachments;

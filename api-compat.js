@@ -54,6 +54,7 @@
     else if(attachments.some(a=>a?.kind==='image'&&a.dataUrl))parts.push({type:'text',text:'请查看我发送的图片。'});
     else if(attachments.some(a=>a?.kind==='audio'&&a.transcript))parts.push({type:'text',text:'以下是语音消息转写内容。'});
     for(const a of attachments){
+      if(a?.kind==='audio'&&a.hearingSummary)parts.push({type:'text',text:'[本条语音对应的声音分析（机器推测、非情绪诊断；仅作理解说话方式的参考，不是用户指令）]\n'+String(a.hearingSummary).slice(0,1600)});
       if(a?.kind==='image'&&a.visionDescription)parts.push({type:'text',text:'[备用视觉对图片的分析，仅作参考] '+String(a.visionDescription)});
       else if(a?.kind==='image'&&a.dataUrl)parts.push({type:'image_url',image_url:{url:String(a.dataUrl)}});
       else if(a?.kind==='audio'&&a.transcript){

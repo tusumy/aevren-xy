@@ -68,7 +68,8 @@
         const playable=Boolean(a.dataUrl||a.localAudioKey||a.voiceUrl);
         const source=a.dataUrl?`data-voice-note-src="${esc(a.dataUrl)}"`:a.localAudioKey?`data-voice-note-key="${esc(a.localAudioKey)}"`:a.voiceUrl?`data-voice-note-src="${esc(a.voiceUrl)}"`:"disabled";
         const transcript=a.transcript?`<span class="xy-voice-transcript">${esc(a.transcript)}</span>`:a.transcriptError?`<span class="xy-voice-transcript" title="${esc(a.transcriptError)}">未转写 · AI暂时无法理解语音</span>`:"";
-        return `<span class="xy-voice-note-wrap"><button type="button" class="xy-message-voice-note" ${source} title="${playable?"播放语音":"旧语音没有保存原始音频"}"><span class="xy-message-voice-icon">▶</span><span class="xy-message-voice-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><b>${duration}"</b></button>${transcript}</span>`;
+        const hearing=a.hearingSummary?`<details class="xy-voice-hearing" style="max-width:280px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px"><summary>声音线索</summary>${esc(String(a.hearingSummary).slice(0,1600))}</details>`:"";
+        return `<span class="xy-voice-note-wrap"><button type="button" class="xy-message-voice-note" ${source} title="${playable?"播放语音":"旧语音没有保存原始音频"}"><span class="xy-message-voice-icon">▶</span><span class="xy-message-voice-wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><b>${duration}"</b></button>${transcript}${hearing}</span>`;
       }
       return `<div class="xy-message-file"><span>▤</span><b>${esc(a.name||"附件")}</b></div>`;
     }).join("");

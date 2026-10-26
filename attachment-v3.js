@@ -232,6 +232,7 @@
       kind:a.kind,name:a.name,type:a.type,size:a.size,width:a.width,height:a.height,mediaKey:a.mediaKey||"",visionDescription:a.visionDescription||"",
       duration:Number(a.duration||0),format:a.format||"",
       localAudioKey:a.localAudioKey||"",transcript:a.transcript||"",transcriptError:a.transcriptError||"",
+      hearingSummary:String(a.hearingSummary||"").slice(0,1600),
       truncated:!!a.truncated,previewDataUrl:a.previewDataUrl||""
     };
   };

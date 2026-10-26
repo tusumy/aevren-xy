@@ -5,7 +5,7 @@
   let overlay,statusEl,timeEl,transcriptEl,acceptBtn,hangupBtn,fallbackWrap,fallbackInput,pushBtn;
   let callCharacter=null,callUseNative=false,nativeAutoTimer=null,callGeneration=0,callChat=null,callLines=[],missedSpeech=0,nativeBusyRetries=0;
   let forceRecordedStt=false;
-  let ambience=null,ambienceEvents=[];
+  let ambience=null,ambienceEvents=[],recordingHearingSummary="";
   let ringtoneContext=null,ringtoneTimer=null;
   function stopRingtone(){
     if(ringtoneTimer){clearInterval(ringtoneTimer);ringtoneTimer=null}
@@ -115,7 +115,7 @@
       name:String(incoming.name||active.name||"玄砚")
     };
     syncCallCharacter();
-    callChat=currentChat();callLines=[];ambienceEvents=[];missedSpeech=0;nativeBusyRetries=0;forceRecordedStt=false;startedAt=0;
+    callChat=currentChat();callLines=[];ambienceEvents=[];recordingHearingSummary="";missedSpeech=0;nativeBusyRetries=0;forceRecordedStt=false;startedAt=0;
     callGeneration++;phase="ringing";processing=false;overlay.hidden=false;overlay.classList.add("show","ringing");overlay.classList.remove("connected");
     transcriptEl.innerHTML="";statusEl.textContent="语音来电";timeEl.textContent="00:00";acceptBtn.hidden=false;hangupBtn.hidden=false;
     fallbackWrap.hidden=true;pushBtn.hidden=true;
@@ -287,7 +287,12 @@
       processing=true;statusEl.textContent="正在听懂…";
       const detected=await window.xyAcousticEvents?.analyzeBlob?.(blob).catch(()=>[])||[];
       ambienceEvents=[...new Set([...ambienceEvents,...detected])].slice(0,3);
-      const text=await window.AevrenVoice.transcribeBlob(blob);
+      let heard=null;
+      try{heard=await window.xyVoiceHearing?.listen?.(blob)||null}
+      catch(error){console.warn("ears service unavailable",error)}
+      if(heard?.blocked){processing=false;statusEl.textContent="声纹未通过，不再转写";return}
+      const text=heard?.transcript||await window.AevrenVoice.transcribeBlob(blob);
+      recordingHearingSummary=heard?.summary||"";
       processing=false;
       if(phase!=="connected")return;
       if(text){statusEl.textContent="录音已转写 · 正在发给角色";await handleUserText(text)}
@@ -357,7 +362,11 @@
     if(!text||phase!=="connected"||processing)return;
     processing=true;stopListening();addLine("user",text);statusEl.textContent="已识别文字 · 正在发给"+currentCallName();
     const detected=ambienceEvents.splice(0,3);
-    const reported=detected.length?text+"\n[麦克风声学提示（仅机器推测，未确认来源）："+detected.join("；")+"。请勿据此猜测用户身体状态。]":text;
+    const heard=recordingHearingSummary;recordingHearingSummary="";
+    const extras=[];
+    if(detected.length)extras.push("[麦克风声学线索（来源未确认）："+detected.join("；")+"]");
+    if(heard)extras.push("[本次录音的耳朵分析（仅供参考）："+heard.slice(0,650)+"]");
+    const reported=extras.length?text+"\n"+extras.join("\n"):text;
     const c=currentChat(),before=c?.messages?.length||0;
     if(!c){statusEl.textContent="当前对话不可用";processing=false;return}
     const generation=callGeneration;
@@ -451,7 +460,7 @@
     const recordChat=callChat,recordCharacter={...currentCallCharacter()},recordStartedAt=startedAt,recordEndedAt=Date.now();
     const transcript=callLines.slice();
     callGeneration++;phase="idle";processing=false;callUseNative=false;forceRecordedStt=false;
-    if(ambience){ambience.stop();ambience=null}ambienceEvents=[];
+    if(ambience){ambience.stop();ambience=null}ambienceEvents=[];recordingHearingSummary="";
     window.AevrenVoice?.onRecognitionProgress?.(null);clearTimeout(nativeAutoTimer);nativeAutoTimer=null;stopListening();try{window.AevrenVoice?.cancelNativeRecognition?.()}catch{}callNativeRecognizing=false;if(callNativeRecording){try{window.AevrenVoice?.stopNativeCapture?.()}catch{}callNativeRecording=false}if(callRecorder?.state==="recording"){try{callRecorder.onstop=null;callRecorder.stop()}catch{}}callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];clearInterval(timerId);timerId=null;window.AevrenVoice?.stop?.();
     if(wasConnected&&recordChat?.messages){
       recordChat.messages.push({role:"system",kind:"call",text:"☎ 与"+String(recordCharacter.name||"角色")+"通话 · "+duration,
