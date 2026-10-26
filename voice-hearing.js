@@ -3,7 +3,7 @@
 // Optional integration; only finished recordings are submitted.
 const KEY="xy.voice.hearing.v1";
 const defaults={ears:false,seven:false,earsUrl:"",sevenUrl:"",accessKey:""};
-const config=()=>{try{return {...defaults,...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch{return {...defaults}}};
+const config=()=>{let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||"{}")||{}}catch{}let accessKey="";try{accessKey=sessionStorage.getItem("xy.voice.hearing.key")||""}catch{}return {...defaults,...saved,accessKey}};
 const limit=(x,n=400)=>String(x??"").trim().slice(0,n);
 function valid(raw){
   const url=new URL(String(raw||"").trim(),location.href);
