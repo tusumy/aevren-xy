@@ -56,7 +56,7 @@ function mockHome() {
   const input={focus(){calls.focused++}};
   const doc={
     body:{appendChild(node){calls.root=node}},
-    documentElement:{classList:cls()},
+    documentElement:{classList:cls(),dataset:{xyPalette:"apple"}},
     querySelector(selector){
       if(selector===".app")return app;
       if(selector===".main > header")return header;
