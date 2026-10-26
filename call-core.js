@@ -362,7 +362,11 @@
     if(!text||phase!=="connected"||processing)return;
     processing=true;stopListening();addLine("user",text);statusEl.textContent="已识别文字 · 正在发给"+currentCallName();
     const detected=ambienceEvents.splice(0,3);
-    const reported=detected.length?text+"\n[麦克风声学提示（仅机器推测，未确认来源）："+detected.join("；")+"。请勿据此猜测用户身体状态。]":text;
+    const heard=recordingHearingSummary;recordingHearingSummary="";
+    const extras=[];
+    if(detected.length)extras.push("[麦克风声学线索（来源未确认）："+detected.join("；")+"]");
+    if(heard)extras.push("[本次录音的耳朵分析（仅供参考）："+heard.slice(0,650)+"]");
+    const reported=extras.length?text+"\n"+extras.join("\n"):text;
     const c=currentChat(),before=c?.messages?.length||0;
     if(!c){statusEl.textContent="当前对话不可用";processing=false;return}
     const generation=callGeneration;
