@@ -19,7 +19,7 @@ function mount(host){
   const ears=checkbox("使用 ears",cfg.ears),earsUrl=address("ears 地址",cfg.earsUrl);
   const seven=checkbox("语音留言使用 Seven Ears",cfg.seven),sevenUrl=address("Seven Ears 地址",cfg.sevenUrl);
   const secret=document.createElement("input");secret.type="password";secret.placeholder="声音代理访问令牌";secret.value=cfg.accessKey||"";
-  const secretLabel=document.createElement("label");secretLabel.textContent="代理令牌（保存在本机）";box.append(secretLabel,secret);
+  const secretLabel=document.createElement("label");secretLabel.textContent="代理令牌（仅当前会话）";box.append(secretLabel,secret);
   const button=document.createElement("button"),status=document.createElement("small");
   button.type="button";button.textContent="保存声音感知";button.className="panel-action";
   status.textContent="没有配置时继续使用原语音转写。";
