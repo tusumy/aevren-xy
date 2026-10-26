@@ -90,37 +90,27 @@ function mockHome() {
   return {calls,app,history,w,root};
 }
 
-test("home keeps chat plus three compact entries, with other functions in More", () => {
-  const h=mockHome();
-  assert.equal(h.root.hidden,false);
-  assert.equal(h.app.inert,true);
-  assert.match(h.root.innerHTML,/今天想说什么/);
-  assert.match(h.root.innerHTML,/进入对话/);
-  assert.match(h.root.innerHTML,/外观主题/);
-  assert.match(h.root.innerHTML,/首页导航/);
-  assert.equal((h.root.innerHTML.match(/class="xy-pearl-tab(?: is-active)?"/g)||[]).length,3);
-  for(const route of ["study","creation","imagine"]){
-    assert.match(h.root.innerHTML,new RegExp('data-xy-home-route="'+route+'"'));
-  }
-  for(const route of ["groupchat","journal","call"]){
-    assert.doesNotMatch(h.root.innerHTML,new RegExp('data-xy-home-route="'+route+'"'));
-  }
-  assert.match(h.root.innerHTML,/常用入口/);
-  assert.match(h.root.innerHTML,/全部功能/);
-  h.calls.tap("chat");
-  assert.equal(h.root.hidden,true);
-  assert.equal(h.app.inert,false);
-  assert.equal(h.history.state.xyIslandPage,"chat");
-  assert.equal(h.calls.focused,1);
-  h.history.back();
-  assert.equal(h.root.hidden,false);
-  assert.equal(h.app.inert,true);
-  h.calls.tap("study");
-  assert.deepEqual(h.calls.panels,["study"]);
-  h.history.back();
-  h.calls.tap("toolhub");
-  assert.deepEqual(h.calls.panels,["study","toolhub"]);
-  assert.equal(h.root.hidden,true);
+test("home includes hero, chat, call, four smaller space tools and all five tabs", () => {
+ const h=mockHome();
+ assert.equal(h.root.hidden,false);
+ assert.equal(h.app.inert,true);
+ for(const word of ["我们的空间","继续我们的对话","语音通话","Keep exploring","今天也有好多话想跟你说"]){
+   assert.ok(h.root.innerHTML.includes(word),"missing "+word);
+ }
+ assert.equal((h.root.innerHTML.match(/class="xy-pearl-tile"/g)||[]).length,4);
+ assert.equal((h.root.innerHTML.match(/class="xy-pearl-tab(?: is-active)?"/g)||[]).length,5);
+ assert.equal((h.root.innerHTML.match(/class="xy-pearl-look"/g)||[]).length,4);
+ for(const route of ["study","imagine","creation","groupchat","journal","toolhub","settings","call"]){
+   assert.ok(h.root.innerHTML.includes('data-xy-home-route="'+route+'"'),"missing "+route);
+ }
+ h.calls.tap("chat");
+ assert.equal(h.root.hidden,true);
+ assert.equal(h.history.state.xyIslandPage,"chat");
+ assert.equal(h.calls.focused,1);
+ h.history.back();
+ assert.equal(h.root.hidden,false);
+ h.calls.tap("study");
+ assert.deepEqual(h.calls.panels,["study"]);
 });
 
 test("More retains all previously available tools and routes", () => {
