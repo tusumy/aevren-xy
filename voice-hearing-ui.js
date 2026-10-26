@@ -28,6 +28,7 @@ function mount(host){
     const next={ears:ears.checked,seven:seven.checked,earsUrl:earsUrl.value.trim(),sevenUrl:sevenUrl.value.trim()};
     const safe=raw=>{try{const u=new URL(raw);return u.protocol==="https:"||(u.protocol==="http:"&&["localhost","127.0.0.1"].includes(u.hostname))}catch{return false}};
     if((next.ears&&!safe(next.earsUrl))||(next.seven&&!safe(next.sevenUrl))){status.textContent="需要 HTTPS 地址，未保存";return}
+    sessionStorage.setItem("xy.voice.hearing.key",secret.value.trim());
     localStorage.setItem("xy.voice.hearing.v1",JSON.stringify(next));
     status.textContent="声音设置已保存，下条录音生效";
   };
