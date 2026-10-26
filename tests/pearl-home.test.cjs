@@ -126,11 +126,14 @@ test("More retains all previously available tools and routes", () => {
   assert.deepEqual(home.calls.panels,["creation","imagine"]);
 });
 
-test("appearance button reaches original theme settings without showing a theme chooser on home", () => {
-  const h=mockHome();
-  h.calls.tap("theme");
-  assert.deepEqual(h.calls.panels,["theme"]);
-  assert.equal(h.root.hidden,true);
+test("appearance swatches match available persistent palettes", () => {
+ const h=mockHome();
+ for(const name of ["青苹果","雾薄荷","樱雾","墨绿夜"]){
+   assert.ok(h.root.innerHTML.includes(name),"missing home theme "+name);
+ }
+ const theme=read("theme-core.js");
+ assert.ok(theme.includes("window.xyThemePresets="));
+ assert.ok(theme.includes("persist();applyTheme();return true"));
 });
 
 test("speech CTA opens the existing native-capable call layer", () => {
