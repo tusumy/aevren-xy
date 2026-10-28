@@ -1,0 +1,73 @@
+/* Imported fonts are opt-in and scoped; existing system/serif settings remain intact. */
+html[data-xy-import-font-scope="chat"] .message .bubble{
+  font-family:var(--xy-import-font-family),system-ui,sans-serif!important;
+}
+html[data-xy-import-font-scope="title"] :is(
+  #xyIslandHome h1,#xyIslandHome h2,#xyIslandHome .xy-pearl-card-text strong,
+  #xyIslandHome .xy-pearl-primary strong,#panelTitle,#panelBody h1,#panelBody h2,#panelBody h3,
+  .journal-title,.study-title,.xy-hub-title
+){
+  font-family:var(--xy-import-font-family),system-ui,sans-serif!important;
+}
+html[data-xy-import-font-scope="all"] :is(
+  body,.app,.sidebar,.main,.main header,.panel,#panel,#panelBody,#xyIslandHome,
+  button,input,textarea,select,label,p,span,small,strong,h1,h2,h3,
+  .message .bubble
+){
+  font-family:var(--xy-import-font-family),system-ui,sans-serif!important;
+}
+#panelBody .xy-font-import-card{
+  display:block;
+  border-radius:17px;
+  padding:15px;
+  margin:12px 0;
+}
+#panelBody .xy-font-import-card .xy-font-heading{
+  font-size:13px;font-weight:650;margin:0 0 6px;
+}
+#panelBody .xy-font-import-card .xy-font-help{
+  font-size:11px;color:var(--muted,#718374);line-height:1.6;margin:0 0 12px;
+}
+#panelBody .xy-font-upload{
+  display:flex;justify-content:center;align-items:center;
+  min-height:43px;padding:10px 12px;cursor:pointer;
+  border-radius:13px;border:1px dashed var(--theme-accent,#658769);
+  color:var(--theme-accent,#507b52);font-weight:600;font-size:12px;
+  background:rgba(134,169,131,.06);margin:0 0 12px;
+}
+#panelBody .xy-font-upload input{display:none}
+#panelBody .xy-font-field{display:grid;gap:5px;margin-bottom:11px;font-size:11px}
+#panelBody .xy-font-field>span{color:var(--muted,#718374)}
+#panelBody .xy-font-field select{
+  box-sizing:border-box;width:100%;min-height:42px;padding:8px 11px;
+  border-radius:12px;border:1px solid var(--line,#cbd9c9);
+  background:var(--glass-strong,rgba(255,255,255,.8));
+  color:var(--ink,#354c3b);font-size:12px;
+}
+#panelBody .xy-font-preview{
+  font-size:14px;line-height:1.8;padding:13px 12px;
+  border-radius:13px;border:1px solid var(--line,#dbe5d6);
+  background:var(--glass,rgba(255,255,255,.43));min-height:52px;
+  overflow-wrap:anywhere;
+}
+#panelBody .xy-font-actions{display:flex;flex-wrap:wrap;gap:7px;margin:11px 0 8px}
+#panelBody .xy-font-actions button{
+  min-height:36px;padding:8px 10px;flex:1 0 auto;
+  border:1px solid var(--line,#cad9c5);border-radius:11px;
+  background:var(--glass-strong,rgba(255,255,255,.75));
+  color:var(--ink,#3d5e47);font-size:11px;font-weight:600;
+}
+#panelBody #xyFontUse{background:var(--theme-accent,#5c8466);color:white;border-color:transparent}
+#panelBody .xy-font-actions button:disabled{opacity:.45;cursor:default}
+#panelBody .xy-font-current,#panelBody .xy-font-status{
+  font-size:11px;line-height:1.6;margin:6px 0 0;
+  color:var(--muted,#728374);overflow-wrap:anywhere;
+}
+#panelBody .xy-font-status[data-error="true"]{color:#b25956}
+html[data-theme-mode="dark"] #panelBody .xy-font-field select,
+html[data-theme-mode="dark"] #panelBody .xy-font-actions button:not(#xyFontUse){
+  background:#2b3c31;color:#eef4e9;border-color:rgba(207,233,202,.26);
+}
+html[data-theme-mode="dark"] #panelBody .xy-font-preview{
+  background:#27382e;color:#f2f5ed;border-color:rgba(207,233,202,.21);
+}

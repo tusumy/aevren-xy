@@ -169,13 +169,23 @@ class MainActivity : Activity() {
                 // WebView's generic chooser, whose MIME handling varies by vendor.
                 val types = fileChooserParams?.acceptTypes.orEmpty().filter { it.isNotBlank() }
                 val onlyImages = types.isNotEmpty() && types.all { it.startsWith("image/") || it == "image/*" }
+                // Android document providers often label TTF/OTF fonts as application/octet-stream.
+                // Extension tokens are not valid MIME types. Do not filter out locally stored fonts.
+                val isFontRequest = types.any {
+                    it.startsWith("font/") ||
+                        it.endsWith(".ttf", true) || it.endsWith(".otf", true) ||
+                        it.endsWith(".woff", true) || it.endsWith(".woff2", true)
+                }
                 val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
                     type = if (onlyImages) "image/*" else "*/*"
                     if (fileChooserParams?.mode == FileChooserParams.MODE_OPEN_MULTIPLE) {
                         putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
                     }
-                    if (types.isNotEmpty() && !onlyImages) putExtra(Intent.EXTRA_MIME_TYPES, types.toTypedArray())
+                    if (types.isNotEmpty() && !onlyImages && !isFontRequest) {
+                        val mimeTypes = types.filter { it.contains('/') && !it.startsWith(".") }
+                        if (mimeTypes.isNotEmpty()) putExtra(Intent.EXTRA_MIME_TYPES, mimeTypes.toTypedArray())
+                    }
                 }
                 return try {
                     startActivityForResult(Intent.createChooser(intent, if (onlyImages) "选择图片" else "选择文件"), FILE_CHOOSER)
