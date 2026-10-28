@@ -84,8 +84,8 @@ class MainActivity : Activity() {
         window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
 
         val root = FrameLayout(this)
-        // Keep a botanical glass curtain visible until the new interactive homepage is painted.
-        root.setBackgroundColor(Color.rgb(233, 239, 221))
+        // Keep the pearl glass aura visible until the interactive homepage has painted.
+        root.setBackgroundColor(Color.rgb(238, 247, 234))
 
         webView = WebView(this)
         webView.setBackgroundColor(0xFFE9EFDD.toInt())
