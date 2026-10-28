@@ -53,11 +53,15 @@ html[data-theme-mode="dark"]:not([data-xy-palette="night"]) #xyIslandHome{
  radial-gradient(ellipse 95% 60% at 62% 110%,var(--yh-shade),transparent 85%),
  var(--yh-bg);
 }
+/* Quiet optics instead of the repeated floral line drawing. */
 #xyIslandHome .xy-pearl-ambient::after{
- content:"";position:absolute;inset:0;opacity:.55;
- background-image:url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="280" height="360" viewBox="0 0 280 360"%3E%3Cpath d="M282 10C251 28 239 76 242 123M241 76c-27-3-34-26-36-37 28-4 39 12 36 37ZM241 108c17-12 39-10 44 1-18 15-32 15-44-1ZM-10 265c33-13 47-39 50-73M30 216C5 216-6 200-7 191c23-4 37 4 37 25ZM29 222c20-16 31-10 40-2-13 19-26 20-40 2Z" fill="none" stroke="%238FA98D" stroke-width="1.3" opacity=".25"/%3E%3C/svg%3E');
- background-size:280px 360px;
+ content:"";position:absolute;inset:0;pointer-events:none;
+ background:
+   radial-gradient(ellipse 38% 18% at 88% 27%,rgba(255,255,255,.26),transparent 95%),
+   radial-gradient(ellipse 45% 22% at 14% 74%,rgba(255,255,255,.23),transparent 95%);
+ opacity:.75;
 }
+
 #xyIslandHome .xy-pearl-shell{
  position:relative;display:flex;flex-direction:column;height:100%;
  width:min(100%,480px);margin:auto;min-height:0;
@@ -165,7 +169,7 @@ html[data-theme-mode="dark"]:not([data-xy-palette="night"]) #xyIslandHome{
  box-shadow:0 5px 16px var(--yh-shadow);
 }
 #xyIslandHome .xy-pearl-moment-symbol{
- font:400 26px/1 Georgia,serif;color:var(--yh-petal);
+ font:400 23px/1 Georgia,serif;color:var(--yh-petal);opacity:.65;
 }
 #xyIslandHome .xy-pearl-moment > span:nth-child(2){flex:1;min-width:0}
 #xyIslandHome .xy-pearl-moment strong{display:block;font-size:12px;font-weight:500;white-space:nowrap}
