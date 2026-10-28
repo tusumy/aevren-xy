@@ -19,11 +19,21 @@
 
   const persistCharacters=()=>{store.set("xy.characters",characters);store.set("xy.defaultCharacter",defaultCharacterId)};
   const findCharacter=id=>characters.find(x=>x.id===id)||characters[0];
-  const currentCharacter=()=>findCharacter(chat()?.characterId||defaultCharacterId);
+  // Character ownership is per conversation, not a mutable global default.
+  const characterForChat=c=>findCharacter(c?.characterId||legacyCharacterId);
+  const currentCharacter=()=>characterForChat(chat());
+  window.xyCharacterForChat=characterForChat;
+  window.xyActiveCharacterPrompt=()=>currentCharacter()?.system||"";
+  window.xyIsCharacterSystem=text=>!!String(text||"").trim()&&characters.some(c=>c.system?.trim()===String(text).trim());
   const memoriesFor=id=>allMemories.filter(m=>m.characterId===id);
   window.xyCurrentCharacter=currentCharacter;
 
-  chats.forEach(c=>{if(!c.characterId)c.characterId=defaultCharacterId});
+  let bindingMigration=false;
+  chats.forEach(c=>{
+    // Existing legacy threads predate the per-chat feature; never assign
+    // the last selected global default to every unbound conversation.
+    if(!c.characterId){c.characterId=legacyCharacterId;bindingMigration=true}
+  });
   persistCharacters();
 
   const baseSave=save;
@@ -41,8 +51,9 @@
   }
 
   function syncPrompt(){
-    const ep=activeEndpoint(),ch=currentCharacter();
-    if(ep&&ch)ep.system=ch.system||"";
+    // Request builders resolve the current thread character at send time.
+    // Never overwrite the endpoint's shared system prompt.
+    return currentCharacter()?.system||"";
   }
 
   function refreshCharacterLabels(){
@@ -63,7 +74,7 @@
         <div class="xy-user-identity-row"><input id="xyUserDisplayName" maxlength="40" autocomplete="nickname" placeholder="例如：阿毛" value="${esc(window.xyTavernMacros?.name?.()||"你")}"><button type="button" id="xySaveUserName">保存名字</button></div>
         <p id="xyUserNameStatus" role="status" aria-live="polite"></p>
       </section>
-      <p class="setting-note">角色提示词完全由你自己填写；默认角色不再内置玄砚提示词。</p>
+      <p class="setting-note">每段对话分别绑定角色，点击「使用」只修改当前对话，不会更改其他窗口。角色提示词也不会覆盖 API 接口设置。</p>
       <div id="xyCharacterList">${characters.map((x,i)=>`
         <div class="character-card ${x.id===active?"active":""}" data-character-card="${esc(x.id)}">
           <strong>${esc(x.name)}</strong>
@@ -110,7 +121,7 @@
     body.querySelectorAll("[data-character-edit]").forEach(btn=>btn.addEventListener("click",()=>characterPanel(btn.dataset.characterEdit)));
     body.querySelectorAll("[data-character-use]").forEach(btn=>btn.addEventListener("click",()=>{
       const id=btn.dataset.characterUse,c=chat();if(!characters.some(x=>x.id===id))return;
-      if(c)c.characterId=id;defaultCharacterId=id;save();syncPrompt();renderMessages();renderChats();characterPanel();
+      if(c)c.characterId=id;save();syncPrompt();renderMessages();renderChats();characterPanel();
     }));
     body.querySelectorAll("[data-character-delete]").forEach(btn=>btn.addEventListener("click",()=>{
       const id=btn.dataset.characterDelete;if(characters.length<=1)return;
@@ -127,7 +138,7 @@
       if(edit){
         const i=characters.findIndex(x=>x.id===edit);if(i>=0)characters[i]={...characters[i],name,system};
       }else{
-        const id="role-"+Date.now();characters.push({id,name,system});defaultCharacterId=id;
+        const id="role-"+Date.now();characters.push({id,name,system});
         const c=chat();if(c)c.characterId=id;
       }
       save();syncPrompt();renderMessages();renderChats();characterPanel();
@@ -135,7 +146,19 @@
   }
 
   const baseRenderChats=renderChats;
-  renderChats=function(){baseRenderChats();updateMemoryCount()};
+  renderChats=function(){
+    baseRenderChats();
+    document.querySelectorAll("#chatList .chat-item").forEach((button,i)=>{
+      const owner=characterForChat(chats[i]);if(!owner)return;
+      button.dataset.characterId=owner.id;
+      button.title="绑定角色："+owner.name;
+      const label=document.createElement("small");
+      label.className="xy-chat-role-label";
+      label.textContent=owner.name;
+      button.append(label);
+    });
+    updateMemoryCount();
+  };
 
   const baseRenderMessages=renderMessages;
   renderMessages=function(){baseRenderMessages();refreshCharacterLabels()};
@@ -157,9 +180,9 @@
   const previousOpenPanel=openPanel;
   openPanel=function(type){if(type==="characters"){characterPanel();return}return previousOpenPanel(type)};
 
-  document.querySelector("#newChat")?.addEventListener("click",()=>requestAnimationFrame(()=>{
-    const c=chat();if(c&&!c.characterId){c.characterId=defaultCharacterId;save()}refreshCharacterLabels();
-  }));
+  document.querySelector("#newChat")?.addEventListener("click",()=>requestAnimationFrame(refreshCharacterLabels));
 
-  syncPrompt();refreshCharacterLabels();save();
+  syncPrompt();refreshCharacterLabels();
+  if(bindingMigration)save();else persistCharacters();
+  renderChats();
 })();
