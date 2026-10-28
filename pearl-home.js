@@ -7,7 +7,7 @@ const originalApp=document.querySelector(".app");
 const originalInert=Boolean(originalApp?.inert);
 let fromHome=false;
 const NAV_ROOT="xyIslandRoot";
-const allowed=new Set(["chat","study","imagine","creation","groupchat","journal","toolhub","settings","voice","theme","memory"]);
+const allowed=new Set(["chat","study","imagine","creation","groupchat","journal","toolhub","settings","voice","theme","memory","quotes"]);
 const cards=[
   {label:"书房",description:"人物与角色卡",icon:"book",route:"study"},
   {label:"生图",description:"灵感画室",icon:"image",route:"imagine"},
@@ -114,7 +114,7 @@ function navigate(type){
  if(type==="home"){root.querySelector("#xyPearlScroll")?.scrollTo({top:0,behavior:"smooth"});return}
  if(type==="call"){startCall();return}
  const favorites=type==="favorites";
- if(favorites)type="toolhub";
+ if(favorites)type=window.xyQuoteFavorites?"quotes":"toolhub";
  if(!allowed.has(type))return;
  if(root.hidden)return;
  ensureHomeRoot();
@@ -126,7 +126,7 @@ function navigate(type){
    openPanel(type);
   }else throw Error("No panel route: "+type);
   close();
-  if(favorites){
+  if(favorites&&type==="toolhub"){
     const disclosure=document.querySelector("#xyHubSectionsDisclosure");
     if(disclosure)disclosure.open=true;
     document.querySelector('#xyToolHub [data-hub-filter="favorite"]')?.click();
