@@ -1,6 +1,7 @@
 (()=>{
   const tools=[
     {id:"memory",title:"记忆",subtitle:"整理记忆与偏好",symbol:"⌁",group:"日常"},
+    {id:"quotes",title:"句子收藏",subtitle:"收藏喜欢的单句，随时翻看",symbol:"♡",group:"日常"},
     {id:"characters",title:"角色",subtitle:"角色资料、用户名字",symbol:"◇",group:"日常"},
     {id:"study",title:"书房",subtitle:"角色卡与故事预设",symbol:"▤",group:"创作"},
     {id:"creation",title:"创作角",subtitle:"独立设定书 · 多条故事线",symbol:"✧",group:"创作"},
