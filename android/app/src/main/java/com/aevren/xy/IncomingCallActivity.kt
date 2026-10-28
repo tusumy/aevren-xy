@@ -137,9 +137,8 @@ class IncomingCallActivity : Activity() {
         }
         column.addView(caption)
 
-        val click: (View) -> Unit = { if (declined) decline() else answer() }
-        button.setOnClickListener(click)
-        column.setOnClickListener(click)
+        button.setOnClickListener { if (declined) decline() else answer() }
+        column.setOnClickListener { if (declined) decline() else answer() }
         return column
     }
 
