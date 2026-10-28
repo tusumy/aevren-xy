@@ -55,6 +55,7 @@ test("font import is applied, persists and respects selected scope, without repl
  };
  let mounted=false;
  const body={
+   contains(){return true},
    querySelector(sel){
      if(sel==="#themeBubbleGlass")return {};
      if(sel===".xy-font-import-card")return mounted?card:null;
