@@ -68,11 +68,15 @@
    return previousOpen(type);
  };
  function copy(text){
-   return navigator.clipboard?.writeText(text).catch(()=>{
+   const fallback=()=>{
      const el=document.createElement("textarea");
-     el.value=text;document.body.append(el);el.select();
-     document.execCommand("copy");el.remove();
-   })||Promise.resolve();
+     el.value=text;el.style.position="fixed";el.style.opacity="0";
+     document.body.append(el);el.select();
+     const ok=document.execCommand("copy");el.remove();
+     if(!ok)throw Error("复制失败");
+   };
+   if(navigator.clipboard?.writeText)return navigator.clipboard.writeText(text).catch(fallback);
+   try{fallback();return Promise.resolve()}catch(err){return Promise.reject(err)}
  }
  function jump(item){
    const target=typeof chats!=="undefined"?chats.find(x=>String(x.id)===String(item.chatId)):null;
@@ -80,8 +84,11 @@
    current=target.id;save();renderChats();renderMessages();
    panel.classList.remove("open","xy-quote-panel");
    document.querySelector("#scrim")?.classList.remove("show");
-   const idx=target.messages.findIndex(m=>String(m.id??"")!==""&&String(m.id)===String(item.messageId));
-   const targetIndex=idx>=0?idx:item.messageIndex;
+   const idx=item.messageId?target.messages.findIndex(m=>String(m.id??"")===String(item.messageId)):-1;
+   const old=Number.isInteger(item.messageIndex)?target.messages[item.messageIndex]:null;
+   const matching=old&&String(old.text||"").includes(item.text);
+   const byText=target.messages.findIndex(m=>String(m.text||"").includes(item.text));
+   const targetIndex=idx>=0?idx:matching?item.messageIndex:byText>=0?byText:null;
    requestAnimationFrame(()=>{
      const row=Number.isInteger(targetIndex)?
        document.querySelector('#messages .message[data-message="'+targetIndex+'"]'):null;
