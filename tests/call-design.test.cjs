@@ -12,7 +12,7 @@ test("web phone screen retains live interaction hooks in redesigned pearl glass 
    "xy-call","xy-call-card","xy-call-avatar","xy-call-name","xy-call-status","xy-call-time",
    "xy-call-transcript","xy-call-push","xy-call-fallback","xy-call-answer","xy-call-hangup"
  ]){
-   assert.ok(js.includes('class="'+cls)||js.includes('class="'+cls+' '),"missing required existing call UI: "+cls);
+   assert.ok(js.includes('class="'+cls)||js.includes('class="'+cls+' ')||js.includes('className="'+cls+'"'),"missing required existing call UI: "+cls);
    assert.ok(css.includes("."+cls),"missing call styling for: "+cls);
  }
  assert.ok(js.includes("acceptBtn.onclick=answer;hangupBtn.onclick=hangup;"));
