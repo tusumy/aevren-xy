@@ -34,6 +34,9 @@ on:
       - 'tool-hub.js'
       - 'sidebar-refine.css'
       - 'tests/role-group-favorites.test.cjs'
+      - 'call-core.css'
+      - 'call-core.js'
+      - 'tests/call-design.test.cjs'
       - '.github/workflows/api-hub-test.yml'
   push:
     branches: [main]
@@ -60,6 +63,9 @@ on:
       - 'tool-hub.js'
       - 'sidebar-refine.css'
       - 'tests/role-group-favorites.test.cjs'
+      - 'call-core.css'
+      - 'call-core.js'
+      - 'tests/call-design.test.cjs'
       - '.github/workflows/api-hub-test.yml'
 
 permissions:
@@ -83,9 +89,10 @@ jobs:
           node --check settings-ui.js
           node --check creation-group.js
           node --check quote-favorites.js
+          node --check call-core.js
           node --check message-actions.js
           node --check api-compat.js
           node --check app.js
           node --check proxy-layer.js
       - name: Route regression tests
-        run: node --test tests/api-hub.test.cjs tests/pearl-home.test.cjs tests/theme-sections.test.cjs tests/font-import.test.cjs tests/role-group-favorites.test.cjs
+        run: node --test tests/api-hub.test.cjs tests/pearl-home.test.cjs tests/theme-sections.test.cjs tests/font-import.test.cjs tests/role-group-favorites.test.cjs tests/call-design.test.cjs

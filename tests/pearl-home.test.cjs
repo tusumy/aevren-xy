@@ -35,7 +35,8 @@ test("Android splash unlocks when the new home has rendered and never uses the i
   const splash=read("android/app/src/main/java/com/aevren/xy/SeaSplashView.kt");
   assert.match(main,/#xyIslandHome:not\(\[hidden\]\) \.xy-pearl-shell/);
   assert.doesNotMatch(main,/#xyIslandWorld\.has-image/);
-  assert.match(splash,/drawFlower\(/);
+  assert.match(splash,/RadialGradient/);
+  assert.doesNotMatch(splash,/drawFlower\(/);
   assert.doesNotMatch(splash,/island_splash|BitmapFactory|drawBitmap/);
 });
 

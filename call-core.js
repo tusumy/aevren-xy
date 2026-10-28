@@ -56,18 +56,28 @@
     if(overlay)return;
     overlay=document.createElement("div");overlay.className="xy-call";overlay.hidden=true;
     overlay.innerHTML=`<div class="xy-call-card" role="dialog" aria-modal="true" aria-label="语音通话">
-      <div class="xy-call-glow"></div>
-      <div class="xy-call-avatar" aria-hidden="true"><span>角</span></div>
-      <div class="xy-call-name">角色</div>
-      <div class="xy-call-status">语音来电</div>
-      <div class="xy-call-time">00:00</div>
-      <div class="xy-call-transcript" aria-live="polite"></div>
-      <button type="button" class="xy-call-push" hidden aria-label="按一下开始或结束说话"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"></path></svg><span>说话</span></button>
-      <div class="xy-call-fallback" hidden><input type="text" placeholder="也可以在这里输入"><button type="button">发送</button></div>
-      <div class="xy-call-actions">
-        <button type="button" class="xy-call-answer" aria-label="接听"><span>接听</span></button>
-        <button type="button" class="xy-call-hangup" aria-label="挂断"><span>挂断</span></button>
+      <div class="xy-call-glow" aria-hidden="true"></div>
+      <div class="xy-call-topline"><span>AEVREN XY <span aria-hidden="true">·</span> VOICE</span><i aria-hidden="true"></i></div>
+      <div class="xy-call-identity">
+        <div class="xy-call-avatar" aria-hidden="true"><span>角</span></div>
+        <div class="xy-call-name">角色</div>
+        <div class="xy-call-status" role="status" aria-live="polite">语音来电</div>
+        <div class="xy-call-time">00:00</div>
       </div>
+      <div class="xy-call-transcript" role="log" aria-live="polite" aria-label="通话字幕"></div>
+      <button type="button" class="xy-call-push" hidden aria-label="按一下开始或结束说话">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"></path></svg><span>说话</span>
+      </button>
+      <div class="xy-call-fallback" hidden><input type="text" placeholder="也可以在这里输入" aria-label="输入通话内容"><button type="button">发送</button></div>
+      <div class="xy-call-actions">
+        <button type="button" class="xy-call-answer" aria-label="接听">
+          <span class="xy-call-button-disc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.3 3.7c-.7-.5-1.7-.4-2.3.2l-1.2 1.3C.8 7.3 4 13 8.2 17.2s9.9 7.4 12 5.4l1.3-1.2c.6-.6.7-1.6.2-2.3l-2.7-3.5c-.6-.7-1.6-.9-2.4-.4l-2.1 1.3c-2.6-1.4-4.7-3.5-6.1-6.1l1.3-2.1c.5-.8.3-1.8-.4-2.4L6.3 3.7Z" transform="translate(1 -1) scale(.91)"></path></svg></span><span>接听</span>
+        </button>
+        <button type="button" class="xy-call-hangup" aria-label="挂断">
+          <span class="xy-call-button-disc" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.3 3.7c-.7-.5-1.7-.4-2.3.2l-1.2 1.3C.8 7.3 4 13 8.2 17.2s9.9 7.4 12 5.4l1.3-1.2c.6-.6.7-1.6.2-2.3l-2.7-3.5c-.6-.7-1.6-.9-2.4-.4l-2.1 1.3c-2.6-1.4-4.7-3.5-6.1-6.1l1.3-2.1c.5-.8.3-1.8-.4-2.4L6.3 3.7Z" transform="translate(1 -1) scale(.91)"></path></svg></span><span>挂断</span>
+        </button>
+      </div>
+      <div class="xy-call-ending-label">ONLY OURS · 只属于我们的声音</div>
     </div>`;
     document.body.appendChild(overlay);
     statusEl=overlay.querySelector(".xy-call-status");timeEl=overlay.querySelector(".xy-call-time");
