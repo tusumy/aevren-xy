@@ -108,7 +108,7 @@ class IncomingCallActivity : Activity() {
         }
 
         val button = FrameLayout(this).apply {
-            background = circle(background, Color.argb(70, 255, 255, 255), 1)
+            this.background = circle(background, Color.argb(70, 255, 255, 255), 1)
             elevation = dp(7).toFloat()
             isClickable = true
             isFocusable = true
