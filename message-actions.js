@@ -156,12 +156,26 @@
     return out.length?out:[raw];
   }
 
-  function showQuotePicker(index,point){
+  function favoriteUnit(index,text){
+    const c=currentChat(),m=c?.messages?.[index],quote=String(text||"").trim();
+    if(!m||!quote)return;
+    if(!window.xyQuoteFavorites?.collect)return showNotice("句子收藏功能还没加载",true);
+    try{
+      const role=window.xyCharacterForChat?.(c)||window.xyCurrentCharacter?.();
+      const result=window.xyQuoteFavorites.collect(quote,{
+        chatId:c.id,messageId:m.id??"",messageIndex:index,role:m.role,
+        characterId:c.characterId||"",characterName:role?.name||"",
+        title:c.title||""
+      });
+      showNotice(result.added?"已收藏这一句":"这句已经收藏过了");
+    }catch(error){showNotice("收藏失败："+String(error?.message||error),true)}
+  }
+  function showQuotePicker(index,point,mode='quote'){
     closeLayers();const m=currentChat()?.messages?.[index];if(!m)return;
     const units=quoteUnits(messageText(m));
-    if(units.length<=1){insertQuote(index,units[0]||messageText(m));return}
+    if(units.length<=1){(mode==='favorite'?favoriteUnit:insertQuote)(index,units[0]||messageText(m));return}
     const wrap=document.createElement('div');wrap.className='xy-context-backdrop';
-    wrap.innerHTML=`<div class="xy-context-menu xy-quote-menu" role="menu" aria-label="选择引用句子">${units.map((x,i)=>`<button type="button" data-quote-unit="${i}">${esc(x.length>44?x.slice(0,44)+'…':x)}</button>`).join('')}</div>`;
+    wrap.innerHTML=`<div class="xy-context-menu xy-quote-menu" role="menu" aria-label="${mode==='favorite'?'选择收藏句子':'选择引用句子'}">${units.map((x,i)=>`<button type="button" data-quote-unit="${i}">${esc(x.length>44?x.slice(0,44)+'…':x)}</button>`).join('')}</div>`;
     document.body.appendChild(wrap);
     const menu=wrap.querySelector('.xy-context-menu');
     requestAnimationFrame(()=>{
@@ -179,7 +193,7 @@
       if(e.target===wrap){closeLayers();return}
       const button=e.target.closest?.('[data-quote-unit]');if(!button)return;
       const selected=units[Number(button.dataset.quoteUnit)]||'';
-      closeLayers();insertQuote(index,selected);
+      closeLayers();(mode==='favorite'?favoriteUnit:insertQuote)(index,selected);
     });
   }
 
@@ -220,6 +234,7 @@
       <button type="button" data-context-act="quote">引用整条</button>
       ${assistant?'<button type="button" data-context-act="quote-one">引用一句</button>':''}
       <button type="button" data-context-act="edit">编辑</button>
+      <button type="button" data-context-act="favorite-one">☆ 收藏一句</button>
       <button type="button" data-context-act="remember">记住</button>
       ${assistant?'<button type="button" data-context-act="voice">'+(voiceActive?'停止播放':'播放语音')+'</button>':''}
       ${assistant?'<button type="button" data-context-act="retry">重新生成</button>':''}
@@ -248,6 +263,7 @@
       else if(act==='quote')quoteMessage(index);
       else if(act==='quote-one'){showQuotePicker(index,point);return}
       else if(act==='edit')editMessage(index);
+      else if(act==='favorite-one'){showQuotePicker(index,point,'favorite');return}
       else if(act==='remember')rememberMessage(index);
       else if(act==='voice'){if(window.AevrenVoice?.speakMessage)window.AevrenVoice.speakMessage(index,currentChat());else showNotice('语音模块还没准备好',true)}
       else if(act==='retry')regenerate(index);

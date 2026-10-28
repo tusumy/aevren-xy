@@ -25,6 +25,15 @@ on:
       - 'font-import.js'
       - 'font-import.css'
       - 'tests/font-import.test.cjs'
+      - 'settings-ui.js'
+      - 'creation-group.js'
+      - 'creation-corner.css'
+      - 'message-actions.js'
+      - 'quote-favorites.js'
+      - 'quote-favorites.css'
+      - 'tool-hub.js'
+      - 'sidebar-refine.css'
+      - 'tests/role-group-favorites.test.cjs'
       - '.github/workflows/api-hub-test.yml'
   push:
     branches: [main]
@@ -42,6 +51,15 @@ on:
       - 'theme-sections.js'
       - 'theme-sections.css'
       - 'tests/theme-sections.test.cjs'
+      - 'settings-ui.js'
+      - 'creation-group.js'
+      - 'creation-corner.css'
+      - 'message-actions.js'
+      - 'quote-favorites.js'
+      - 'quote-favorites.css'
+      - 'tool-hub.js'
+      - 'sidebar-refine.css'
+      - 'tests/role-group-favorites.test.cjs'
       - '.github/workflows/api-hub-test.yml'
 
 permissions:
@@ -62,8 +80,12 @@ jobs:
           node --check theme-sections.js
           node --check theme-core.js
           node --check font-import.js
+          node --check settings-ui.js
+          node --check creation-group.js
+          node --check quote-favorites.js
+          node --check message-actions.js
           node --check api-compat.js
           node --check app.js
           node --check proxy-layer.js
       - name: Route regression tests
-        run: node --test tests/api-hub.test.cjs tests/pearl-home.test.cjs tests/theme-sections.test.cjs tests/font-import.test.cjs
+        run: node --test tests/api-hub.test.cjs tests/pearl-home.test.cjs tests/theme-sections.test.cjs tests/font-import.test.cjs tests/role-group-favorites.test.cjs

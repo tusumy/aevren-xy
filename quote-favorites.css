@@ -1,0 +1,24 @@
+/* Saved sentences are distinct from Tool Hub starred shortcuts and character memory. */
+#panel.xy-quote-panel{width:min(720px,100vw)}
+#panel.xy-quote-panel #panelBody{padding-bottom:45px}
+#panelBody .xy-q-library{max-width:650px;margin:auto;color:var(--ink,#3b4e42)}
+#panelBody .xy-q-heading span{font:600 10px/1.5 Georgia,serif;color:var(--theme-accent,#62896c);letter-spacing:.19em}
+#panelBody .xy-q-heading h2{font-size:24px;font-weight:550;letter-spacing:.06em;margin:7px 0}
+#panelBody .xy-q-heading p{font-size:12px;line-height:1.7;color:var(--muted,#7a8a7d);margin:0 0 14px}
+#panelBody .xy-q-toolbar{display:flex;gap:9px;align-items:center}
+#panelBody .xy-q-toolbar input{min-width:0;flex:1;background:var(--glass-strong,#fafdf8);border:1px solid var(--line,#d4dfd2);border-radius:12px;padding:11px;font:inherit}
+#panelBody .xy-q-toolbar button{flex:none;border:1px solid var(--line,#ccdfc9);border-radius:11px;background:var(--glass,#f5faf3);padding:10px;color:var(--ink,#46654e)}
+#panelBody .xy-q-count{font-size:11px;color:var(--muted,#8c9b8d);margin:13px 1px}
+#panelBody .xy-q-list{display:grid;gap:11px}
+#panelBody .xy-q-item{background:var(--glass-strong,rgba(255,255,255,.64));border:1px solid var(--line,#dce8db);border-radius:16px;padding:15px 16px;box-shadow:0 5px 18px rgba(43,67,45,.055)}
+#panelBody .xy-q-item[hidden]{display:none}
+#panelBody .xy-q-item p{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px;line-height:1.8;margin:0 0 9px}
+#panelBody .xy-q-item small{display:block;font-size:11px;color:var(--muted,#88998c);line-height:1.5}
+#panelBody .xy-q-actions{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+#panelBody .xy-q-actions button{font:500 11px/1.3 inherit;border:1px solid var(--line,#d6e1d3);border-radius:10px;padding:7px 11px;background:var(--glass,#f8fbf5);color:var(--ink,#3d6545);cursor:pointer}
+#panelBody .xy-q-actions .xy-q-remove{margin-left:auto;color:#a86868}
+#panelBody .xy-q-actions button:disabled{opacity:.45;cursor:default}
+#panelBody .xy-q-empty{text-align:center;border:1px dashed var(--line,#b9cdb6);border-radius:18px;padding:35px 18px;font-size:12px;color:var(--muted,#7b8c7a)}
+html[data-theme-mode="dark"] #panelBody .xy-q-item{background:rgba(40,62,47,.78);border-color:rgba(209,231,195,.15)}
+html[data-theme-mode="dark"] #panelBody .xy-q-toolbar :is(input,button),html[data-theme-mode="dark"] #panelBody .xy-q-actions button{background:#2c4132;color:#e5f1e4;border-color:rgba(201,224,194,.2)}
+@media(max-width:480px){#panelBody .xy-q-toolbar{flex-wrap:wrap}#panelBody .xy-q-item{padding:12px 13px}}
