@@ -230,3 +230,17 @@
   display:none!important;
   content:none!important;
 }
+
+/* Make the character binding visible for each conversation, without changing titles. */
+.app #chatList .chat-item .xy-chat-role-label{
+ display:inline-block;vertical-align:baseline;margin-left:7px;
+ font-size:10px;line-height:1.45;font-weight:500;
+ padding:1px 5px;border-radius:7px;
+ color:var(--muted,#718371);
+ background:color-mix(in srgb,var(--theme-accent,#68886b) 8%,transparent);
+ white-space:nowrap;max-width:90%;overflow:hidden;text-overflow:ellipsis;
+}
+.app #chatList .chat-item.active .xy-chat-role-label{
+ color:var(--theme-accent,#507c54);
+ background:color-mix(in srgb,var(--theme-accent,#68886b) 13%,transparent);
+}
