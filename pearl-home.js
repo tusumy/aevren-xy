@@ -74,7 +74,7 @@ root.innerHTML=
  '<div class="xy-pearl-grid">'+cardMarkup+'</div>'+
  '</section>'+
  '<button class="xy-pearl-moment" type="button" data-xy-home-route="journal" aria-label="打开我的记录">'+
- '<span class="xy-pearl-moment-symbol" aria-hidden="true">✳</span>'+
+ '<span class="xy-pearl-moment-symbol" aria-hidden="true">✧</span>'+
  '<span><strong>今天也有好多话想跟你说</strong><small>Just another little moment, ours.</small></span>'+
  '<span class="xy-pearl-moment-heart" aria-hidden="true">♡</span></button>'+
  '</div>'+
