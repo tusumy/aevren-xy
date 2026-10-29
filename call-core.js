@@ -2,8 +2,8 @@
   const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
   let phase="idle",recognition=null,startedAt=0,timerId=null,processing=false,restartTimer=null;
   let callRecorder=null,callStream=null,callChunks=[],callNativeRecording=false,callNativeRecognizing=false;
-  let overlay,statusEl,timeEl,transcriptEl,acceptBtn,hangupBtn,fallbackWrap,fallbackInput,pushBtn;
-  let callCharacter=null,callUseNative=false,nativeAutoTimer=null,callGeneration=0,callChat=null,callLines=[],missedSpeech=0,nativeBusyRetries=0;
+  let overlay,statusEl,timeEl,transcriptEl,acceptBtn,hangupBtn,fallbackWrap,fallbackInput,pushBtn,modeBtn;
+  let callCharacter=null,callUseNative=false,nativeAutoTimer=null,nativeReadyTimer=null,callGeneration=0,callChat=null,callLines=[],missedSpeech=0,nativeBusyRetries=0,nativeTimeouts=0,nativeSpeechReady=false;
   let forceRecordedStt=false;
   let ambience=null,ambienceEvents=[],recordingHearingSummary="";
   let ringtoneContext=null,ringtoneTimer=null;
@@ -65,6 +65,7 @@
         <div class="xy-call-time">00:00</div>
       </div>
       <div class="xy-call-transcript" role="log" aria-live="polite" aria-label="通话字幕"></div>
+      <button type="button" class="xy-call-mode" hidden aria-label="切换语音输入方式"><span>改用按键说话</span></button>
       <button type="button" class="xy-call-push" hidden aria-label="按一下开始或结束说话">
         <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7"></path></svg><span>说话</span>
       </button>
@@ -82,9 +83,14 @@
     document.body.appendChild(overlay);
     statusEl=overlay.querySelector(".xy-call-status");timeEl=overlay.querySelector(".xy-call-time");
     transcriptEl=overlay.querySelector(".xy-call-transcript");acceptBtn=overlay.querySelector(".xy-call-answer");hangupBtn=overlay.querySelector(".xy-call-hangup");
-    fallbackWrap=overlay.querySelector(".xy-call-fallback");fallbackInput=fallbackWrap.querySelector("input");pushBtn=overlay.querySelector(".xy-call-push");
+    fallbackWrap=overlay.querySelector(".xy-call-fallback");fallbackInput=fallbackWrap.querySelector("input");pushBtn=overlay.querySelector(".xy-call-push");modeBtn=overlay.querySelector(".xy-call-mode");
     acceptBtn.onclick=answer;hangupBtn.onclick=hangup;
     pushBtn.onclick=()=>callNativeRecognizing||callNativeRecording||callRecorder?.state==="recording"?stopFallbackRecording():startFallbackRecording();
+    modeBtn.onclick=()=>{
+      if(phase!=="connected"||processing)return;
+      if(callUseNative||recognition)fallbackToManual("已切换为按键说话");
+      else retryAutomaticSpeech();
+    };
     fallbackWrap.querySelector("button").onclick=()=>submitFallback();
     fallbackInput.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();submitFallback()}};
     syncCallCharacter();
@@ -126,16 +132,43 @@
     };
     syncCallCharacter();
     callChat=currentChat();callLines=[];ambienceEvents=[];recordingHearingSummary="";missedSpeech=0;nativeBusyRetries=0;forceRecordedStt=false;startedAt=0;
-    callGeneration++;phase="ringing";processing=false;overlay.hidden=false;overlay.classList.add("show","ringing");overlay.classList.remove("connected");
+    callGeneration++;phase="ringing";processing=false;callUseNative=false;nativeSpeechReady=false;nativeTimeouts=0;overlay.hidden=false;overlay.classList.add("show","ringing");overlay.classList.remove("connected");
     transcriptEl.innerHTML="";statusEl.textContent="语音来电";timeEl.textContent="00:00";acceptBtn.hidden=false;hangupBtn.hidden=false;
-    fallbackWrap.hidden=true;pushBtn.hidden=true;
+    fallbackWrap.hidden=true;pushBtn.hidden=true;modeBtn.hidden=true;
     navigator.vibrate?.([180,120,180]);
     if(options.nativeAccepted!==true)startRingtone();
   }
 
+  function clearNativeReadyTimer(){
+    if(nativeReadyTimer!==null)clearTimeout(nativeReadyTimer);
+    nativeReadyTimer=null;
+  }
+  function updateCallMode(){
+    if(!modeBtn)return;
+    modeBtn.hidden=phase!=="connected";
+    modeBtn.querySelector("span").textContent=callUseNative?"改用按键说话":"重试自动识别";
+  }
+  function retryAutomaticSpeech(){
+    if(phase!=="connected"||processing)return;
+    if(!window.AevrenVoice?.hasNativeRecognition?.()){
+      statusEl.textContent="系统自动识别不可用 · 可用说话按钮或文字输入";return;
+    }
+    clearNativeReadyTimer();clearTimeout(nativeAutoTimer);nativeAutoTimer=null;stopListening();
+    nativeBusyRetries=0;nativeTimeouts=0;missedSpeech=0;nativeSpeechReady=false;
+    callUseNative=true;callNativeRecognizing=false;forceRecordedStt=false;
+    window.AevrenVoice?.cancelNativeRecognition?.();
+    window.AevrenVoice?.onRecognitionProgress?.(voiceStage);
+    pushBtn.hidden=true;fallbackWrap.hidden=true;
+    updateCallMode();
+    statusEl.textContent="正在连接麦克风…";
+    scheduleNativeListening(450);
+  }
   function voiceStage({stage,detail}={}){
     if(phase!=="connected"||!callUseNative||processing)return;
     if(stage==="starting")statusEl.textContent="正在启动语音识别…";
+    if((stage==="state"&&["ready","speech"].includes(detail))||(stage==="partial"&&detail)){
+      nativeSpeechReady=true;clearNativeReadyTimer();
+    }
     if(stage==="state"&&detail==="ready")statusEl.textContent="麦克风已就绪 · 请说话";
     if(stage==="state"&&detail==="speech")statusEl.textContent="已检测到你说话 · 正在听";
     if(stage==="state"&&detail==="processing")statusEl.textContent="已收到声音 · 正在转成文字";
@@ -143,9 +176,19 @@
     if(stage==="result"&&detail)statusEl.textContent="已识别："+detail.slice(0,24);
   }
   function fallbackToManual(reason){
+    if(phase!=="connected")return;
+    clearNativeReadyTimer();clearTimeout(nativeAutoTimer);nativeAutoTimer=null;stopListening();
+    // Cancellation rejects the pending recognizer; disable auto before cancelling
+    // so its handler cannot secretly resume the failed speech loop.
+    callUseNative=false;callNativeRecognizing=false;nativeSpeechReady=false;nativeTimeouts=0;
+    forceRecordedStt=true;
     window.AevrenVoice?.cancelNativeRecognition?.();
-    callUseNative=false;forceRecordedStt=true;pushBtn.hidden=false;fallbackWrap.hidden=false;
-    statusEl.textContent=reason+" · 自动识别不可用，可点击说话或输入文字";
+    window.AevrenVoice?.onRecognitionProgress?.(null);
+    pushBtn.hidden=false;fallbackWrap.hidden=false;
+    pushBtn.classList.remove("recording");
+    pushBtn.querySelector("span").textContent="说话";
+    updateCallMode();
+    statusEl.textContent=reason+" · 点击说话或输入文字";
   }
 
   async function answer(){
@@ -154,15 +197,11 @@
     try{window.AevrenCallNative?.dismissIncomingCall?.()}catch{}
     phase="connected";startedAt=Date.now();overlay.classList.remove("ringing");overlay.classList.add("connected");acceptBtn.hidden=true;statusEl.textContent=SpeechRecognition?"正在接通…":"已接通";
     timerId=setInterval(()=>{if(phase==="connected")timeEl.textContent=fmtTime(Date.now()-startedAt)},500);
-    if(window.AevrenVoice?.hasNativeRecognition?.()){
-      callUseNative=true;nativeBusyRetries=0;
-      window.AevrenVoice.onRecognitionProgress?.(voiceStage);
-      // Clear any abandoned recognizer from a prior call before starting.
-      window.AevrenVoice?.cancelNativeRecognition?.();
-      statusEl.textContent="已接通 · 正在启动麦克风…";
-      scheduleNativeListening(550);return;
-    }
-    if(!SpeechRecognition){fallbackWrap.hidden=false;pushBtn.hidden=false;forceRecordedStt=true;statusEl.textContent="没有系统语音识别 · 点麦克风录音转写";return}
+    updateCallMode();
+    if(window.AevrenVoice?.hasNativeRecognition?.()){retryAutomaticSpeech();return}
+    if(!SpeechRecognition){fallbackToManual("系统自动语音识别不可用");return}
+    // Keep manual controls available even if WebView reports a broken recognizer.
+    forceRecordedStt=false;pushBtn.hidden=false;fallbackWrap.hidden=false;
     await startListening();
   }
 
@@ -176,12 +215,18 @@
     if(phase!=="connected"||!callUseNative||processing||callNativeRecognizing)return;
     if(window.AevrenVoice?.isSpeaking?.())return scheduleNativeListening(350);
     const generation=callGeneration;
-    callNativeRecognizing=true;statusEl.textContent="麦克风识别准备中…";
+    callNativeRecognizing=true;nativeSpeechReady=false;statusEl.textContent="麦克风识别准备中…";
+    clearNativeReadyTimer();
+    nativeReadyTimer=setTimeout(()=>{
+      nativeReadyTimer=null;
+      if(generation!==callGeneration||phase!=="connected"||!callUseNative||!callNativeRecognizing||nativeSpeechReady)return;
+      fallbackToManual("系统麦克风没有响应");
+    },9000);
     try{
       const text=String(await window.AevrenVoice.recognizeNativeOnce({allowActivityFallback:false})).trim();
-      callNativeRecognizing=false;
+      clearNativeReadyTimer();callNativeRecognizing=false;
       if(phase!=="connected"||!callUseNative||generation!==callGeneration)return;
-      nativeBusyRetries=0;
+      nativeBusyRetries=0;nativeTimeouts=0;
       if(text){missedSpeech=0;await handleUserText(text)}
       else{
         missedSpeech++;
@@ -189,30 +234,32 @@
         scheduleNativeListening(missedSpeech<6?700:1800);
       }
     }catch(error){
-      callNativeRecognizing=false;
+      clearNativeReadyTimer();callNativeRecognizing=false;
       if(phase!=="connected"||!callUseNative||generation!==callGeneration)return;
       const code=String(error?.message||error);
       if(["already_listening","speech_busy","speech_error_8","speech_cancelled"].includes(code)){
         // Recover the native microphone rather than forcing a tap on "说话".
         nativeBusyRetries++;
         window.AevrenVoice?.cancelNativeRecognition?.();
-        if(nativeBusyRetries<=3){
+        if(nativeBusyRetries<=2){
           statusEl.textContent="麦克风正在恢复…";
           return scheduleNativeListening(700+nativeBusyRetries*350);
         }
-        if(SpeechRecognition){
-          callUseNative=false;
-          statusEl.textContent="切换到自动语音识别…";
-          return startListening();
-        }
-        fallbackToManual("系统识别一直被占用");
-        return;
+        return fallbackToManual("系统麦克风一直被占用");
       }
-      if(["speech_no_match","speech_timeout"].includes(code)){
+      if(code==="speech_timeout"){
+        nativeTimeouts++;
+        if(nativeTimeouts>=2)return fallbackToManual("语音识别连续超时");
+        statusEl.textContent="语音识别超时，重试一次…";
+        return scheduleNativeListening(700);
+      }
+      if(code==="speech_no_match"){
         nativeBusyRetries=0;missedSpeech++;
         statusEl.textContent="正在听…";
-        // Silence should not disable hands-free mode.
         return scheduleNativeListening(missedSpeech<6?750:1800);
+      }
+      if(code==="permission_requested"||code==="speech_permission"){
+        return fallbackToManual("请允许麦克风权限");
       }
       fallbackToManual("自动语音识别失败："+code.slice(0,50));
     }
@@ -406,7 +453,7 @@
         if(phase==="connected"){
           statusEl.textContent=voiceProblem?"回复已收到 · 声音播放失败，请检查语音设置":"正在听…";
           if(callUseNative)scheduleNativeListening();
-          else if(SpeechRecognition)startListening();
+          else if(!forceRecordedStt&&SpeechRecognition)startListening();
           else{pushBtn.hidden=false;fallbackWrap.hidden=false}
         }
       }
@@ -469,7 +516,7 @@
     const duration=startedAt?fmtTime(Date.now()-startedAt):"00:00";
     const recordChat=callChat,recordCharacter={...currentCallCharacter()},recordStartedAt=startedAt,recordEndedAt=Date.now();
     const transcript=callLines.slice();
-    callGeneration++;phase="idle";processing=false;callUseNative=false;forceRecordedStt=false;
+    callGeneration++;phase="idle";processing=false;callUseNative=false;forceRecordedStt=false;clearNativeReadyTimer();nativeTimeouts=0;modeBtn.hidden=true;
     if(ambience){ambience.stop();ambience=null}ambienceEvents=[];recordingHearingSummary="";
     window.AevrenVoice?.onRecognitionProgress?.(null);clearTimeout(nativeAutoTimer);nativeAutoTimer=null;stopListening();try{window.AevrenVoice?.cancelNativeRecognition?.()}catch{}callNativeRecognizing=false;if(callNativeRecording){try{window.AevrenVoice?.stopNativeCapture?.()}catch{}callNativeRecording=false}if(callRecorder?.state==="recording"){try{callRecorder.onstop=null;callRecorder.stop()}catch{}}callStream?.getTracks().forEach(track=>track.stop());callStream=null;callRecorder=null;callChunks=[];clearInterval(timerId);timerId=null;window.AevrenVoice?.stop?.();
     if(wasConnected&&recordChat?.messages){
