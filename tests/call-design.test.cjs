@@ -29,8 +29,8 @@ test("web phone screen retains live interaction hooks in redesigned pearl glass 
  assert.ok(css.includes("@media(max-width:760px)"),"phone breakpoint");
  assert.ok(css.includes("prefers-reduced-motion"),"accessibility reduced-motion");
  assert.ok(css.includes('data-theme-mode="dark"'),"dark styling");
- assert.ok(index.includes("call-core.css?v=xy20261028pearlaura1"));
- assert.ok(index.includes("call-core.js?v=xy20261028pearlaura1"));
+ assert.ok(index.includes("call-core.css?v=xy20261029sttfix2"));
+ assert.ok(index.includes("call-core.js?v=xy20261029sttfix2"));
 });
 
 test("native locked-screen call screen preserves notification answer and decline intents",()=>{
