@@ -183,6 +183,16 @@ root.addEventListener("click",event=>{
  if(!btn||!root.contains(btn))return;
  navigate(btn.dataset.xyHomeRoute);
 });
+function enterChatFromDestination(){
+ if(routeHost.hidden)return false;
+ unmountDestination();
+ document.documentElement.classList.remove("xy-home-subroute");
+ document.documentElement.classList.remove("xy-island-visible");
+ history.replaceState({...history.state,xyOverlay:false,xyHubChild:false,xyIslandRoot:false,xyIslandPage:"chat"},"");
+ if(originalApp)originalApp.inert=originalInert;
+ fromHome=true;
+ return true;
+}
 function returnHome(){
  document.documentElement.classList.remove("xy-home-subroute");
  fromHome=false;
@@ -214,7 +224,7 @@ if(header&&!document.getElementById("xyIslandReturn")){
  btn.addEventListener("click",()=>{clearOverlays();open()});
 }
 window.xyIslandHome={
- open,close,arrive:()=>{},replay:()=>open(),navigate,nativeBack(){
+ open,close,arrive:()=>{},replay:()=>open(),navigate,enterChatFromDestination,nativeBack(){
   if(!root.hidden)return true;
   if(!fromHome)return false;
   if(history.state?.xyHubChild||history.state?.xyOverlay||history.state?.xyIslandPage)history.back();
