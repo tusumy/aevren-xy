@@ -1,8 +1,7 @@
 (()=>{
   const originalSend=window.AevrenApiCompat?.send||send;
   const pendingUserQueue=[];
-  let queueDraining=false,pendingSeq=0,flushTimer=null;
-  const SEND_SETTLE_MS=10000;
+  let queueDraining=false,pendingSeq=0;
 
   const currentCharacterName=()=>{
     try{return window.xyCurrentCharacter?.()?.name||document.querySelector(".presence strong")?.textContent?.trim()||"玄砚"}catch{return "玄砚"}
@@ -276,21 +275,8 @@
     return true;
   }
 
-  function scheduleFlush(delay=SEND_SETTLE_MS){
-    if(flushTimer)clearTimeout(flushTimer);
-    flushTimer=setTimeout(()=>{
-      flushTimer=null;
-      const draft=document.querySelector("#input")?.value.trim()||"";
-      if(draft){scheduleFlush(900);return}
-      drainQueue();
-    },delay);
-  }
-
   async function drainQueue(){
-    if(queueDraining||sending||!pendingUserQueue.length){
-      if(pendingUserQueue.length)scheduleFlush();
-      return;
-    }
+    if(queueDraining||sending||!pendingUserQueue.length)return;
     queueDraining=true;
     updateReplyNow();
     try{
@@ -308,32 +294,20 @@
     }finally{
       queueDraining=false;
       updateReplyNow();
-      if(pendingUserQueue.length)scheduleFlush();
+      // Only messages that were explicitly submitted by the user enter this queue.
+      if(pendingUserQueue.length)void drainQueue();
     }
   }
 
   send=async function(){
     if(!await queueCurrentInput())return;
-    const latest=pendingUserQueue.at(-1);
-    if(latest?.attachments?.length){
-      if(flushTimer){clearTimeout(flushTimer);flushTimer=null}
-      await drainQueue();
-      return;
-    }
-    scheduleFlush();
+    await drainQueue();
   };
   window.xySendQueued=send;
 
   const sendButton=document.querySelector("#sendBtn");if(sendButton){sendButton.disabled=false;sendButton.onclick=send}
-  const composerWrap=document.querySelector(".composer-wrap");
-  if(composerWrap&&!document.querySelector("#xyReplyNow")){
-    const quick=document.createElement("button");
-    quick.type="button";quick.id="xyReplyNow";quick.className="xy-reply-now";quick.textContent="直接回答";quick.hidden=true;
-    composerWrap.insertBefore(quick,composerWrap.querySelector(".composer"));
-    quick.addEventListener("click",()=>{if(flushTimer){clearTimeout(flushTimer);flushTimer=null}drainQueue()});
-  }
   const inputEl=document.querySelector("#input");
-  inputEl?.addEventListener("input",()=>{if(pendingUserQueue.length)scheduleFlush()});
+  // Input and cursor activity only edit the draft. They never start a request.
   if(inputEl)inputEl.onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}};
   document.querySelector("#newChat")?.addEventListener("click",()=>requestAnimationFrame(()=>{
     const c=chat();if(c?.messages?.length&&!c.messages[0].createdAt){c.messages[0].createdAt=Date.now();save();renderMessages()}
