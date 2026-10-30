@@ -88,7 +88,7 @@ function mockTheme(storage=new Map()){
   };
   const doc={
     documentElement:root,body:{classList:classes,prepend(node){nodes["#themeBackdrop"]=node}},
-    querySelector:sel=>nodes[sel]||null,
+    querySelector:sel=>nodes[sel]||null,addEventListener(){},
     createElement:tag=>({style:{},id:""})
   };
   const window={matchMedia:()=>({matches:false,addEventListener(){}}),
