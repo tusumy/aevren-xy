@@ -39,3 +39,34 @@
 .xy-sticker-edit-mask[hidden]{display:none!important}
 
 .xy-sticker-edit-card{background:white;padding:16px;border-radius:14px}
+
+
+/* Compact sticker autocomplete just above the chat composer. */
+.xy-sticker-suggest[hidden]{display:none!important}
+.xy-sticker-suggest{
+  position:absolute;left:max(12px,calc((100% - 800px)/2));right:max(12px,calc((100% - 800px)/2));
+  bottom:calc(100% - 7px);z-index:80;min-width:0;
+  border:1px solid color-mix(in srgb,var(--theme-accent,#597d61) 18%,transparent);
+  background:color-mix(in srgb,var(--theme-bg,#f5f8f0) 86%,white 14%);
+  box-shadow:0 9px 30px rgba(25,47,32,.15);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-radius:17px;padding:10px 12px 11px;color:var(--ink,#324a3a);
+}
+.xy-sticker-suggest-caption{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:650;margin-bottom:8px}
+.xy-sticker-suggest-caption span{font-size:10px;font-weight:400;opacity:.6}
+.xy-sticker-suggestions{display:flex;gap:8px;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none}
+.xy-sticker-suggestions::-webkit-scrollbar{display:none}
+.xy-sticker-suggestion{
+  appearance:none;-webkit-appearance:none;flex:0 0 60px;min-width:0;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  border:0;border-radius:11px;background:transparent;padding:6px 4px;
+  font:inherit;color:inherit;text-align:center;cursor:pointer;
+}
+.xy-sticker-suggestion:hover,.xy-sticker-suggestion:focus-visible{background:color-mix(in srgb,var(--theme-accent,#628b6d) 14%,transparent)}
+.xy-sticker-suggestion img{display:block;width:48px;height:48px;object-fit:contain}
+.xy-sticker-suggestion span{max-width:100%;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html[data-theme-mode="dark"] .xy-sticker-suggest{
+  background:color-mix(in srgb,var(--theme-bg,#202d24) 87%,#171e19 13%);
+  border-color:rgba(255,255,255,.13);color:#e4efe4
+}
+@media(max-width:760px){.xy-sticker-suggest{left:12px;right:12px;bottom:calc(100% + 1px)}}
