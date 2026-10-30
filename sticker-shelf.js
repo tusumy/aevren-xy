@@ -235,7 +235,7 @@ function renderGrid(){
   if(!all.length){const empty=document.createElement("p");empty.className="xy-sticker-empty";empty.textContent="这里还没有符合条件的表情包";grid.appendChild(empty)}
   for(const s of all){
     const card=document.createElement("div");card.className="xy-sticker-card";
-    card.innerHTML='<button class="xy-sticker-pick" type="button" data-action="send" data-id="'+s.id+'" title="发送 '+escape(s.label)+'"><img data-xy-sticker="'+s.id+'" alt="'+escape(s.label)+'"><span>'+escape(s.label)+'</span></button>'+
+    card.innerHTML='<button class="xy-sticker-pick" type="button" data-action="send" data-id="'+s.id+'" title="插入 '+escape(s.label)+'"><img data-xy-sticker="'+s.id+'" alt="'+escape(s.label)+'"><span>'+escape(s.label)+'</span></button>'+
       '<div class="xy-sticker-actions"><button type="button" data-action="favorite" data-id="'+s.id+'" title="收藏">'+(s.favorite?"♥":"♡")+'</button>'+
       '<button type="button" data-action="ai" data-id="'+s.id+'" title="允许AI发送">'+(s.aiEnabled?"AI ✓":"AI ×")+'</button>'+
       '<button type="button" data-action="scope" data-id="'+s.id+'" title="切换角色范围">'+(s.scope==="character"?"仅此角色":"共享")+'</button>'+
@@ -247,23 +247,21 @@ function renderGrid(){
 function close(){if(overlay)overlay.hidden=true}
 function open(){if(!overlay)return;overlay.hidden=false;overlay.querySelector("#xyStickerSearch").value="";query="";renderGrid()}
 async function sendSticker(id){
-  const x=cache.get(id);if(!x)return;
+  const item=cache.get(id);if(!item)return;
   const input=document.querySelector("#input");if(!input)return;
   close();
-  const mark="[sticker:"+id+"]";
-  if(input.value.trim()){
-    input.value+=(input.value.endsWith("\n")?"":"\n")+mark;
-    input.dispatchEvent(new Event("input",{bubbles:true}));input.focus();
-  }else{
-    input.value=mark;input.dispatchEvent(new Event("input",{bubbles:true}));
-    try{
-      if(window.xySendQueued){
-        await window.xySendQueued();
-        document.querySelector("#xyReplyNow")?.click();
-      }else document.querySelector("#sendBtn")?.click();
-    }catch(e){toast("发送失败："+(e?.message||e))}
-  }
-  edit(id,{lastUsed:Date.now()});
+  const marker="[sticker:"+id+"]";
+  const start=input.selectionStart??input.value.length;
+  const end=input.selectionEnd??start;
+  const before=input.value.slice(0,start),after=input.value.slice(end);
+  const prefix=before&&!before.endsWith("\n")?"\n":"";
+  const suffix=after&&!after.startsWith("\n")?"\n":"";
+  input.setRangeText(prefix+marker+suffix,start,end,"end");
+  input.dispatchEvent(new Event("input",{bubbles:true}));
+  input.focus();
+  try{resize()}catch{}
+  // Selecting a sticker edits the draft only. The Send button/Enter is explicit.
+  void edit(id,{lastUsed:Date.now()});
 }
 
 /* On-device sticker suggestions as the user types; no model calls. */
