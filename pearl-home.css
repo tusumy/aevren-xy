@@ -236,3 +236,44 @@ html[data-xy-custom-background="1"] #xyIslandHome .xy-pearl-ambient::after{
 
 /* Do not expose the persistent chat surface behind a home subpage. */
 html.xy-home-subroute .app .main{visibility:hidden!important;pointer-events:none!important}
+
+
+/* Independent full-page destinations when navigating from the home screen.
+   The chat view stays mounted for continuity but is not the page background. */
+#xyHomeDestination[hidden]{display:none!important}
+#xyHomeDestination{
+ position:fixed;inset:0;z-index:50010;
+ display:flex;flex-direction:column;align-items:center;
+ isolation:isolate;
+ background:var(--theme-bg,#f3f8ed);
+ color:var(--ink,#354a3b);
+ overflow:hidden;
+}
+#xyHomeDestination #panel{
+ position:relative!important;
+ inset:auto!important;
+ top:auto!important;left:auto!important;right:auto!important;
+ width:min(100%,760px)!important;
+ max-width:100%!important;
+ height:100%!important;
+ min-height:0;
+ transform:none!important;
+ transition:none!important;
+ border:0!important;
+ border-radius:0!important;
+ box-shadow:none!important;
+ overflow-y:auto;
+ overscroll-behavior:contain;
+ padding:calc(19px + env(safe-area-inset-top,0px)) clamp(16px,4vw,28px) calc(24px + env(safe-area-inset-bottom,0px));
+ background:var(--theme-bg,#f3f8ed);
+}
+#xyHomeDestination #panel .panel-head{
+ position:sticky;top:-20px;z-index:4;
+ padding:6px 0 12px;
+ background:var(--theme-bg,#f3f8ed);
+}
+html[data-theme-mode="dark"] #xyHomeDestination,
+html[data-theme-mode="dark"] #xyHomeDestination #panel,
+html[data-theme-mode="dark"] #xyHomeDestination #panel .panel-head{
+ background:var(--theme-bg,#1f3025);
+}
