@@ -76,6 +76,36 @@
     return `<div class="xy-message-attachments">${inner}</div>`;
   }
 
+
+  // Keep the original quote text in chat history/model context, but show it as
+  // a compact in-bubble reference instead of oversized ordinary bubble text.
+  function quotedSourceIndex(quote,who,beforeIndex){
+    const messages=chat()?.messages||[];
+    const needle=String(quote||"").replace(/…$/,"").replace(/\s+/g," ").trim();
+    if(needle.length<3)return -1;
+    const expectedRole=who==="你"?"user":"assistant";
+    for(let i=Math.min(beforeIndex,messages.length)-1;i>=0;i--){
+      const m=messages[i];if(m?.role!==expectedRole)continue;
+      const variant=Array.isArray(m.variants)&&m.variants.length?m.variants[Math.min(Math.max(Number(m.activeVariant)||0,0),m.variants.length-1)]?.text:null;
+      const source=String(variant??m.text??"").replace(/\s+/g," ").trim();
+      if(source.includes(needle))return i;
+    }
+    return -1;
+  }
+  function bubbleTextHtml(value,index,role){
+    const raw=String(value??"");
+    const quote=role==="user"?raw.match(/^引用([^\r\n：「]{1,40})：「([^\r\n]*)」(?:\r?\n|$)/):null;
+    const body=quote?raw.slice(quote[0].length):raw;
+    const rendered=window.xyChatMarkdown?.render?.(body)??(window.xyStickerShelf?.renderText?.(body)??esc(body));
+    if(!quote)return `<span class="bubble-text">${rendered}</span>`;
+    const who=quote[1].trim(),excerpt=quote[2];
+    const target=quotedSourceIndex(excerpt,who,index);
+    const tag=target>=0?"button":"div";
+    const attributes=target>=0?` type="button" data-xy-quote-target="${target}" title="跳转到原消息" aria-label="跳转到${esc(who)}的原消息"`:"";
+    const preview=`<${tag} class="xy-quoted-preview"${attributes}><span class="xy-quoted-author">↪ 引用 · ${esc(who)}</span><span class="xy-quoted-excerpt">${esc(excerpt)}</span></${tag}>`;
+    return `<span class="bubble-text">${preview}${rendered}</span>`;
+  }
+
   function messageHtml(m,index){
     if(m?.kind==="call"){
       const when=timeText(m.createdAt),name=String(m.characterName||"角色");
@@ -96,7 +126,7 @@
       const split=parts.length>1?` split-piece ${first?"split-first":last?"split-last":"split-mid"}`:"";
       const ts=last&&stamp?`<span class="message-time" title="${esc(title)}">${esc(stamp)}</span>`:"";
       const attachments=first?media:"";
-      const text=part?`<span class="bubble-text">${window.xyChatMarkdown?.render?.(part)??(window.xyStickerShelf?.renderText?.(part)??esc(part))}</span>`:"";
+       const text=part?bubbleTextHtml(part,index,m.role):"";
       return `<div class="message ${m.role}${split}" data-message="${index}" data-part="${i}"><div class="message-stack"><div class="bubble">${attachments}${text}</div>${ts}</div></div>`;
     }).join("");
   }
@@ -104,7 +134,7 @@
   function pendingHtml(item){
     const stamp=messageStamp(item.createdAt),title=timeTitle(item.createdAt);
     const ts=stamp?`<span class="message-time" title="${esc(title)}">${esc(stamp)}</span>`:"";
-    const media=attachmentHtml(item.attachments),text=item.text?`<span class="bubble-text">${window.xyChatMarkdown?.render?.(item.text)??(window.xyStickerShelf?.renderText?.(item.text)??esc(item.text))}</span>`:"";
+    const media=attachmentHtml(item.attachments),text=item.text?bubbleTextHtml(item.text,chat()?.messages?.length||0,"user"):"";
     return `<div class="message user xy-pending" data-pending="${item.id}"><div class="message-stack"><div class="bubble">${media}${text}</div>${ts}</div></div>`;
   }
 
@@ -172,6 +202,20 @@
     updatePlaceholder();
     updateMessageCount();
   };
+
+
+  document.querySelector("#messages")?.addEventListener("click",event=>{
+    const button=event.target.closest?.(".xy-quoted-preview[data-xy-quote-target]");
+    if(!button)return;
+    event.preventDefault();event.stopPropagation();
+    const index=Number(button.dataset.xyQuoteTarget);
+    if(!Number.isInteger(index)||index<0)return;
+    const target=document.querySelector(`#messages .message[data-message="${index}"]`);
+    if(!target)return;
+    target.scrollIntoView({behavior:"smooth",block:"center"});
+    target.classList.add("xy-quote-target-active");
+    setTimeout(()=>target.classList.remove("xy-quote-target-active"),1500);
+  });
 
   async function performOriginalSend(text,createdAt=Date.now(),attachments=[]){
     const c=chat(),input=document.querySelector("#input");
