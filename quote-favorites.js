@@ -84,6 +84,7 @@
    current=target.id;save();renderChats();renderMessages();
    panel.classList.remove("open","xy-quote-panel");
    document.querySelector("#scrim")?.classList.remove("show");
+   window.xyIslandHome?.enterChatFromDestination?.();
    const idx=item.messageId?target.messages.findIndex(m=>String(m.id??"")===String(item.messageId)):-1;
    const old=Number.isInteger(item.messageIndex)?target.messages[item.messageIndex]:null;
    const matching=old&&String(old.text||"").includes(item.text);
