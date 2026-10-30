@@ -31,7 +31,7 @@ test("all existing and injected Theme settings have foldable groups", () => {
   const html=read("index.html");
   assert.ok(html.includes("theme-sections.js?v="));
   assert.ok(html.includes("theme-sections.css?v="));
-  assert.ok(html.includes("theme-core.js?v=xy20261026bgunlock1"));
+  assert.ok(html.includes("theme-core.js?v=xy20261030palette1"));
 });
 
 test("fold controller defaults detail cards shut; toggles keep original card nodes and persist across rerenders", () => {
