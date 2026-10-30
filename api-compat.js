@@ -247,8 +247,22 @@
 
   async function compatSend(options){
     const fromCall=options?.__xyCall===true&&typeof options.text==='string';
-    const el=$('#input'),text=fromCall?options.text.trim():el.value.trim();
-    const attachments=fromCall?[]:(Array.isArray(window.xyActiveSendAttachments)?window.xyActiveSendAttachments:[]);
+    const replyExisting=options?.__xyReplyExisting===true&&!fromCall;
+    const el=$('#input'),c=chat();
+    // A normal tap on Send is handled locally in message-ui. Only the
+    // separate "直接回答" button opts into generating for saved user messages.
+    let pending=[];
+    if(replyExisting){
+      let answeredAt=-1;
+      for(let i=c.messages.length-1;i>=0;i--){
+        const m=c.messages[i];
+        if(m?.role==='assistant'&&!m.localOnly&&!isLocalAssistant(m.text)){answeredAt=i;break}
+      }
+      pending=c.messages.slice(answeredAt+1).filter(m=>m?.role==='user');
+    }
+    const text=fromCall?options.text.trim():replyExisting?pending.map(m=>String(m.text||'').trim()).filter(Boolean).join('\n'):el.value.trim();
+    const attachments=fromCall?[]:replyExisting?pending.flatMap(m=>Array.isArray(m.attachments)?m.attachments:[]):(Array.isArray(window.xyActiveSendAttachments)?window.xyActiveSendAttachments:[]);
+    if(replyExisting&&!pending.length)return;
     if(!text&&!attachments.length)return;
     if(sending){if(fromCall)throw new Error('上一条消息还在发送');return}
     const ep=window.xyApiHub?.resolveEndpoint?.(chat())||endpoints.find(x=>x.active)||endpoints[0];
@@ -260,10 +274,13 @@
     if(fromCall&&(!ep?.base||!ep?.model))throw new Error('请先配置可用的聊天模型接口');
     sending=true;
     $('#sendBtn').disabled=true;
-    const c=chat();
-    c.messages.push({role:'user',text,attachments});
-    if(c.messages.filter(x=>x.role==='user').length===1)c.title=(text||attachments[0]?.name||'新对话').slice(0,22);
-    if(!fromCall){el.value='';resize()}
+    if(!replyExisting){
+      c.messages.push({role:'user',text,attachments});
+      if(c.messages.filter(x=>x.role==='user').length===1)c.title=(text||attachments[0]?.name||'新对话').slice(0,22);
+      if(!fromCall){el.value='';resize()}
+    }
+    // Existing messages stay in the same order; don't create a duplicate
+    // user bubble or erase the unfinished draft.
     save();renderChats();renderMessages();showTyping();
     if(!ep?.base||!ep?.model){
       hideTyping();
