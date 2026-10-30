@@ -1,7 +1,6 @@
 (()=>{
   const originalSend=window.AevrenApiCompat?.send||send;
-  const pendingUserQueue=[];
-  let queueDraining=false,pendingSeq=0;
+  let replyRequestRunning=false;
 
   const currentCharacterName=()=>{
     try{return window.xyCurrentCharacter?.()?.name||document.querySelector(".presence strong")?.textContent?.trim()||"玄砚"}catch{return "玄砚"}
@@ -130,16 +129,23 @@
     }).join("");
   }
 
-  function pendingHtml(item){
-    const stamp=messageStamp(item.createdAt),title=timeTitle(item.createdAt);
-    const ts=stamp?`<span class="message-time" title="${esc(title)}">${esc(stamp)}</span>`:"";
-    const media=attachmentHtml(item.attachments),text=item.text?bubbleTextHtml(item.text,chat()?.messages?.length||0,"user"):"";
-    return `<div class="message user xy-pending" data-pending="${item.id}"><div class="message-stack"><div class="bubble">${media}${text}</div>${ts}</div></div>`;
+  function hasUnansweredUser(c=chat()){
+    const messages=c?.messages||[];
+    let answeredAt=-1;
+    for(let i=messages.length-1;i>=0;i--){
+      const m=messages[i];
+      if(m?.role==="assistant"&&!m.localOnly&&!String(m.text||"").startsWith("请求失败：")){
+        answeredAt=i;break;
+      }
+    }
+    return messages.slice(answeredAt+1).some(m=>m?.role==="user");
   }
 
   function updateReplyNow(){
     const button=document.querySelector("#xyReplyNow");
-    if(button)button.hidden=!pendingUserQueue.length||queueDraining||sending;
+    if(!button)return;
+    button.hidden=!hasUnansweredUser()||replyRequestRunning||sending;
+    button.disabled=replyRequestRunning||sending;
   }
 
   function ensureHeaderMessageStats(){
@@ -164,8 +170,8 @@
     const c=chat(),day=document.querySelector("#messages .day");
     if(!c)return;
     const saved=(c.messages||[]).filter(m=>m?.role==="user"||m?.role==="assistant");
-    const total=saved.length+pendingUserQueue.length;
-    const users=saved.filter(m=>m.role==="user").length+pendingUserQueue.length;
+    const total=saved.length;
+    const users=saved.filter(m=>m.role==="user").length;
     const assistants=saved.filter(m=>m.role==="assistant").length;
     if(day){day.textContent="AEVREN · XY";day.title="你 "+users+" · "+currentCharacterName()+" "+assistants}
     const wrap=ensureHeaderMessageStats();if(!wrap)return;
@@ -177,29 +183,16 @@
     wrap.querySelector(".xy-header-count")?.setAttribute("aria-label","当前对话 "+total+" 条消息");
   }
 
-  function renderPendingQueue(){
-    const box=document.querySelector("#messages");if(!box)return;
-    box.querySelectorAll(".xy-pending").forEach(x=>x.remove());
-    if(!pendingUserQueue.length){updateReplyNow();updateMessageCount();return}
-    const html=pendingUserQueue.map(pendingHtml).join("");
-    const typing=box.querySelector("#typing");
-    if(typing)typing.insertAdjacentHTML("beforebegin",html);else box.insertAdjacentHTML("beforeend",html);
-    box.scrollTop=box.scrollHeight;
-    window.xyStickerShelf?.hydrateRendered?.(box);
-    updateReplyNow();
-    updateMessageCount();
-  }
-
   renderMessages=function(){
     const c=chat(),box=document.querySelector("#messages");
     if(!box||!c)return;
     box.innerHTML='<div class="day">AEVREN · XY</div>'+c.messages.map(messageHtml).join("");
     window.xyStickerShelf?.hydrateRendered?.(box);
-    renderPendingQueue();
     box.scrollTop=box.scrollHeight;
     const name=document.querySelector(".presence strong");if(name)name.textContent=currentCharacterName();
     updatePlaceholder();
     updateMessageCount();
+    updateReplyNow();
   };
 
 
@@ -216,99 +209,91 @@
     setTimeout(()=>target.classList.remove("xy-quote-target-active"),1500);
   });
 
-  async function performOriginalSend(text,createdAt=Date.now(),attachments=[]){
+  // Local Send is intentionally not an API request. Saved messages survive
+  // refreshes and switching conversations until the user asks for a reply.
+  let localSending=false;
+  send=async function(){
+    if(localSending||sending)return;
     const c=chat(),input=document.querySelector("#input");
     if(!c||!input)return;
-    input.value=String(text||"");
-    window.xyActiveSendAttachments=Array.isArray(attachments)?attachments:[];
-    try{resize()}catch{}
-    const before=c.messages.length,start=Date.now();
-    const pending=originalSend();
-    const afterImmediate=c.messages.length;
-    for(let i=before;i<afterImmediate;i++){
-      if(c.messages[i].createdAt)continue;
-      c.messages[i].createdAt=(i===before&&c.messages[i].role==="user")?createdAt:start+i-before;
-    }
-    if(afterImmediate>before){
-      save();renderMessages();
-      if(sending&&!document.querySelector("#typing"))showTyping();
-    }
-    const button=document.querySelector("#sendBtn");
-    if(button&&sending)button.disabled=false;
-    try{return await pending}
-    finally{
-      window.xyActiveSendAttachments=[];
-      const finished=Date.now();
-      for(let i=afterImmediate;i<c.messages.length;i++)if(!c.messages[i].createdAt)c.messages[i].createdAt=finished+i-afterImmediate;
-      save();renderMessages();
-      if(button)button.disabled=false;
-    }
-  }
-
-  async function queueCurrentInput(){
-    const input=document.querySelector("#input"),text=input?.value.trim()||"";
-    if(!input)return false;
-    const api=window.xyAttachments;
-    if(api?.busy()){
-      api.toast?.("图片还在处理，处理完会继续发送");
-      try{await api.wait()}catch{}
-    }
-    if(api?.peek?.().some(a=>a?.kind==="image")&&!window.xyVision?.enabled?.()&&!window.xyVisionFallback?.forSend?.()){
-      api.toast?.("当前接口是仅文本模式，请到接口设置开启视觉，或移除图片",true);
-      return false;
-    }
-    const attachments=api?.take?.();
-    const files=Array.isArray(attachments)?attachments:[];
-    if(files.some(a=>a?.kind==="image"&&!a.dataUrl)){
-      await window.xyImagePayload?.hydrate?.([{attachments:files}]);
-      if(files.some(a=>a?.kind==="image"&&!a.dataUrl)){
-        api?.restore?.(files);
-        api?.toast?.("图片正文读取失败，已保留在输入框，请重新选择图片",true);
-        return false;
-      }
-    }
-    if(!text&&!files.length)return false;
-    pendingUserQueue.push({id:++pendingSeq,text,attachments:files,createdAt:Date.now()});
-    input.value="";
-    try{resize()}catch{}
-    renderPendingQueue();
-    return true;
-  }
-
-  async function drainQueue(){
-    if(queueDraining||sending||!pendingUserQueue.length)return;
-    queueDraining=true;
-    updateReplyNow();
+    const text=input.value.trim(),api=window.xyAttachments;
+    if(!text&&!api?.peek?.()?.length)return;
+    localSending=true;
+    const sourceChatId=c.id;
+    let files=[];
     try{
-      const batch=pendingUserQueue.splice(0);
-      renderPendingQueue();
-      const c=chat();if(!c)return;
-      const last=batch.at(-1),hadUser=c.messages.some(x=>x.role==="user");
-      if(!hadUser){
-        const first=batch[0];
-        c.title=(first?.text||first?.attachments?.[0]?.name||"新对话").slice(0,22);
+      if(api?.busy()){
+        api.toast?.("正在处理附件");
+        await api.wait();
       }
-      for(const item of batch.slice(0,-1))c.messages.push({role:"user",text:item.text,attachments:item.attachments||[],createdAt:item.createdAt});
-      if(batch.length>1||!hadUser){save();renderChats();renderMessages()}
-      await performOriginalSend(last.text,last.createdAt,last.attachments||[]);
+      // Don't put attachments into a different conversation if the user
+      // changed chats while file processing was underway.
+      if(chat()?.id!==sourceChatId)return;
+      files=api?.take?.()||[];
+      if(files.some(a=>a?.kind==="image"&&!a.dataUrl)){
+        await window.xyImagePayload?.hydrate?.([{attachments:files}]);
+        if(files.some(a=>a?.kind==="image"&&!a.dataUrl)){
+          api?.restore?.(files);
+          api?.toast?.("图片读取失败，附件已保留，请重试",true);
+          return;
+        }
+      }
+      if(!text&&!files.length)return;
+      c.messages.push({role:"user",text,attachments:files,createdAt:Date.now()});
+      if(c.messages.filter(m=>m.role==="user").length===1){
+        c.title=(text||files[0]?.name||"新对话").slice(0,22);
+      }
+      input.value="";
+      try{resize()}catch{}
+      save();renderChats();renderMessages();
+    }catch(error){
+      if(files.length)api?.restore?.(files);
+      api?.toast?.("消息暂未发出："+String(error?.message||error),true);
     }finally{
-      queueDraining=false;
+      localSending=false;
       updateReplyNow();
-      // Only messages that were explicitly submitted by the user enter this queue.
-      if(pendingUserQueue.length)void drainQueue();
     }
-  }
-
-  send=async function(){
-    if(!await queueCurrentInput())return;
-    await drainQueue();
   };
   window.xySendQueued=send;
 
-  const sendButton=document.querySelector("#sendBtn");if(sendButton){sendButton.disabled=false;sendButton.onclick=send}
+  async function answerNow(){
+    if(replyRequestRunning||sending||!hasUnansweredUser())return;
+    const c=chat(),startIndex=c?.messages?.length||0;
+    replyRequestRunning=true;
+    updateReplyNow();
+    try{
+      // Dedicated opt-in. This does not add another user message and does not
+      // consume or clear any text currently being composed.
+      await originalSend({__xyReplyExisting:true});
+    }catch(error){
+      window.xyAttachments?.toast?.("请求失败："+String(error?.message||error),true);
+    }finally{
+      const completedAt=Date.now();
+      for(let i=startIndex;i<(c?.messages?.length||0);i++){
+        if(!c.messages[i].createdAt)c.messages[i].createdAt=completedAt+i-startIndex;
+      }
+      save();renderMessages();
+      replyRequestRunning=false;
+      updateReplyNow();
+    }
+  }
+
+  const sendButton=document.querySelector("#sendBtn");
+  if(sendButton){sendButton.disabled=false;sendButton.onclick=send}
+  const composerWrap=document.querySelector(".composer-wrap");
+  if(composerWrap&&!document.querySelector("#xyReplyNow")){
+    const quick=document.createElement("button");
+    quick.type="button";quick.id="xyReplyNow";quick.className="xy-reply-now";
+    quick.textContent="直接回答";quick.hidden=true;
+    composerWrap.insertBefore(quick,composerWrap.querySelector(".composer"));
+    quick.addEventListener("click",answerNow);
+  }
   const inputEl=document.querySelector("#input");
-  // Input and cursor activity only edit the draft. They never start a request.
-  if(inputEl)inputEl.onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}};
+  if(inputEl)inputEl.onkeydown=e=>{
+    if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing&&e.keyCode!==229){
+      e.preventDefault();send();
+    }
+  };
   document.querySelector("#newChat")?.addEventListener("click",()=>requestAnimationFrame(()=>{
     const c=chat();if(c?.messages?.length&&!c.messages[0].createdAt){c.messages[0].createdAt=Date.now();save();renderMessages()}
   }));
