@@ -100,7 +100,7 @@
     if(!quote)return `<span class="bubble-text">${rendered}</span>`;
     const who=quote[1].trim(),excerpt=quote[2];
     const target=quotedSourceIndex(excerpt,who,index);
-    const tag=target>=0?"button":"div";
+    const tag=target>=0?"button":"span";
     const attributes=target>=0?` type="button" data-xy-quote-target="${target}" title="跳转到原消息" aria-label="跳转到${esc(who)}的原消息"`:"";
     const preview=`<${tag} class="xy-quoted-preview"${attributes}><span class="xy-quoted-author">↪ 引用 · ${esc(who)}</span><span class="xy-quoted-excerpt">${esc(excerpt)}</span></${tag}>`;
     return `<span class="bubble-text">${preview}${rendered}</span>`;
