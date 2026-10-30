@@ -106,10 +106,10 @@
   const escHtml=s=>String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   function colorField(label,key){
     const value=theme[key];
-    return `<div class="xy-theme-color-row" data-color-row="${key}"><span>${label}</span><div class="xy-theme-color-control"><button type="button" class="xy-theme-color-preview" data-color-preview="${key}" aria-label="${label}" style="background:${value}"></button><input class="xy-theme-color-hex" data-color-input="${key}" value="${value}" maxlength="7" inputmode="text" spellcheck="false"><div class="xy-theme-palette" data-color-palette="${key}" hidden>${SWATCHES.map(c=>`<button type="button" class="xy-theme-swatch" data-color-swatch="${key}" data-color="${c}" style="background:${c}" aria-label="${c}"></button>`).join('')}</div></div></div>`;
+    return `<div class="xy-theme-color-row" data-color-row="${key}"><span>${label}</span><div class="xy-theme-color-control"><button type="button" class="xy-theme-color-preview" data-color-preview="${key}" aria-label="${label}" aria-expanded="false" style="background:${value}"></button><input class="xy-theme-color-hex" data-color-input="${key}" value="${value}" maxlength="7" inputmode="text" spellcheck="false"><div class="xy-theme-palette" data-color-palette="${key}" hidden>${SWATCHES.map(c=>`<button type="button" class="xy-theme-swatch" data-color-swatch="${key}" data-color="${c}" style="background:${c}" aria-label="${c}"></button>`).join('')}</div></div></div>`;
   }
   function paintRange(el,min,max,value){const pct=Math.max(0,Math.min(100,((Number(value)-min)/(max-min))*100));el?.style.setProperty('--xy-range-pct',pct+'%')}
-  function setColor(key,value){const v=norm(value);if(!v)return false;theme[key]=v;applyTheme();return true}
+  function setColor(key,value){const v=norm(value);if(!v)return false;theme[key]=v;persist();applyTheme();return true}
 
   const blobToDataURL=blob=>new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||''));r.onerror=reject;r.readAsDataURL(blob)});
   const loadImage=file=>new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{URL.revokeObjectURL(url);resolve(img)};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('图片读取失败'))};img.src=url});
@@ -153,8 +153,17 @@
       persist();applyTheme();
       body.querySelectorAll('.xy-bubble-skin-choice').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.bubbleSkin===theme.bubbleSkin)));
     }));
-    body.querySelectorAll('[data-color-preview]').forEach(btn=>btn.addEventListener('click',()=>{const key=btn.dataset.colorPreview,p=body.querySelector(`[data-color-palette="${key}"]`);body.querySelectorAll('.xy-theme-palette').forEach(x=>{if(x!==p)x.hidden=true});if(p)p.hidden=!p.hidden}));
-    body.querySelectorAll('[data-color-swatch]').forEach(btn=>btn.addEventListener('click',()=>{const key=btn.dataset.colorSwatch,value=btn.dataset.color;if(setColor(key,value)){const input=body.querySelector(`[data-color-input="${key}"]`),preview=body.querySelector(`[data-color-preview="${key}"]`),p=body.querySelector(`[data-color-palette="${key}"]`);if(input)input.value=theme[key];if(preview)preview.style.background=theme[key];if(p)p.hidden=true}}));
+    body.querySelectorAll('[data-color-preview]').forEach(btn=>btn.addEventListener('click',()=>{
+      const key=btn.dataset.colorPreview,p=body.querySelector(`[data-color-palette="${key}"]`);
+      body.querySelectorAll('.xy-theme-palette').forEach(x=>{if(x!==p)x.hidden=true});
+      if(!p)return;
+      p.hidden=!p.hidden;
+      btn.setAttribute('aria-expanded',String(!p.hidden));
+      // The palette now expands within the card; scroll just enough to reveal
+      // the lowest swatches instead of covering the following section.
+      if(!p.hidden)requestAnimationFrame(()=>{if(!p.hidden)p.scrollIntoView?.({block:'nearest',behavior:'smooth'})});
+    }));
+    body.querySelectorAll('[data-color-swatch]').forEach(btn=>btn.addEventListener('click',()=>{const key=btn.dataset.colorSwatch,value=btn.dataset.color;if(setColor(key,value)){const input=body.querySelector(`[data-color-input="${key}"]`),preview=body.querySelector(`[data-color-preview="${key}"]`),p=body.querySelector(`[data-color-palette="${key}"]`);if(input)input.value=theme[key];if(preview){preview.style.background=theme[key];preview.setAttribute('aria-expanded','false')}if(p)p.hidden=true}}));
     body.querySelectorAll('[data-color-input]').forEach(input=>{const commit=()=>{const key=input.dataset.colorInput;if(setColor(key,input.value)){input.value=theme[key];const p=body.querySelector(`[data-color-preview="${key}"]`);if(p)p.style.background=theme[key]}else input.value=theme[key]};input.addEventListener('change',commit);input.addEventListener('blur',commit)});
     body.querySelectorAll('[data-theme-mode]').forEach(btn=>btn.addEventListener('click',()=>{theme.mode=btn.dataset.themeMode;persist();applyTheme();themePanel()}));
     body.querySelectorAll('[data-theme-preset]').forEach(btn=>btn.addEventListener('click',()=>{if(window.xyThemePresets.set(btn.dataset.themePreset))themePanel()}));
