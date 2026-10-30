@@ -265,6 +265,67 @@ async function sendSticker(id){
   }
   edit(id,{lastUsed:Date.now()});
 }
+
+/* On-device sticker suggestions as the user types; no model calls. */
+let suggestionHost=null,suggestionComposing=false,suggestionSerial=0;
+function dismissSuggestions(){if(suggestionHost)suggestionHost.hidden=true;suggestionSerial++}
+function stickerMatches(value,caret){
+  const before=String(value||"").slice(0,caret);
+  const tail=(before.split(/[\s，。！？,.!?;；：:\r\n()（）【】]/).pop()||"").toLocaleLowerCase();
+  if(tail.length<2||tail.includes("[sticker:"))return [];
+  const list=[];
+  for(const item of cache.values()){
+    if(!scopeOk(item))continue;
+    const name=String(item.label||"").toLocaleLowerCase();let strength=0;
+    for(let size=2;size<=Math.min(14,tail.length);size++){
+      const ending=tail.slice(-size);
+      if(name.includes(ending))strength=Math.max(strength,size*12+(name===ending?15:0)+(name.startsWith(ending)?4:0));
+    }
+    if(strength)list.push({item,score:strength+(item.favorite?6:0)+(item.lastUsed?2:0)});
+  }
+  return list.sort((a,b)=>b.score-a.score||sortItems(a.item,b.item)).slice(0,5).map(x=>x.item);
+}
+function updateSuggestions(){
+  if(!suggestionHost||suggestionComposing)return;
+  const input=document.querySelector("#input");
+  if(!input||document.querySelector("#xyIslandHome:not([hidden])"))return dismissSuggestions();
+  const results=stickerMatches(input.value,input.selectionStart??input.value.length);
+  if(!results.length)return dismissSuggestions();
+  const serial=++suggestionSerial,row=suggestionHost.querySelector(".xy-sticker-suggestions");
+  row.replaceChildren();
+  for(const item of results){
+    const button=document.createElement("button");button.type="button";button.className="xy-sticker-suggestion";
+    button.dataset.stickerSuggestion=item.id;button.title="插入表情："+item.label;
+    const img=document.createElement("img");img.alt="";img.loading="lazy";
+    const label=document.createElement("span");label.textContent=item.label;
+    button.append(img,label);row.appendChild(button);
+    imageUrl(item.id).then(src=>{if(src&&serial===suggestionSerial&&button.isConnected)img.src=src}).catch(()=>{});
+  }
+  suggestionHost.hidden=false;
+}
+function installAutocomplete(){
+  const composer=document.querySelector(".composer-wrap"),input=document.querySelector("#input");
+  if(!composer||!input||document.querySelector("#xyStickerSuggestions"))return;
+  composer.style.position="relative";
+  suggestionHost=document.createElement("section");
+  suggestionHost.id="xyStickerSuggestions";suggestionHost.className="xy-sticker-suggest";
+  suggestionHost.hidden=true;suggestionHost.setAttribute("aria-label","输入时推荐的表情包");
+  suggestionHost.innerHTML='<div class="xy-sticker-suggest-caption">表情联想 <span>点击插入</span></div><div class="xy-sticker-suggestions"></div>';
+  composer.insertBefore(suggestionHost,composer.querySelector(".composer"));
+  input.addEventListener("compositionstart",()=>{suggestionComposing=true;dismissSuggestions()});
+  input.addEventListener("compositionend",()=>{suggestionComposing=false;updateSuggestions()});
+  input.addEventListener("input",updateSuggestions);
+  input.addEventListener("keyup",event=>{if(event.key==="ArrowLeft"||event.key==="ArrowRight")updateSuggestions()});
+  input.addEventListener("blur",()=>setTimeout(()=>{if(document.activeElement!==input)dismissSuggestions()},220));
+  input.addEventListener("keydown",event=>{if(event.key==="Escape"&&!suggestionHost.hidden){event.preventDefault();event.stopPropagation();dismissSuggestions()}},true);
+  suggestionHost.addEventListener("pointerdown",event=>{if(event.target.closest("button[data-sticker-suggestion]"))event.preventDefault()});
+  suggestionHost.addEventListener("click",event=>{
+    const button=event.target.closest("button[data-sticker-suggestion]");if(!button)return;
+    const id=button.dataset.stickerSuggestion;dismissSuggestions();void sendSticker(id);
+  });
+  void ready.then(()=>updateSuggestions());
+}
+
 let editingId="", editingDelete=false;
 function editorNodes(){
   const mask=overlay?.querySelector(".xy-sticker-edit-dialog");
@@ -391,5 +452,6 @@ function installUI(){
 }
 window.xyStickerShelf={ready:()=>ready,context,expandHistory,normalizeReply,renderText,hydrateRendered,open,close};
 installUI();
+installAutocomplete();
 ready.then(()=>{if(typeof renderMessages==="function")renderMessages()});
 })();
