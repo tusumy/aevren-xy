@@ -267,7 +267,9 @@
     if(sending){if(fromCall)throw new Error('上一条消息还在发送');return}
     const ep=window.xyApiHub?.resolveEndpoint?.(chat())||endpoints.find(x=>x.active)||endpoints[0];
     if(!fromCall&&attachments.some(a=>a?.kind==="image")&&ep?.vision!==true&&!window.xyVisionFallback?.forSend?.()){
-      window.xyAttachments?.restore?.(attachments);
+      // Saved history attachments stay with their messages; only unsent
+      // composer attachments may be restored to the draft.
+      if(!replyExisting)window.xyAttachments?.restore?.(attachments);
       window.xyAttachments?.toast?.("当前模型不支持看图，请启用视觉或设置备用视觉模型",true);
       return;
     }
