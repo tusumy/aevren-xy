@@ -1,7 +1,9 @@
 /* 砚屿 · 青苹果奶霜玻璃 — isolated theme preset, no image or character artwork.
    Uses layered CSS color, pearl highlights and blush reflections; other presets are untouched.
    Preset gradients apply only without a user-selected wallpaper/background color.
-   The normal theme overlay slider remains in control of the backdrop. */
+   The normal theme overlay slider remains in control of the backdrop.
+   Bubble pigments and readable text are always user-owned theme variables;
+   this preset controls the glass edges and shadows, never locks bubble colors. */
 html[data-xy-palette="apple"][data-theme-mode="light"]{
   --ink:#303e2f;--muted:#737d6c;--line:rgba(112,137,96,.18);--soft:#e9efdd;
   --glass:rgba(255,251,245,.53);--glass-strong:rgba(255,252,247,.76);
@@ -42,13 +44,13 @@ html[data-xy-palette="apple"][data-theme-mode="light"] .composer:focus-within{
   box-shadow:0 0 0 3px rgba(212,228,195,.62),inset 0 1px 0 white,0 11px 28px rgba(88,110,74,.16)!important;
 }
 html[data-xy-palette="apple"][data-theme-mode="light"] .user .bubble{
-  background:linear-gradient(135deg,rgba(240,250,222,.81),rgba(200,214,182,.71) 65%,rgba(248,223,226,.62))!important;
-  color:#30402d!important;border:1px solid rgba(255,255,247,.96)!important;
+
+  border:1px solid rgba(255,255,247,.96)!important;
   box-shadow:inset 0 2px 0 rgba(255,255,255,.83),0 7px 19px rgba(92,115,74,.14)!important;
 }
 html[data-xy-palette="apple"][data-theme-mode="light"] .assistant .bubble{
-  background:linear-gradient(140deg,rgba(255,253,246,.90),rgba(246,249,234,.68) 58%,rgba(251,223,231,.54))!important;
-  color:#34422f!important;border:1px solid rgba(255,255,250,.96)!important;
+
+  border:1px solid rgba(255,255,250,.96)!important;
   box-shadow:inset 0 2px 0 rgba(255,255,255,.94),0 7px 19px rgba(92,115,74,.10)!important;
 }
 html[data-xy-palette="apple"][data-theme-mode="light"] .send,
@@ -100,12 +102,12 @@ html[data-xy-palette="apple"][data-theme-mode="dark"] :is(
   color:#edf4e9;
 }
 html[data-xy-palette="apple"][data-theme-mode="dark"] .user .bubble{
-  background:linear-gradient(140deg,rgba(73,102,70,.97),rgba(51,77,56,.96))!important;
-  color:#f7fbef!important;border-color:rgba(211,234,196,.30)!important;
+
+  border-color:rgba(211,234,196,.30)!important;
 }
 html[data-xy-palette="apple"][data-theme-mode="dark"] .assistant .bubble{
-  background:linear-gradient(145deg,rgba(52,68,54,.95),rgba(58,53,57,.90))!important;
-  color:#f0f4e9!important;border-color:rgba(231,240,211,.25)!important;
+
+  border-color:rgba(231,240,211,.25)!important;
 }
 html[data-xy-palette="apple"][data-theme-mode="dark"] :is(.theme-setting-card label,.xy-theme-color-row,.setting-note,.xy-apple-theme-note){
   color:#c3d0bb!important;
