@@ -43,6 +43,7 @@ test("swatch grid is inline in expanded theme card; never clipped by the next se
 });
 
 function mockTheme(storage=new Map()){
+  if(!storage.has('xy.theme'))storage.set('xy.theme',JSON.stringify({preset:'apple'}));
   const settings=new Map(),paletteNodes=new Map(),hexNodes=new Map(),previewNodes=new Map();
   const attrs=(key)=>({dataset:{colorPreview:key},style:{},_listeners:{},setAttribute(name,val){this[name]=val},
     addEventListener(name,cb){this._listeners[name]=cb}});
