@@ -100,6 +100,7 @@ function clearOverlays(){
  document.querySelector("#scrim")?.classList.remove("show");
 }
 function open(asReturn=false){
+ document.documentElement.classList.remove("xy-home-subroute");
  root.hidden=false;
  if(originalApp)originalApp.inert=true;
  document.documentElement.classList.add("xy-island-visible");
@@ -118,6 +119,8 @@ function navigate(type){
  if(!allowed.has(type))return;
  if(root.hidden)return;
  ensureHomeRoot();
+ // Hide the underlying chat for panel destinations before revealing them.
+ document.documentElement.classList.toggle("xy-home-subroute",type!=="chat");
  fromHome=true;
  try{
   if(type==="chat"){
@@ -157,6 +160,7 @@ root.addEventListener("click",event=>{
  navigate(btn.dataset.xyHomeRoute);
 });
 function returnHome(){
+ document.documentElement.classList.remove("xy-home-subroute");
  fromHome=false;
  clearOverlays();
  open(true);
