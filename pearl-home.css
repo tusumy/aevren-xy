@@ -232,3 +232,7 @@ html[data-xy-custom-background="1"] #xyIslandHome .xy-pearl-ambient{
 html[data-xy-custom-background="1"] #xyIslandHome .xy-pearl-ambient::after{
  display:none;
 }
+
+
+/* Do not expose the persistent chat surface behind a home subpage. */
+html.xy-home-subroute .app .main{visibility:hidden!important;pointer-events:none!important}
