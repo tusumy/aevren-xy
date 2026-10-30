@@ -5,6 +5,28 @@ if(document.getElementById("xyIslandHome"))return;
 
 const originalApp=document.querySelector(".app");
 const originalInert=Boolean(originalApp?.inert);
+const panel=document.querySelector("#panel");
+const panelParent=panel?.parentNode||null;
+const panelNextSibling=panel?.nextSibling||null;
+const routeHost=document.createElement("section");
+routeHost.id="xyHomeDestination";
+routeHost.hidden=true;
+routeHost.setAttribute("aria-label","砚屿功能页面");
+document.body.appendChild(routeHost);
+function mountDestination(){
+ if(!panel)return false;
+ routeHost.appendChild(panel);
+ routeHost.hidden=false;
+ if(originalApp)originalApp.inert=true;
+ return true;
+}
+function unmountDestination(){
+ routeHost.hidden=true;
+ if(panel&&panelParent&&panel.parentNode===routeHost){
+  if(panelNextSibling?.parentNode===panelParent)panelParent.insertBefore(panel,panelNextSibling);
+  else panelParent.appendChild(panel);
+ }
+}
 let fromHome=false;
 const NAV_ROOT="xyIslandRoot";
 const allowed=new Set(["chat","study","imagine","creation","groupchat","journal","toolhub","settings","voice","theme","memory","quotes"]);
@@ -100,6 +122,7 @@ function clearOverlays(){
  document.querySelector("#scrim")?.classList.remove("show");
 }
 function open(asReturn=false){
+ unmountDestination();
  document.documentElement.classList.remove("xy-home-subroute");
  root.hidden=false;
  if(originalApp)originalApp.inert=true;
@@ -108,7 +131,7 @@ function open(asReturn=false){
 }
 function close(){
  root.hidden=true;
- if(originalApp)originalApp.inert=originalInert;
+ if(originalApp)originalApp.inert=routeHost.hidden?originalInert:true;
  document.documentElement.classList.remove("xy-island-visible");
 }
 function navigate(type){
@@ -127,6 +150,7 @@ function navigate(type){
    history.pushState({...history.state,xyIslandRoot:false,xyIslandPage:"chat",xyOverlay:false,xyHubChild:false},"");
   }else if(typeof openPanel==="function"){
    openPanel(type);
+   if(!mountDestination())throw Error("Missing destination panel");
   }else throw Error("No panel route: "+type);
   close();
   if(favorites&&type==="toolhub"){
@@ -137,7 +161,7 @@ function navigate(type){
   if(type==="chat")document.querySelector("#input")?.focus({preventScroll:true});
  }catch(error){
   console.warn("[砚屿首页] 打开入口失败",type,error);
-  fromHome=false;open();
+  unmountDestination();fromHome=false;open();
  }
 }
 function startCall(){
