@@ -278,9 +278,19 @@ function navigate(type){
  if(type===activeRoute){
   if(type==="home")root.querySelector("#xyPearlScroll")?.scrollTo({top:0,behavior:"smooth"});
   else if(type==="favorites")renderFavorites();
+  else if(type==="toolhub"&&history.state?.xyHubChild){
+   window.xyPanelNavigation?.reset?.();
+   history.replaceState({...history.state,xyHubChild:false},"");
+   applyRoute("toolhub","toolhub");
+  }
   return;
  }
  const tab=primaryRoutes.has(type)?type:tabFor(type);
+ // A main-tab switch leaves a nested Tool Hub page behind; the Back
+ // destination should be the hub itself, not an orphaned child overlay.
+ if(history.state?.xyHubChild){
+  history.replaceState({...history.state,xyHubChild:false,xyAppRoute:activeRoute,xyIslandPage:activeRoute},"");
+ }
  window.xyPanelNavigation?.reset?.();
  const previous=history.state||{};
  history.pushState({...routeState(type,tab),xyFromRoute:previous.xyAppRoute||activeRoute},"");
