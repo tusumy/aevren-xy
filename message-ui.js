@@ -256,6 +256,29 @@
   };
   window.xySendQueued=send;
 
+  // A sticker tap creates one saved user message immediately, without
+  // invoking the model or touching any unfinished text/attachments in composer.
+  window.xySendStickerMessage=function(stickerId,label=""){
+    const id=String(stickerId||"");
+    if(!/^u-[a-f0-9]{10}$/.test(id))return false;
+    const c=chat();
+    if(!c?.messages)return false;
+    c.messages.push({
+      role:"user",
+      text:"[sticker:"+id+"]",
+      createdAt:Date.now()
+    });
+    if(c.messages.filter(m=>m.role==="user").length===1){
+      const name=String(label||"").trim().slice(0,30);
+      c.title=name?"表情包："+name:"表情包";
+    }
+    save();
+    renderChats();
+    renderMessages();
+    return true;
+  };
+
+
   async function answerNow(){
     if(replyRequestRunning||sending||!hasUnansweredUser())return;
     const c=chat(),startIndex=c?.messages?.length||0;
