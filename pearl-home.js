@@ -69,7 +69,7 @@ const tabs=[
  {label:"对话",icon:"chat",route:"chat"},
  {label:"工具",icon:"toolbox",route:"toolhub"},
  {label:"收藏",icon:"heart",route:"favorites"},
- {label:"我",icon:"user",route:"settings"}
+ {label:"我",icon:"user",route:"me"}
 ];
 const tabMarkup=tabs.map(item=>
  '<button type="button" class="xy-pearl-tab'+(item.route==="home"?' is-active':'')+'" data-xy-home-route="'+item.route+'" aria-label="'+item.label+'"'+(item.route==="home"?' aria-current="page"':'')+'>'+
@@ -100,8 +100,14 @@ root.innerHTML=
  '<span><strong>今天也有好多话想跟你说</strong><small>Just another little moment, ours.</small></span>'+
  '<span class="xy-pearl-moment-heart" aria-hidden="true">♡</span></button>'+
  '</div>'+
- '<nav class="xy-pearl-bottom" aria-label="首页导航">'+tabMarkup+'</nav></div>';
+ '</div>';
 document.body.appendChild(root);
+const appTabs=document.createElement("nav");
+appTabs.id="xyAppTabBar";
+appTabs.className="xy-app-tabs";
+appTabs.setAttribute("aria-label","砚屿主导航");
+appTabs.innerHTML=tabMarkup;
+document.body.appendChild(appTabs);
 function syncName(){
   const value=window.xyTavernMacros?.name?.();
   const name=typeof value==="string"&&value.trim()&&value.trim()!=="你"?value.trim():"阿毛";
@@ -111,126 +117,272 @@ syncName();
 window.addEventListener("xy-user-profile-change",syncName);
 
 
-function ensureHomeRoot(){
- const h=history.state||{};
- if(h[NAV_ROOT]&&!h.xyOverlay&&!h.xyHubChild&&!h.xyIslandPage)return;
- history.replaceState({...h,[NAV_ROOT]:true,xyOverlay:false,xyHubChild:false,xyIslandPage:false,xyIslandChat:false},"");
+function escapeHtml(value){
+ return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+const primaryRoutes=new Set(["home","chat","toolhub","favorites","me"]);
+const knownRoutes=new Set([...primaryRoutes,"study","imagine","creation","groupchat","journal","settings","mcp","voice","theme","memory","quotes","characters","avatar","data"]);
+let activeRoute="home",activeTab="home";
+
+function tabFor(type){
+ if(primaryRoutes.has(type))return type;
+ if(type==="quotes")return "favorites";
+ return activeTab||"home";
+}
+function setTabSelection(tab){
+ activeTab=tab;
+ appTabs.querySelectorAll("[data-xy-home-route]").forEach(button=>{
+  const selected=button.dataset.xyHomeRoute===tab;
+  button.classList.toggle("is-active",selected);
+  if(selected)button.setAttribute("aria-current","page");
+  else button.removeAttribute("aria-current");
+ });
 }
 function clearOverlays(){
- document.querySelector("#panel")?.classList.remove("open");
+ panel?.classList.remove("open");
  document.querySelector("#sidebar")?.classList.remove("open");
  document.querySelector("#scrim")?.classList.remove("show");
 }
-function open(asReturn=false){
- unmountDestination();
- document.documentElement.classList.remove("xy-home-subroute");
- root.hidden=false;
- if(originalApp)originalApp.inert=true;
- document.documentElement.classList.add("xy-island-visible");
- if(!asReturn){fromHome=false;ensureHomeRoot()}
+function cleanPanelClasses(){
+ panel?.classList.remove("xy-creative-panel","xy-quote-panel","xy-from-toolhub");
 }
-function close(){
- root.hidden=true;
- if(originalApp)originalApp.inert=routeHost.hidden?originalInert:true;
- document.documentElement.classList.remove("xy-island-visible");
+function panelHeading(eyebrow,title){
+ const e=document.querySelector("#panelEyebrow"),t=document.querySelector("#panelTitle");
+ if(e)e.textContent=eyebrow;
+ if(t)t.textContent=title;
 }
-function navigate(type){
- if(type==="home"){root.querySelector("#xyPearlScroll")?.scrollTo({top:0,behavior:"smooth"});return}
- if(type==="call"){startCall();return}
- const favorites=type==="favorites";
- if(favorites)type=window.xyQuoteFavorites?"quotes":"toolhub";
- if(!allowed.has(type))return;
- if(root.hidden)return;
- ensureHomeRoot();
- // Hide the underlying chat for panel destinations before revealing them.
- document.documentElement.classList.toggle("xy-home-subroute",type!=="chat");
- fromHome=true;
+function showCustomPage(title,eyebrow,html){
+ if(!panel)return;
+ cleanPanelClasses();
+ panelHeading(eyebrow,title);
+ const body=document.querySelector("#panelBody");
+ if(body)body.innerHTML=html;
+ panel.classList.add("open");
+ document.querySelector("#scrim")?.classList.add("show");
+}
+function displayName(){
+ const v=window.xyTavernMacros?.name?.();
+ return typeof v==="string"&&v.trim()&&v.trim()!=="你"?v.trim():"阿毛";
+}
+function renderMe(){
+ const name=displayName(),letter=Array.from(name)[0]||"毛";
+ showCustomPage("我","PERSONAL SPACE",
+  '<div class="xy-my-page">'+
+  '<div class="xy-my-profile">'+
+   '<span class="xy-my-avatar" aria-hidden="true">'+escapeHtml(letter)+'</span>'+
+   '<div class="xy-my-intro"><strong>'+escapeHtml(name)+'</strong><small>我的砚屿 · 个人资料</small></div>'+
+  '</div>'+
+  '<label class="xy-my-name" for="xyMyName">你的名字 · 用于 {{user}}</label>'+
+  '<div class="xy-my-name-row"><input id="xyMyName" type="text" maxlength="40" autocomplete="nickname" value="'+escapeHtml(window.xyTavernMacros?.name?.()==="你"?"":window.xyTavernMacros?.name?.()||"")+'" placeholder="阿毛"><button type="button" data-xy-my-save>保存</button></div>'+
+  '<p class="xy-my-note" id="xyMyStatus" role="status">名字与角色卡、聊天中的用户称呼共用同一份设置。</p>'+
+  '<div class="xy-my-section-title">外观与管理</div>'+
+  pageLink("avatar","头像","聊天头像与角色头像","user")+
+  pageLink("theme","个性化","主题、字体、气泡与聊天背景","gear")+
+  pageLink("data","数据与备份","导入、导出与本地数据管理","folder")+
+  '<div class="xy-my-section-title">连接与设置</div>'+
+  pageLink("settings","高级设置","API 接口、模型与参数","gear")+
+  pageLink("mcp","MCP 工具","已连接的服务与权限","toolbox")+
+  pageLink("characters","角色与设定","角色资料与用户称呼","book")+
+  '<p class="xy-my-foot">AEVREN · XY　砚屿</p>'+
+  '</div>');
+}
+function pageLink(route,title,subtitle,icon){
+ return '<button type="button" class="xy-my-link" data-xy-subroute="'+route+'">'+
+  '<span class="xy-my-link-icon">'+svg(icon)+'</span>'+
+  '<span class="xy-my-link-label"><strong>'+escapeHtml(title)+'</strong><small>'+escapeHtml(subtitle)+'</small></span>'+
+  '<span class="xy-my-chevron">›</span></button>';
+}
+const favTools=[
+ ["study","书房"],["memory","记忆"],["mcp","MCP 工具"],["quotes","句子收藏"],["characters","角色"],
+ ["creation","创作角"],["groupchat","群聊"],["journal","日记"],["imagine","生图"],
+ ["theme","主题"],["avatar","头像"],["data","数据管理"],["settings","模型设置"],["voice","语音"]
+];
+function getToolFavorites(){
  try{
-  if(type==="chat"){
-   history.pushState({...history.state,xyIslandRoot:false,xyIslandPage:"chat",xyOverlay:false,xyHubChild:false},"");
-  }else if(typeof openPanel==="function"){
-   openPanel(type);
-   if(!mountDestination())throw Error("Missing destination panel");
-  }else throw Error("No panel route: "+type);
-  close();
-  if(favorites&&type==="toolhub"){
-    const disclosure=document.querySelector("#xyHubSectionsDisclosure");
-    if(disclosure)disclosure.open=true;
-    document.querySelector('#xyToolHub [data-hub-filter="favorite"]')?.click();
-  }
-  if(type==="chat")document.querySelector("#input")?.focus({preventScroll:true});
+  const v=JSON.parse(localStorage.getItem("xy.toolhub.favorites.v1"));
+  return Array.isArray(v)?v.filter(id=>favTools.some(x=>x[0]===id)):["study","memory","mcp"];
+ }catch{return ["study","memory","mcp"]}
+}
+function renderFavorites(){
+ const quotes=window.xyQuoteFavorites?.all?.()||[];
+ const pinned=getToolFavorites();
+ const stickerCount=window.xyStickerShelf?.count?.()||0;
+ const quoteSnippet=quotes.length?quotes.slice(0,2).map(q=>'<div class="xy-fav-quote">'+escapeHtml(String(q.text||"").slice(0,115))+'</div>').join(""):'<p class="xy-fav-empty">收藏的句子会出现在这里。</p>';
+ const toolSnippet=pinned.length?pinned.slice(0,8).map(id=>{
+  const title=favTools.find(t=>t[0]===id)?.[1]||id;
+  return '<button type="button" class="xy-fav-tool" data-xy-subroute="'+escapeHtml(id)+'">'+escapeHtml(title)+'</button>';
+ }).join(""):'<p class="xy-fav-empty">暂时还没有收藏工具。</p>';
+ showCustomPage("收藏","MY FAVORITES",
+  '<div class="xy-fav-page">'+
+   '<div class="xy-fav-hero"><span>COLLECTED MOMENTS</span><h2>喜欢的，都放在一起。</h2><p>收藏的句子、表情包和常用工具，分开保存，统一从这里进入。</p></div>'+
+   '<section class="xy-fav-section"><div class="xy-fav-head"><strong>句子收藏 <small>'+quotes.length+' 句</small></strong><button type="button" data-xy-subroute="quotes">全部查看 ›</button></div>'+quoteSnippet+'</section>'+
+   '<section class="xy-fav-section"><div class="xy-fav-head"><strong>表情包 <small>'+stickerCount+' 张</small></strong><button type="button" data-xy-sticker-library>打开图库 ›</button></div><p class="xy-fav-muted">沿用已经保存的表情包和收藏记录，不会重复建立图库。</p></section>'+
+   '<section class="xy-fav-section"><div class="xy-fav-head"><strong>常用工具 <small>'+pinned.length+' 项</small></strong><button type="button" data-xy-subroute="toolhub" data-xy-tool-favorites>管理工具 ›</button></div><div class="xy-fav-tools">'+toolSnippet+'</div></section>'+
+  '</div>');
+}
+function showHome(){
+ unmountDestination();
+ clearOverlays();
+ document.documentElement.classList.remove("xy-home-subroute","xy-island-visible","xy-tabs-chat");
+ root.hidden=false;
+ document.documentElement.classList.add("xy-island-visible");
+ if(originalApp)originalApp.inert=true;
+}
+function showChat(){
+ clearOverlays();
+ unmountDestination();
+ root.hidden=true;
+ document.documentElement.classList.remove("xy-home-subroute","xy-island-visible");
+ document.documentElement.classList.add("xy-tabs-chat");
+ if(originalApp)originalApp.inert=originalInert;
+}
+function showPanelRoute(type){
+ root.hidden=true;
+ document.documentElement.classList.remove("xy-island-visible","xy-tabs-chat");
+ document.documentElement.classList.add("xy-home-subroute");
+ if(type==="favorites")renderFavorites();
+ else if(type==="me")renderMe();
+ else if(typeof openPanel==="function")openPanel(type);
+ else throw Error("没有可用的页面："+type);
+ if(!mountDestination())throw Error("页面容器未就绪");
+}
+function applyRoute(type,tab=tabFor(type)){
+ if(!knownRoutes.has(type))return false;
+ activeRoute=type;
+ setTabSelection(tab);
+ try{
+  if(type==="home")showHome();
+  else if(type==="chat")showChat();
+  else showPanelRoute(type);
+  return true;
  }catch(error){
-  console.warn("[砚屿首页] 打开入口失败",type,error);
-  unmountDestination();fromHome=false;open();
+  console.warn("[砚屿导航] 无法打开页面",type,error);
+  activeRoute="home";setTabSelection("home");showHome();
+  return false;
  }
 }
+function routeState(type,tab){
+ const rootRoute=type==="home";
+ const panelRoute=type!=="home"&&type!=="chat";
+ return {...(history.state||{}),
+  xyIslandRoot:rootRoute,
+  xyIslandPage:panelRoute?type:type==="chat"?"chat":false,
+  xyIslandChat:type==="chat",
+  xyOverlay:panelRoute,xyHubChild:false,
+  xyAppRoute:type,xyAppTab:tab
+ };
+}
+function navigate(type){
+ if(type==="call"){startCall();return}
+ if(!knownRoutes.has(type))return;
+ if(type===activeRoute){
+  if(type==="home")root.querySelector("#xyPearlScroll")?.scrollTo({top:0,behavior:"smooth"});
+  else if(type==="favorites")renderFavorites();
+  return;
+ }
+ const tab=primaryRoutes.has(type)?type:tabFor(type);
+ window.xyPanelNavigation?.reset?.();
+ const previous=history.state||{};
+ history.pushState({...routeState(type,tab),xyFromRoute:previous.xyAppRoute||activeRoute},"");
+ if(!applyRoute(type,tab))history.back();
+ if(type==="chat")document.querySelector("#input")?.focus({preventScroll:true});
+}
 function startCall(){
- if(root.hidden)return;
  navigate("chat");
  const call=window.AevrenCall;
  if(call?.ring&&call?.answer){
   try{
    call.ring(undefined,{nativeAccepted:true});
-   Promise.resolve(call.answer()).catch(error=>console.warn("[砚屿首页] 语音接通失败",error));
-  }catch(error){
-   console.warn("[砚屿首页] 语音启动失败",error);
-   if(typeof openPanel==="function")openPanel("voice");
+   Promise.resolve(call.answer()).catch(e=>console.warn("[砚屿导航] 语音接通失败",e));
+  }catch(e){
+   console.warn("[砚屿导航] 通话失败",e);
+   openPanel("voice");
   }
  }else if(typeof openPanel==="function")openPanel("voice");
 }
 root.addEventListener("click",event=>{
- const btn=event.target.closest("button[data-xy-home-route]");
- if(!btn||!root.contains(btn))return;
- navigate(btn.dataset.xyHomeRoute);
+ const button=event.target.closest?.("[data-xy-home-route]");
+ if(button&&root.contains(button))navigate(button.dataset.xyHomeRoute);
 });
-function enterChatFromDestination(){
- if(routeHost.hidden)return false;
- unmountDestination();
- document.documentElement.classList.remove("xy-home-subroute");
- document.documentElement.classList.remove("xy-island-visible");
- history.replaceState({...history.state,xyOverlay:false,xyHubChild:false,xyIslandRoot:false,xyIslandPage:"chat"},"");
- if(originalApp)originalApp.inert=originalInert;
- fromHome=true;
- return true;
+appTabs.addEventListener("click",event=>{
+ const button=event.target.closest?.("[data-xy-home-route]");
+ if(button&&appTabs.contains(button))navigate(button.dataset.xyHomeRoute);
+});
+routeHost.addEventListener("click",event=>{
+ const nameSave=event.target.closest?.("[data-xy-my-save]");
+ if(nameSave){
+  const input=routeHost.querySelector("#xyMyName");
+  const message=routeHost.querySelector("#xyMyStatus");
+  try{
+   const name=window.xyTavernMacros?.setName?.(input?.value);
+   if(message)message.textContent="已保存："+name;
+   if(input)input.value=name;
+   const label=routeHost.querySelector(".xy-my-intro strong");
+   if(label)label.textContent=name;
+   const avatar=routeHost.querySelector(".xy-my-avatar");
+   if(avatar)avatar.textContent=Array.from(name)[0]||"毛";
+  }catch(error){if(message)message.textContent=String(error?.message||error)}
+  return;
+ }
+ const sticker=event.target.closest?.("[data-xy-sticker-library]");
+ if(sticker){
+  if(window.xyStickerShelf?.open)window.xyStickerShelf.open();
+  return;
+ }
+ const link=event.target.closest?.("[data-xy-subroute]");
+ if(!link)return;
+ const type=link.dataset.xySubroute;
+ navigate(type);
+ if(link.hasAttribute("data-xy-tool-favorites")){
+  document.querySelector("#xyHubSectionsDisclosure")?.setAttribute("open","");
+  document.querySelector('#xyToolHub [data-hub-filter="favorite"]')?.click();
+ }
+});
+routeHost.addEventListener("keydown",event=>{
+ if(event.key==="Enter"&&event.target?.id==="xyMyName"){
+  event.preventDefault();
+  routeHost.querySelector("[data-xy-my-save]")?.click();
+ }
+});
+function enterChatFromDestination(){navigate("chat");return true}
+function open(asReturn=false){
+ if(asReturn){applyRoute("home","home");return}
+ navigate("home");
 }
-function returnHome(){
- document.documentElement.classList.remove("xy-home-subroute");
- fromHome=false;
- clearOverlays();
- open(true);
-}
+function close(){showChat();activeRoute="chat";setTabSelection("chat")}
+function returnHome(){navigate("home")}
 window.addEventListener("popstate",()=>{
- if(!fromHome)return;
  const state=history.state||{};
- if(state.xyOverlay||state.xyHubChild||state.xyIslandPage)return;
- if(state[NAV_ROOT]||(!state.xyOverlay&&!state.xyHubChild))returnHome();
+ const route=state.xyAppRoute||(state.xyIslandRoot?"home":null);
+ if(!route)return;
+ // Tool Hub's own child-back handler has already restored its parent.
+ if(state.xyHubChild)return;
+ window.xyPanelNavigation?.reset?.();
+ applyRoute(route,state.xyAppTab||tabFor(route));
 });
-// Keep Android and close buttons consistent with the former island navigation.
-document.addEventListener("click",event=>{
- if(!fromHome||!root.hidden)return;
- const button=event.target.closest?.("#closePanel,#sidebarClose,#scrim");
- if(!button||history.state?.xyHubChild)return;
- event.preventDefault();
- event.stopImmediatePropagation();
- if(history.state?.xyOverlay||history.state?.xyIslandPage)history.back();
- else returnHome();
-},true);
 const header=document.querySelector(".main > header");
 if(header&&!document.getElementById("xyIslandReturn")){
- const btn=document.createElement("button");
- btn.type="button";btn.id="xyIslandReturn";btn.className="xy-pearl-return";
- btn.textContent="⌂";btn.title="返回砚屿首页";btn.setAttribute("aria-label","返回砚屿首页");
- header.insertBefore(btn,header.querySelector("#memoryBtn")||null);
- btn.addEventListener("click",()=>{clearOverlays();open()});
+ const button=document.createElement("button");button.type="button";
+ button.id="xyIslandReturn";button.className="xy-pearl-return";
+ button.textContent="⌂";button.title="返回砚屿首页";
+ button.setAttribute("aria-label","返回砚屿首页");
+ header.insertBefore(button,header.querySelector("#memoryBtn")||null);
+ button.addEventListener("click",()=>navigate("home"));
 }
 window.xyIslandHome={
- open,close,arrive:()=>{},replay:()=>open(),navigate,enterChatFromDestination,nativeBack(){
-  if(!root.hidden)return true;
-  if(!fromHome)return false;
-  if(history.state?.xyHubChild||history.state?.xyOverlay||history.state?.xyIslandPage)history.back();
-  else returnHome();
+ open,close,arrive:()=>{},replay:()=>navigate("home"),navigate,
+ enterChatFromDestination,
+ nativeBack(){
+  if(activeRoute==="home")return true;
+  if(history.length>1)history.back();else navigate("home");
   return true;
- },panBy:()=>{}
+ },
+ panBy:()=>{},activeRoute:()=>activeRoute
 };
-open();
+document.documentElement.classList.add("xy-shell-tabs");
+const initial=history.state||{};
+if(!initial.xyAppRoute){
+ history.replaceState({...routeState("home","home"),xyFromRoute:null},"");
+ applyRoute("home","home");
+}else applyRoute(initial.xyAppRoute,initial.xyAppTab||tabFor(initial.xyAppRoute));
 })();
