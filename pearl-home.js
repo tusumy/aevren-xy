@@ -395,4 +395,8 @@ if(!initial.xyAppRoute){
  history.replaceState({...routeState("home","home"),xyFromRoute:null},"");
  applyRoute("home","home");
 }else applyRoute(initial.xyAppRoute,initial.xyAppTab||tabFor(initial.xyAppRoute));
+// IndexedDB sticker metadata may finish loading after the first favorites view.
+void window.xyStickerShelf?.ready?.()?.then(()=>{
+ if(activeRoute==="favorites")renderFavorites();
+}).catch(()=>{});
 })();
