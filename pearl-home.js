@@ -359,7 +359,7 @@ function open(asReturn=false){
  if(asReturn){applyRoute("home","home");return}
  navigate("home");
 }
-function close(){showChat();activeRoute="chat";setTabSelection("chat")}
+function close(){navigate("chat")}
 function returnHome(){navigate("home")}
 window.addEventListener("popstate",()=>{
  const state=history.state||{};
