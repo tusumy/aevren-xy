@@ -46,7 +46,8 @@
   }
   window.xyEnsureOverlayHistory=ensureHistory;
   window.xyPanelNavigation={enterFromHub,backToHub:requestBackToHub,
-    isHubChild:()=>returningToHub&&!!history.state?.xyHubChild};
+    isHubChild:()=>returningToHub&&!!history.state?.xyHubChild,
+    reset:()=>{returningToHub=false;updatePanelClose(false)}};
 
   const priorOpenPanel=openPanel;
   openPanel=function(type){ensureHistory();return priorOpenPanel(type)};
