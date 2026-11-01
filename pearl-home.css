@@ -278,52 +278,108 @@ html[data-theme-mode="dark"] #xyHomeDestination #panel .panel-head{
  background:var(--theme-bg,#1f3025);
 }
 
-/* Five persistent primary tabs live above all three screen surfaces. */
-html.xy-shell-tabs{--xy-tab-height:calc(72px + env(safe-area-inset-bottom,0px))}
+/* Shared navigation: slim, quiet glass instead of an opaque second toolbar. */
+html.xy-shell-tabs{--xy-tab-height:calc(54px + env(safe-area-inset-bottom,0px))}
 .xy-app-tabs{
  position:fixed;left:50%;bottom:0;transform:translateX(-50%);
  z-index:50050;width:min(100%,480px);height:var(--xy-tab-height);
  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
- gap:2px;padding:7px 9px calc(8px + env(safe-area-inset-bottom,0px));
- box-sizing:border-box;border:1px solid rgba(90,125,96,.14);
- border-bottom:0;border-radius:18px 18px 0 0;
- background:color-mix(in srgb,var(--theme-bg,#f0f7eb) 88%,white 12%);
- backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
- box-shadow:0 -6px 24px rgba(45,75,49,.11);
+ gap:0;padding:5px 10px calc(5px + env(safe-area-inset-bottom,0px));
+ box-sizing:border-box;
+ border:0;border-top:1px solid rgba(255,255,255,.46);border-radius:0;
+ background:linear-gradient(180deg,rgba(244,250,248,.42),rgba(235,245,242,.60));
+ -webkit-backdrop-filter:blur(14px) saturate(1.2);
+ backdrop-filter:blur(14px) saturate(1.2);
+ box-shadow:0 -3px 13px rgba(37,71,59,.055);
+}
+/* Uploaded handwriting fonts are for chat, not for small navigation labels. */
+.xy-app-tabs,.xy-app-tabs button,.xy-app-tabs span{
+ font-family:system-ui,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif!important;
+ letter-spacing:normal!important;text-transform:none!important;
 }
 .xy-app-tabs .xy-pearl-tab{
- display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
- min-height:50px;min-width:0;padding:5px 2px;
- border:0;border-radius:13px;background:transparent;
- font:500 10px/1.3 system-ui,-apple-system,"PingFang SC",sans-serif;
- color:var(--muted,#738678);cursor:pointer;touch-action:manipulation;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:2px;min-width:0;min-height:40px;
+ border:0;border-radius:10px;padding:2px 1px;
+ background:none!important;color:var(--muted,#607b77);
+ cursor:pointer;touch-action:manipulation;
  -webkit-tap-highlight-color:transparent;
 }
 .xy-app-tabs .xy-pearl-tab-icon{
- display:grid;place-items:center;width:42px;height:27px;border-radius:999px;
+ display:grid;place-items:center;flex:none;
+ width:34px;height:25px;border-radius:10px;
+ transition:background .16s ease,color .16s ease;
 }
-.xy-app-tabs .xy-pearl-tab-icon svg{display:block;width:20px;height:20px}
-.xy-app-tabs .xy-pearl-tab.is-active{color:var(--theme-accent,#5e8260);font-weight:700}
+.xy-app-tabs .xy-pearl-tab-icon svg{
+ width:18px!important;height:18px!important;display:block;
+ stroke-width:1.7;
+}
+.xy-app-tabs .xy-pearl-tab>span:last-child{
+ display:block;font-size:10px!important;
+ font-weight:500!important;line-height:1.2!important;
+ color:inherit;
+}
+.xy-app-tabs .xy-pearl-tab.is-active{
+ color:var(--xy-ui-accent-ink,var(--theme-accent,#376b61));font-weight:600;
+}
 .xy-app-tabs .xy-pearl-tab.is-active .xy-pearl-tab-icon{
- background:color-mix(in srgb,var(--theme-accent,#668b6b) 17%,transparent);
+ background:color-mix(in srgb,var(--theme-accent,#4b8578) 13%,transparent);
 }
+.xy-app-tabs .xy-pearl-tab.is-active>span:last-child{font-weight:650!important}
 .xy-app-tabs .xy-pearl-tab:focus-visible{
- outline:2px solid var(--theme-accent,#668b6b);outline-offset:-2px;
+ outline:2px solid var(--theme-accent,#638c7b);outline-offset:-2px;
+}
+/* Preserve the water / flower wallpaper behind a translucent navigation strip. */
+html[data-xy-custom-background="1"] .xy-app-tabs{
+ background:linear-gradient(180deg,rgba(224,245,245,.18),rgba(229,249,247,.37));
+ border-top-color:rgba(255,255,255,.42);
+ -webkit-backdrop-filter:blur(11px) saturate(1.13);
+ backdrop-filter:blur(11px) saturate(1.13);
+ box-shadow:0 -2px 12px rgba(18,71,75,.055);
+}
+html[data-xy-custom-background="1"] .xy-app-tabs .xy-pearl-tab{
+ color:color-mix(in srgb,var(--theme-accent,#305f61) 42%,#445c5c);
+}
+html[data-xy-custom-background="1"] .xy-app-tabs .xy-pearl-tab.is-active{
+ color:var(--xy-ui-accent-ink,var(--theme-accent,#235d54));
 }
 html[data-theme-mode="dark"] .xy-app-tabs{
- background:color-mix(in srgb,var(--theme-bg,#1f3025) 90%,#101b14 10%);
- border-color:rgba(230,255,238,.1);box-shadow:0 -8px 24px rgba(0,0,0,.22);
+ background:linear-gradient(180deg,rgba(25,40,35,.38),rgba(21,34,31,.69));
+ border-top-color:rgba(232,255,242,.12);
+ box-shadow:0 -3px 18px rgba(0,0,0,.12);
+}
+html[data-theme-mode="dark"] .xy-app-tabs .xy-pearl-tab{color:#b3c8c0}
+html[data-theme-mode="dark"] .xy-app-tabs .xy-pearl-tab.is-active{
+ color:var(--xy-ui-accent-ink,#edf6ef);
 }
 html.xy-shell-tabs #xyHomeDestination{bottom:var(--xy-tab-height)}
 html.xy-shell-tabs #xyIslandHome .xy-pearl-scroll{
- padding-bottom:calc(var(--xy-tab-height) + 18px);
+ padding-bottom:calc(var(--xy-tab-height) + 12px);
 }
 html.xy-tabs-chat .app .main .composer-wrap{
- padding-bottom:calc(var(--xy-tab-height) + 10px)!important;
+ padding-bottom:calc(var(--xy-tab-height) + 6px)!important;
 }
 html.xy-shell-tabs #xyStickerShelf{z-index:50080}
-@media(max-width:480px){
- .xy-app-tabs{width:100%;border-radius:16px 16px 0 0}
+@media(max-width:480px){.xy-app-tabs{width:100%}}
+@media(prefers-reduced-motion:reduce){.xy-app-tabs .xy-pearl-tab-icon{transition:none}}
+/* Safety: an old standalone return icon can never sit beside global Home. */
+html.xy-shell-tabs #xyIslandReturn{display:none!important}
+
+/* Quiet header shortcut, same line-icon family as the bottom navigation. */
+html.xy-shell-tabs .app .main header #memoryBtn{
+ flex:none;width:34px;min-width:34px;height:34px;min-height:34px;
+ padding:7px;border:0;border-radius:11px;
+ background:rgba(235,248,243,.13)!important;
+ color:var(--theme-accent,#386c5f)!important;
+ box-shadow:none!important;
+}
+html.xy-shell-tabs .app .main header #memoryBtn svg{
+ display:block;width:19px;height:19px;
+ fill:none;stroke:currentColor;stroke-width:1.7;
+ stroke-linecap:round;stroke-linejoin:round;
+}
+html.xy-shell-tabs .app .main header #memoryBtn:hover{
+ background:rgba(235,248,243,.26)!important;
 }
 
 /* The personal page is independent of model/API configuration. */
