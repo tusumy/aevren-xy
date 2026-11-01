@@ -361,9 +361,8 @@ html.xy-shell-tabs #xyHomeDestination{bottom:var(--xy-tab-height)}
 html.xy-shell-tabs #xyIslandHome .xy-pearl-scroll{
  padding-bottom:calc(var(--xy-tab-height) + 12px);
 }
-html.xy-tabs-chat .app .main .composer-wrap{
- padding-bottom:calc(var(--xy-tab-height) + 6px)!important;
-}
+/* Chat is deliberately full-screen: no bottom tab bar or reserved tab space. */
+html.xy-tabs-chat .xy-app-tabs{display:none!important}
 html.xy-shell-tabs #xyStickerShelf{z-index:50080}
 @media(max-width:480px){.xy-app-tabs{width:100%}}
 @media(prefers-reduced-motion:reduce){.xy-app-tabs .xy-pearl-tab-icon{transition:none}}
