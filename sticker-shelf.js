@@ -453,7 +453,7 @@ function installUI(){
   });
   document.addEventListener("keydown",e=>{if(e.key!=="Escape"||overlay.hidden)return;e.preventDefault();if(editor.open)closeEditor();else close()});
 }
-window.xyStickerShelf={ready:()=>ready,context,expandHistory,normalizeReply,renderText,hydrateRendered,open,close};
+window.xyStickerShelf={ready:()=>ready,count:()=>cache.size,context,expandHistory,normalizeReply,renderText,hydrateRendered,open,close};
 installUI();
 installAutocomplete();
 ready.then(()=>{if(typeof renderMessages==="function")renderMessages()});
