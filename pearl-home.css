@@ -319,6 +319,11 @@ html.xy-shell-tabs{--xy-tab-height:calc(54px + env(safe-area-inset-bottom,0px))}
  font-weight:500!important;line-height:1.2!important;
  color:inherit;
 }
+/* Win over global imported-font rules, whose :is() selectors are unusually specific. */
+html[data-xy-import-font-scope="all"] body .xy-app-tabs .xy-pearl-tab,
+html[data-xy-import-font-scope="all"] body .xy-app-tabs .xy-pearl-tab span{
+ font-family:system-ui,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif!important;
+}
 .xy-app-tabs .xy-pearl-tab.is-active{
  color:var(--xy-ui-accent-ink,var(--theme-accent,#376b61));font-weight:600;
 }
@@ -330,17 +335,17 @@ html.xy-shell-tabs{--xy-tab-height:calc(54px + env(safe-area-inset-bottom,0px))}
  outline:2px solid var(--theme-accent,#638c7b);outline-offset:-2px;
 }
 /* Preserve the water / flower wallpaper behind a translucent navigation strip. */
-html[data-xy-custom-background="1"] .xy-app-tabs{
+html[data-xy-custom-background="1"] body.theme-has-image .xy-app-tabs{
  background:linear-gradient(180deg,rgba(224,245,245,.18),rgba(229,249,247,.37));
  border-top-color:rgba(255,255,255,.42);
  -webkit-backdrop-filter:blur(11px) saturate(1.13);
  backdrop-filter:blur(11px) saturate(1.13);
  box-shadow:0 -2px 12px rgba(18,71,75,.055);
 }
-html[data-xy-custom-background="1"] .xy-app-tabs .xy-pearl-tab{
+html[data-xy-custom-background="1"] body.theme-has-image .xy-app-tabs .xy-pearl-tab{
  color:color-mix(in srgb,var(--theme-accent,#305f61) 42%,#445c5c);
 }
-html[data-xy-custom-background="1"] .xy-app-tabs .xy-pearl-tab.is-active{
+html[data-xy-custom-background="1"] body.theme-has-image .xy-app-tabs .xy-pearl-tab.is-active{
  color:var(--xy-ui-accent-ink,var(--theme-accent,#235d54));
 }
 html[data-theme-mode="dark"] .xy-app-tabs{
