@@ -235,7 +235,7 @@ function renderGrid(){
   if(!all.length){const empty=document.createElement("p");empty.className="xy-sticker-empty";empty.textContent="这里还没有符合条件的表情包";grid.appendChild(empty)}
   for(const s of all){
     const card=document.createElement("div");card.className="xy-sticker-card";
-    card.innerHTML='<button class="xy-sticker-pick" type="button" data-action="send" data-id="'+s.id+'" title="插入 '+escape(s.label)+'"><img data-xy-sticker="'+s.id+'" alt="'+escape(s.label)+'"><span>'+escape(s.label)+'</span></button>'+
+    card.innerHTML='<button class="xy-sticker-pick" type="button" data-action="send" data-id="'+s.id+'" title="发送 '+escape(s.label)+'"><img data-xy-sticker="'+s.id+'" alt="'+escape(s.label)+'"><span>'+escape(s.label)+'</span></button>'+
       '<div class="xy-sticker-actions"><button type="button" data-action="favorite" data-id="'+s.id+'" title="收藏">'+(s.favorite?"♥":"♡")+'</button>'+
       '<button type="button" data-action="ai" data-id="'+s.id+'" title="允许AI发送">'+(s.aiEnabled?"AI ✓":"AI ×")+'</button>'+
       '<button type="button" data-action="scope" data-id="'+s.id+'" title="切换角色范围">'+(s.scope==="character"?"仅此角色":"共享")+'</button>'+
@@ -246,21 +246,26 @@ function renderGrid(){
 }
 function close(){if(overlay)overlay.hidden=true}
 function open(){if(!overlay)return;overlay.hidden=false;overlay.querySelector("#xyStickerSearch").value="";query="";renderGrid()}
-async function sendSticker(id){
-  const item=cache.get(id);if(!item)return;
-  const input=document.querySelector("#input");if(!input)return;
+function sendSticker(id){
+  const item=cache.get(id);
+  if(!item)return;
+  const commit=window.xySendStickerMessage;
+  if(typeof commit!=="function"){
+    toast("发送功能未加载，请刷新页面后重试");
+    return;
+  }
+  // Commit a standalone local chat message, not a draft edit or API call.
+  try{
+    if(!commit(id,item.label)){
+      toast("表情包发送失败，请重试");
+      return;
+    }
+  }catch(error){
+    toast("表情包发送失败："+String(error?.message||error));
+    return;
+  }
   close();
-  const marker="[sticker:"+id+"]";
-  const start=input.selectionStart??input.value.length;
-  const end=input.selectionEnd??start;
-  const before=input.value.slice(0,start),after=input.value.slice(end);
-  const prefix=before&&!before.endsWith("\n")?"\n":"";
-  const suffix=after&&!after.startsWith("\n")?"\n":"";
-  input.setRangeText(prefix+marker+suffix,start,end,"end");
-  input.dispatchEvent(new Event("input",{bubbles:true}));
-  input.focus();
-  try{resize()}catch{}
-  // Selecting a sticker edits the draft only. The Send button/Enter is explicit.
+  dismissSuggestions();
   void edit(id,{lastUsed:Date.now()});
 }
 
@@ -308,7 +313,7 @@ function installAutocomplete(){
   suggestionHost=document.createElement("section");
   suggestionHost.id="xyStickerSuggestions";suggestionHost.className="xy-sticker-suggest";
   suggestionHost.hidden=true;suggestionHost.setAttribute("aria-label","输入时推荐的表情包");
-  suggestionHost.innerHTML='<div class="xy-sticker-suggest-caption">表情联想 <span>点击插入</span></div><div class="xy-sticker-suggestions"></div>';
+  suggestionHost.innerHTML='<div class="xy-sticker-suggest-caption">表情联想 <span>点击发送</span></div><div class="xy-sticker-suggestions"></div>';
   composer.insertBefore(suggestionHost,composer.querySelector(".composer"));
   input.addEventListener("compositionstart",()=>{suggestionComposing=true;dismissSuggestions()});
   input.addEventListener("compositionend",()=>{suggestionComposing=false;updateSuggestions()});
