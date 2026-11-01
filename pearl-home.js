@@ -370,15 +370,8 @@ window.addEventListener("popstate",()=>{
  window.xyPanelNavigation?.reset?.();
  applyRoute(route,state.xyAppTab||tabFor(route));
 });
-const header=document.querySelector(".main > header");
-if(header&&!document.getElementById("xyIslandReturn")){
- const button=document.createElement("button");button.type="button";
- button.id="xyIslandReturn";button.className="xy-pearl-return";
- button.textContent="⌂";button.title="返回砚屿首页";
- button.setAttribute("aria-label","返回砚屿首页");
- header.insertBefore(button,header.querySelector("#memoryBtn")||null);
- button.addEventListener("click",()=>navigate("home"));
-}
+// The persistent Home tab replaces the old duplicate header Home button.
+document.getElementById("xyIslandReturn")?.remove();
 window.xyIslandHome={
  open,close,arrive:()=>{},replay:()=>navigate("home"),navigate,
  enterChatFromDestination,
