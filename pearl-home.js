@@ -295,7 +295,7 @@ function navigate(type){
  const previous=history.state||{};
  history.pushState({...routeState(type,tab),xyFromRoute:previous.xyAppRoute||activeRoute},"");
  if(!applyRoute(type,tab))history.back();
- if(type==="chat")document.querySelector("#input")?.focus({preventScroll:true});
+ // Switching to the chat tab should not automatically open the keyboard.
 }
 function startCall(){
  navigate("chat");
