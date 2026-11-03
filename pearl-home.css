@@ -357,15 +357,35 @@ html[data-theme-mode="dark"] .xy-app-tabs .xy-pearl-tab{color:#b3c8c0}
 html[data-theme-mode="dark"] .xy-app-tabs .xy-pearl-tab.is-active{
  color:var(--xy-ui-accent-ink,#edf6ef);
 }
-html.xy-shell-tabs #xyHomeDestination{bottom:var(--xy-tab-height)}
+/* The destination surface must continue behind the floating glass bar;
+   otherwise its transparency reveals the unrelated chat wallpaper below. */
+html.xy-shell-tabs #xyHomeDestination{
+ bottom:0;
+ box-sizing:border-box;
+ padding-bottom:var(--xy-tab-height);
+}
 html.xy-shell-tabs #xyIslandHome .xy-pearl-scroll{
  padding-bottom:calc(var(--xy-tab-height) + 12px);
 }
-/* Inner pages keep their own theme surface, never the Home wallpaper tint. */
+/* Independent pages share their actual surface AND its glass effect:
+   theme-tinted translucency, diffusion, fine edge highlight and soft elevation.
+   No cyan wallpaper colors or opaque overlay even when chat has a wallpaper. */
 html.xy-home-subroute .xy-app-tabs{
- background:var(--theme-bg,#f3f8ed)!important;
- border-top:1px solid color-mix(in srgb,var(--theme-accent,#668b6b) 15%,transparent)!important;
- box-shadow:0 -3px 14px rgba(42,58,48,.055)!important;
+ background:linear-gradient(180deg,
+   color-mix(in srgb,var(--theme-bg,#f3f8ed) 48%,rgba(255,255,255,.40)),
+   color-mix(in srgb,var(--theme-bg,#f3f8ed) 72%,rgba(255,255,255,.38))
+ )!important;
+ border:0!important;
+ border-top:1px solid color-mix(in srgb,var(--theme-accent,#668b6b) 12%,rgba(255,255,255,.64))!important;
+ -webkit-backdrop-filter:blur(19px) saturate(1.16)!important;
+ backdrop-filter:blur(19px) saturate(1.16)!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.52),
+   0 -7px 22px color-mix(in srgb,var(--theme-accent,#668b6b) 9%,transparent)!important;
+}
+html.xy-home-subroute .xy-app-tabs::before{
+ content:"";position:absolute;left:8%;right:8%;top:0;height:1px;
+ border-radius:999px;pointer-events:none;
+ background:linear-gradient(90deg,transparent,rgba(255,255,255,.64),transparent);
 }
 html.xy-home-subroute .xy-app-tabs .xy-pearl-tab{
  color:var(--muted,#748178)!important;
@@ -374,7 +394,23 @@ html.xy-home-subroute .xy-app-tabs .xy-pearl-tab.is-active{
  color:var(--xy-ui-accent-ink,var(--theme-accent,#5e8260))!important;
 }
 html.xy-home-subroute .xy-app-tabs .xy-pearl-tab.is-active .xy-pearl-tab-icon{
- background:color-mix(in srgb,var(--theme-accent,#668b6b) 14%,transparent);
+ background:color-mix(in srgb,var(--theme-accent,#668b6b) 13%,rgba(255,255,255,.13))!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.36);
+}
+html.xy-home-subroute[data-theme-mode="dark"] .xy-app-tabs{
+ background:linear-gradient(180deg,
+   color-mix(in srgb,var(--theme-bg,#1f3025) 58%,rgba(33,40,36,.28)),
+   color-mix(in srgb,var(--theme-bg,#1f3025) 74%,rgba(13,19,16,.42))
+ )!important;
+ border-top-color:color-mix(in srgb,var(--theme-accent,#a6c1ad) 20%,rgba(255,255,255,.13))!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 -7px 22px rgba(0,0,0,.12)!important;
+}
+html.xy-home-subroute[data-theme-mode="dark"] .xy-app-tabs::before{
+ background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);
+}
+html.xy-home-subroute[data-theme-mode="dark"] .xy-app-tabs .xy-pearl-tab.is-active .xy-pearl-tab-icon{
+ background:color-mix(in srgb,var(--theme-accent,#a6c1ad) 23%,transparent)!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
 }
 
 /* Chat is deliberately full-screen: no bottom tab bar or reserved tab space. */
