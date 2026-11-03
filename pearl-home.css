@@ -335,17 +335,17 @@ html[data-xy-import-font-scope="all"] body .xy-app-tabs .xy-pearl-tab span{
  outline:2px solid var(--theme-accent,#638c7b);outline-offset:-2px;
 }
 /* Preserve the water / flower wallpaper behind a translucent navigation strip. */
-html[data-xy-custom-background="1"] body.theme-has-image .xy-app-tabs{
+html.xy-island-visible[data-xy-custom-background="1"] body.theme-has-image .xy-app-tabs{
  background:linear-gradient(180deg,rgba(224,245,245,.18),rgba(229,249,247,.37));
  border-top-color:rgba(255,255,255,.42);
  -webkit-backdrop-filter:blur(11px) saturate(1.13);
  backdrop-filter:blur(11px) saturate(1.13);
  box-shadow:0 -2px 12px rgba(18,71,75,.055);
 }
-html[data-xy-custom-background="1"] body.theme-has-image .xy-app-tabs .xy-pearl-tab{
+html.xy-island-visible[data-xy-custom-background="1"] body.theme-has-image .xy-app-tabs .xy-pearl-tab{
  color:color-mix(in srgb,var(--theme-accent,#305f61) 42%,#445c5c);
 }
-html[data-xy-custom-background="1"] body.theme-has-image .xy-app-tabs .xy-pearl-tab.is-active{
+html.xy-island-visible[data-xy-custom-background="1"] body.theme-has-image .xy-app-tabs .xy-pearl-tab.is-active{
  color:var(--xy-ui-accent-ink,var(--theme-accent,#235d54));
 }
 html[data-theme-mode="dark"] .xy-app-tabs{
@@ -361,6 +361,22 @@ html.xy-shell-tabs #xyHomeDestination{bottom:var(--xy-tab-height)}
 html.xy-shell-tabs #xyIslandHome .xy-pearl-scroll{
  padding-bottom:calc(var(--xy-tab-height) + 12px);
 }
+/* Inner pages keep their own theme surface, never the Home wallpaper tint. */
+html.xy-home-subroute .xy-app-tabs{
+ background:var(--theme-bg,#f3f8ed)!important;
+ border-top:1px solid color-mix(in srgb,var(--theme-accent,#668b6b) 15%,transparent)!important;
+ box-shadow:0 -3px 14px rgba(42,58,48,.055)!important;
+}
+html.xy-home-subroute .xy-app-tabs .xy-pearl-tab{
+ color:var(--muted,#748178)!important;
+}
+html.xy-home-subroute .xy-app-tabs .xy-pearl-tab.is-active{
+ color:var(--xy-ui-accent-ink,var(--theme-accent,#5e8260))!important;
+}
+html.xy-home-subroute .xy-app-tabs .xy-pearl-tab.is-active .xy-pearl-tab-icon{
+ background:color-mix(in srgb,var(--theme-accent,#668b6b) 14%,transparent);
+}
+
 /* Chat is deliberately full-screen: no bottom tab bar or reserved tab space. */
 html.xy-tabs-chat .xy-app-tabs{display:none!important}
 html.xy-shell-tabs #xyStickerShelf{z-index:50080}
