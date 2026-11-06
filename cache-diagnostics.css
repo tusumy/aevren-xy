@@ -1,0 +1,21 @@
+/* Read-only cache receipt summary, nested inside the existing model settings. */
+.xy-cache-diagnostics{margin:11px 0 0;border-top:1px solid rgba(127,127,127,.16);color:inherit}
+.xy-cache-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;list-style:none;cursor:pointer;padding:11px 0;font-size:12px}
+.xy-cache-summary::-webkit-details-marker{display:none}
+.xy-cache-summary::marker{content:""}
+.xy-cache-summary strong{font-size:12px;font-weight:650}
+.xy-cache-summary small{font-size:11px;opacity:.65;text-align:right}
+.xy-cache-content{padding:0 0 8px;font-size:12px}
+#xyCacheScope{margin:5px 0 10px;font-weight:600;overflow-wrap:anywhere;opacity:.86}
+.xy-cache-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.xy-cache-metrics>div{border-radius:11px;padding:10px 8px;background:rgba(127,127,127,.075);display:flex;align-items:baseline;flex-direction:column;gap:2px}
+.xy-cache-metrics strong{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.xy-cache-metrics span{font-size:11px;opacity:.7}
+.xy-cache-empty,.xy-cache-note,.xy-cache-footnote{font-size:11px;line-height:1.6;opacity:.68}
+.xy-cache-empty{grid-column:1/-1;margin:0}
+.xy-cache-note{margin:11px 0}
+.xy-cache-record{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid rgba(127,127,127,.1);font-size:11px}
+.xy-cache-record time{flex:none;opacity:.56;white-space:nowrap}
+.xy-cache-record span{flex:1;min-width:0;overflow-wrap:anywhere}
+.xy-cache-record small{flex:none;opacity:.55;font-size:10px;white-space:nowrap}
+.xy-cache-footnote{margin:10px 0 0}

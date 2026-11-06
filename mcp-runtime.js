@@ -76,7 +76,12 @@
     const out=[],map={};
     (Array.isArray(mcps)?mcps:[]).forEach((server,si)=>{
       if(!server?.enabled||!Array.isArray(server.tools)||!server.tools.length)return;
-      server.tools.forEach(t=>{
+      // Tool discovery can return a different order on every reconnect.
+      // Keep the outbound prefix stable without changing the saved MCP list.
+      server.tools.slice().sort((a,b)=>{
+        const x=String(a?.name||""),y=String(b?.name||"");
+        return x<y?-1:x>y?1:0;
+      }).forEach(t=>{
         if(!t?.name)return;
         const name=("mcp_"+si+"_"+t.name).replace(/[^a-zA-Z0-9_-]/g,"_").slice(0,64);
         out.push({type:"function",function:{
@@ -87,6 +92,8 @@
         map[name]={server,tool:t.name};
       });
     });
+    // Sorting tools is safe; sorting the registered names does not alter execution mapping.
+    out.sort((a,b)=>a.function.name<b.function.name?-1:a.function.name>b.function.name?1:0);
     window.xyMcpState={
       serverCount:(Array.isArray(mcps)?mcps:[]).filter(x=>x?.enabled).length,
       toolCount:out.length,

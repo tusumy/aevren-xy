@@ -82,15 +82,22 @@
       try{
         const res=await fetch(url,{method:"POST",headers,body:JSON.stringify({...payload,model})});
         const elapsed=performance.now()-start;
-        let tokens=0;
-        if(res.ok){try{const d=await res.clone().json();tokens=Number(d?.usage?.total_tokens||0)}catch{}}
+        let tokens=0,usage=null;
+        if(res.ok){try{
+          const d=await res.clone().json();
+          usage=d?.usage??null;
+          tokens=Number(d?.usage?.total_tokens||0);
+        }catch{}}
         record(ep,model,res.status,elapsed,tokens);
+        // Passive receipt inspection only. Never sends a diagnostic request.
+        window.xyCacheDiagnostics?.record({endpointId:ep.id,model,status:res.status,toolCount:payload.tools?.length||0},usage);
         if(res.ok)return {res,routeId:ep.id};
         lastResponse=res;
         if(![408,429,500,502,503,504].includes(res.status))return {res,routeId:ep.id};
       }catch(error){
         lastError=error;
         record(ep,model,0,performance.now()-start,0);
+        window.xyCacheDiagnostics?.record({endpointId:ep.id,model,status:0,toolCount:payload.tools?.length||0},null);
         // Abort is intentional; do not reroute or duplicate a cancelled request.
         if(error?.name==="AbortError")throw error;
       }
