@@ -294,7 +294,9 @@
 
     const headers={'Content-Type':'application/json',Accept:'application/json'};
     if(ep.key)headers.Authorization='Bearer '+ep.key;
-    const memoryContext=memories.length?'长期记忆：\n'+memories.map(m=>'- ['+m.tag+'] '+m.text).join('\n'):'';
+    const roleMemoryId=c.characterId||window.xyCurrentCharacter?.()?.id||'';
+    const scopedMemories=memories.filter(m=>!m.characterId||m.characterId===roleMemoryId);
+    const memoryContext=scopedMemories.length?'长期记忆：\n'+scopedMemories.map(m=>'- ['+m.tag+'] '+m.text).join('\n'):'';
     const phoneStyle=fromCall?'正在进行语音电话。自然接话、用口语说给对方听；每轮通常一两句，不重复刚听到的话，不写 Markdown、列表或旁白，保留你原有的人设和说话习惯。':'';
     const endedCall=[...(c.messages||[])].reverse().find(m=>m?.kind==="call"&&m?.endedAt);
     const callEndedContext=!fromCall&&endedCall
