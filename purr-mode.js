@@ -145,9 +145,9 @@
   function savePosts(){write(POSTS_KEY,posts.slice(0,160))}
   function timestamp(ts){try{return new Date(ts).toLocaleString("zh-CN",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false})}catch{return ""}}
   function addPost(author,text){
-    const post={id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,7),author,text:String(text||"").trim().slice(0,600),at:Date.now(),likes:[],comments:[]};
+    const post={id:"p"+Date.now().toString(36)+Math.random().toString(36).slice(2,7),author,authorName:author==="ai"?(window.xyCurrentCharacter?.()?.name||"玄砚"):"你",characterId:chat()?.characterId||"",text:String(text||"").trim().slice(0,600),at:Date.now(),likes:[],comments:[]};
     if(author==="user"&&settings.autoMoments)post.reactAt=Date.now()+(2+Math.random()*13)*60000;
-    posts.unshift(post);savePosts();renderFeed();return post;
+    posts.unshift(post);posts=posts.slice(0,160);savePosts();renderFeed();return post;
   }
   let busy=false,dialog=null,feed=null,notice=null;
   function setNotice(message){if(notice)notice.textContent=message||""}
@@ -174,7 +174,7 @@
         "你正在自己的虚拟朋友圈里回复熟悉的人，回答直接、自然，10到60字，不要列表、旁白和套话。"
       );
       if(!text)throw new Error("模型没有生成回复");
-      post.comments.push({author:"ai",text:text.slice(0,180),at:Date.now()});
+      post.comments.push({author:"ai",authorName:post.authorName||window.xyCurrentCharacter?.()?.name||"玄砚",text:text.slice(0,180),at:Date.now()});
       savePosts();renderFeed();setNotice("");
     }catch(e){setNotice("回复失败："+String(e.message||e))}
     finally{busy=false}
@@ -182,8 +182,8 @@
   function renderFeed(){
     if(!feed)return;
     feed.innerHTML=posts.length?posts.map(post=>{
-      const name=post.author==="ai"?escapeHtml(window.xyCurrentCharacter?.()?.name||"玄砚"):"你";
-      const comments=(post.comments||[]).map(x=>'<div class="xy-purr-comment"><b>'+escapeHtml(x.author==="ai"?(window.xyCurrentCharacter?.()?.name||"玄砚"):"你")+'</b> '+escapeHtml(x.text)+'</div>').join("");
+      const name=post.author==="ai"?escapeHtml(post.authorName||"玄砚"):"你";
+      const comments=(post.comments||[]).map(x=>'<div class="xy-purr-comment"><b>'+escapeHtml(x.author==="ai"?(x.authorName||post.authorName||"玄砚"):"你")+'</b> '+escapeHtml(x.text)+'</div>').join("");
       return '<article class="xy-purr-post" data-purr-id="'+escapeHtml(post.id)+'"><div class="xy-purr-post-head"><b>'+name+'</b><time>'+escapeHtml(timestamp(post.at))+'</time></div><div class="xy-purr-post-text">'+escapeHtml(post.text)+'</div><div class="xy-purr-post-actions"><button type="button" data-purr-action="like">'+((post.likes||[]).includes("user")?"已赞":"赞")+'</button><button type="button" data-purr-action="comment">评论</button>'+(post.author==="user"?'<button type="button" data-purr-action="ask">让TA回复</button>':'')+'</div>'+(comments?'<div class="xy-purr-comments">'+comments+'</div>':'')+'<form class="xy-purr-comment-form" hidden><input maxlength="180" placeholder="写一条评论…" aria-label="评论内容"><button type="submit">发送</button></form></article>';
     }).join(""):'<p class="xy-purr-empty">这里还没动态。可以自己写一条，或者让玄砚先发。</p>';
   }
@@ -280,12 +280,13 @@
     try{
       const now=new Date(),minute=now.getHours()*60+now.getMinutes(),plan=dayPlan();
       const due=plan.times.find(p=>!p.done&&minute>=p.at);
-      if(due){due.done=true;write(PLAN_KEY,plan);await aiPost(true)}
+      if(due){due.done=true;write(PLAN_KEY,plan);if(minute-due.at<=15)await aiPost(true)}
       const p=posts.find(x=>x.author==="user"&&x.reactAt&&x.reactAt<=Date.now());
       if(p){
         delete p.reactAt;savePosts();
         try{
           await aiComment(p,p.text);
+          p.likes=Array.isArray(p.likes)?p.likes:[];
           if(!p.likes.includes("ai"))p.likes.push("ai");
           savePosts();renderFeed();
         }catch(e){console.warn("[砚屿朋友圈] 互动失败",e)}
