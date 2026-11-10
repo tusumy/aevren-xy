@@ -232,13 +232,44 @@
   }
   function closeMoments(){if(dialog)dialog.hidden=true}
 
+  async function suggestNotes(card){
+    const host=card.querySelector("#xyPurrSuggestedNotes");
+    const button=card.querySelector("#xyPurrSuggestNotes");
+    const recent=(chat()?.messages||[]).filter(m=>["user","assistant"].includes(m?.role)&&!m.localOnly).slice(-24)
+      .map(m=>(m.role==="user"?"用户":"角色")+": "+String(m.text||"").slice(0,260)).join("\n");
+    if(!recent.trim()){host.textContent="这段聊天还没有可提炼的内容。";return}
+    button.disabled=true;host.textContent="正在整理候选便签…";
+    try{
+      const raw=await askModel("以下是实际聊天记录。仅提炼用户清楚表达过、适合下次聊天记住的长期偏好、约定或稳定事实。不要推断，忽略剧情扮演、敏感私事、临时情绪、模型自己声称的话。最多三条，一行一条，不要前言。\n"+recent,
+        "你在协助整理记忆候选项，严禁自动写入。每条是清楚的短句，40字以内。找不到可靠信息时仅输出「无」。");
+      const options=raw.split(/\n+/).map(x=>x.replace(/^\s*(?:[-*•]|\d+[.)、])\s*/,"").trim()).filter(x=>x&&x!=="无").slice(0,3).map(x=>x.slice(0,100));
+      if(!card.isConnected)return;
+      if(!options.length){host.textContent="没有找到足够明确的长期信息。";return}
+      host.innerHTML="<div class='xy-purr-note-list'>"+options.map((x,i)=>'<label><input type="checkbox" data-note-index="'+i+'" checked><span>'+escapeHtml(x)+'</span></label>').join("")+"</div><button type='button' id='xyPurrStoreNotes' class='panel-action'>把勾选的便签存进记忆</button>";
+      host.querySelector("#xyPurrStoreNotes").onclick=()=>{
+        const characterId=chat()?.characterId||window.xyCurrentCharacter?.()?.id||"";
+        let count=0;
+        host.querySelectorAll("input[data-note-index]:checked").forEach(input=>{
+          const text=options[Number(input.dataset.noteIndex)];
+          if(!text||memories.some(m=>m.text===text&&(!m.characterId||m.characterId===characterId)))return;
+          memories.unshift({text,tag:"便签",characterId});
+          count++;
+        });
+        if(count){save();renderChats()}
+        host.textContent=count?"已存入 "+count+" 条便签；可以在记忆页查看和删除。":"没有新增便签。";
+      };
+    }catch(e){if(card.isConnected)host.textContent="提炼失败："+String(e.message||e)}
+    finally{button.disabled=false}
+  }
+
   function addSettings(){
     const body=document.querySelector("#panelBody");
     if(!body||!document.querySelector("#panel")?.classList.contains("open")||document.querySelector("#xyPurrSettings"))return;
     const card=document.createElement("div");
     card.id="xyPurrSettings";card.className="setting-card xy-purr-settings";
-    card.innerHTML='<strong>自然聊天</strong><label><input id="xyPurrAutoReply" type="checkbox"> 等我说完再自动接话</label><label><input id="xyPurrSplit" type="checkbox"> 分条显示回复</label><div class="xy-purr-wait"><span>安静等待</span><input id="xyPurrQuiet" type="number" min="1" max="30" step="1"><span>秒</span></div><small>保留「直接回答」手动入口。无后台服务时，关闭页面不会自动回消息。</small>';
+    card.innerHTML='<strong>自然聊天</strong><label><input id="xyPurrAutoReply" type="checkbox"> 等我说完再自动接话</label><label><input id="xyPurrSplit" type="checkbox"> 分条显示回复</label><div class="xy-purr-wait"><span>安静等待</span><input id="xyPurrQuiet" type="number" min="1" max="30" step="1"><span>秒</span></div><small>保留「直接回答」手动入口。无后台服务时，关闭页面不会自动回消息。</small><button type="button" id="xyPurrSuggestNotes" class="panel-action">从当前聊天提炼便签</button><div id="xyPurrSuggestedNotes" class="xy-purr-suggested" aria-live="polite"></div>';
     body.appendChild(card);
+    card.querySelector("#xyPurrSuggestNotes").onclick=()=>suggestNotes(card);
     card.querySelector("#xyPurrAutoReply").checked=!!settings.autoReply;
     card.querySelector("#xyPurrSplit").checked=!!settings.splitReplies;
     card.querySelector("#xyPurrQuiet").value=Number(settings.quietSeconds)||5;
