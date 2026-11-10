@@ -275,7 +275,9 @@
     }
     if(fromCall&&(!ep?.base||!ep?.model))throw new Error('请先配置可用的聊天模型接口');
     sending=true;
-    $('#sendBtn').disabled=true;
+    // The composer sends locally: keep it usable while this request is in flight.
+    $('#sendBtn').disabled=!(window.xyPurr?.settings?.autoReply);
+    const requestUserCount=c.messages.filter(m=>m?.role==='user').length+(replyExisting||fromCall?0:1);
     if(!replyExisting){
       c.messages.push({role:'user',text,attachments});
       if(c.messages.filter(x=>x.role==='user').length===1)c.title=(text||attachments[0]?.name||'新对话').slice(0,22);
@@ -315,7 +317,7 @@
     const immediateCallInstruction=!fromCall?window.xyProactiveCalls?.instruction?.()||'':'';
     const userIdentity=window.xyTavernMacros?.name?.()||"你";
     const characterIdentity="【角色卡称呼】用户名字："+userIdentity+"；角色名字："+(currentRole?.name||"角色")+"。酒馆 {{user}} 和 {{char}} 仅用于角色卡文本变量替换。普通单人聊天时，AI以“我”自称、以“你”称呼用户，不要因为保存了用户名字就反复直呼其名；只有多人对话或指代可能混淆时，才按需使用具体名字。";
-    const system=[roleSystem,characterIdentity,studyContext,studyAutoContext,callEndedContext,timeContext,memorySummary?"角色的长期记忆摘要:\n"+memorySummary:"",memoryContext,phoneStyle,fromCall?'':(window.xyStickerShelf?.context?.(c.characterId||window.xyCurrentCharacter?.()?.id)||''),heartInstruction,immediateCallInstruction].filter(Boolean).join('\n\n');
+    const system=[roleSystem,characterIdentity,studyContext,studyAutoContext,callEndedContext,timeContext,memorySummary?"角色的长期记忆摘要:\n"+memorySummary:"",memoryContext,phoneStyle,fromCall?'':(window.xyStickerShelf?.context?.(c.characterId||window.xyCurrentCharacter?.()?.id)||''),heartInstruction,immediateCallInstruction,fromCall?'':(window.xyPurr?.instruction?.()||'')].filter(Boolean).join('\n\n');
     // Keep only the requested number of recent chat turns in model context.
     // The 0 setting means unlimited history, not no history. System prompts
     // and explicit character/memory context are independent of this window.
@@ -391,6 +393,12 @@
           const reply=contentText(msg.content)||msg.content;
           if(!reply)throw new Error('模型没有返回文本：'+diagnostic(data,raw));
           hideTyping();
+          // A new message came in during generation: never display a stale reply.
+          // The local chat queue will request a fresh response after its quiet window.
+          if(!fromCall&&c.messages.filter(m=>m?.role==='user').length>requestUserCount){
+            window.xyPurr?.schedule?.(true);
+            return;
+          }
           const callIntent=window.xyProactiveCalls?.extract?.(reply)||{text:String(reply),call:false};
           // A model-initiated call starts immediately, even if a heart note
           // requires an independent retry afterwards.
