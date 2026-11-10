@@ -370,6 +370,7 @@
     const target=completeChatEndpoint(ep.base);
 
     let routeId=null;
+    window.dispatchEvent(new Event('xy-model-request-start'));
     try{
       for(let round=0;round<6;round++){
         const payload={model:ep.model,messages,stream:false};
@@ -434,6 +435,7 @@
       save();renderMessages();
     }finally{
       sending=false;$('#sendBtn').disabled=false;
+      window.dispatchEvent(new Event('xy-model-request-end'));
     }
   }
 
