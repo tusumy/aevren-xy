@@ -122,5 +122,9 @@
     }).observe(btn,{attributes:true,attributeFilter:['disabled']});
   }
 
+  // Also track requests while the composer stays enabled for concurrent local messages.
+  window.addEventListener('xy-model-request-start',beginTrace);
+  window.addEventListener('xy-model-request-end',()=>requestAnimationFrame(finishTrace));
+
   decorateProcesses();
 })();
