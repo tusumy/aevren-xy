@@ -213,7 +213,7 @@
   // refreshes and switching conversations until the user asks for a reply.
   let localSending=false;
   send=async function(){
-    if(localSending||sending)return;
+    if(localSending)return; // A new user message may arrive while the assistant is generating.
     const c=chat(),input=document.querySelector("#input");
     if(!c||!input)return;
     const text=input.value.trim(),api=window.xyAttachments;
