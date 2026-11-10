@@ -176,7 +176,8 @@
       if(!text)throw new Error("模型没有生成回复");
       post.comments.push({author:"ai",authorName:post.authorName||window.xyCurrentCharacter?.()?.name||"玄砚",text:text.slice(0,180),at:Date.now()});
       savePosts();renderFeed();setNotice("");
-    }catch(e){setNotice("回复失败："+String(e.message||e))}
+      return true;
+    }catch(e){setNotice("回复失败："+String(e.message||e));return false}
     finally{busy=false}
   }
   function renderFeed(){
@@ -315,12 +316,12 @@
       const p=posts.find(x=>x.author==="user"&&x.reactAt&&x.reactAt<=Date.now());
       if(p){
         delete p.reactAt;savePosts();
-        try{
-          await aiComment(p,p.text);
+        const reacted=await aiComment(p,p.text);
+        if(reacted){
           p.likes=Array.isArray(p.likes)?p.likes:[];
           if(!p.likes.includes("ai"))p.likes.push("ai");
           savePosts();renderFeed();
-        }catch(e){console.warn("[砚屿朋友圈] 互动失败",e)}
+        }
       }
       const comment=posts.find(x=>x.replyAt&&x.replyAt<=Date.now());
       if(comment){
