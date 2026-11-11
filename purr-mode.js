@@ -189,10 +189,16 @@
     }).join(""):'<p class="xy-purr-empty">这里还没动态。可以自己写一条，或者让玄砚先发。</p>';
   }
   function openMoments(){
+    const body=document.querySelector('#panelBody'),panel=document.querySelector('#panel');
+    if(!body||!panel)return;
+    body.replaceChildren();
+    document.querySelector('#panelEyebrow').textContent='SOCIAL';
+    document.querySelector('#panelTitle').textContent='朋友圈';
+    dialog=null;feed=null;notice=null;
     if(!dialog){
-      dialog=document.createElement("div");dialog.id="xyPurrMoments";dialog.className="xy-purr-overlay";
-      dialog.innerHTML='<div class="xy-purr-shade" data-purr-close></div><section class="xy-purr-sheet" role="dialog" aria-modal="true" aria-label="朋友圈"><header class="xy-purr-head"><div><small>AEVREN · XY</small><h2>朋友圈</h2></div><button type="button" class="xy-purr-close" data-purr-close aria-label="关闭">×</button></header><div class="xy-purr-compose"><textarea id="xyPurrPostDraft" rows="2" maxlength="600" placeholder="发一条自己的动态…"></textarea><div class="xy-purr-compose-actions"><button type="button" id="xyPurrAiPost">让TA发一条</button><button type="button" id="xyPurrMyPost">发表</button></div></div><div class="xy-purr-feed"></div><div class="xy-purr-footer"><label><input type="checkbox" id="xyPurrAutoMoments"> 允许AI自动发动态、互动</label><small>仅在砚屿页面打开时运行；启用后可能消耗模型额度。</small><p class="xy-purr-notice" role="status"></p></div></section>';
-      document.body.appendChild(dialog);
+      dialog=document.createElement("div");dialog.id="xyPurrMoments";dialog.className="xy-purr-panel";
+      dialog.innerHTML='<section class="xy-purr-sheet" aria-label="朋友圈"><div class="xy-purr-compose"><textarea id="xyPurrPostDraft" rows="2" maxlength="600" placeholder="发一条自己的动态…"></textarea><div class="xy-purr-compose-actions"><button type="button" id="xyPurrAiPost">让TA发一条</button><button type="button" id="xyPurrMyPost">发表</button></div></div><div class="xy-purr-feed"></div><div class="xy-purr-footer"><label><input type="checkbox" id="xyPurrAutoMoments"> 允许AI自动发动态、互动</label><small>仅在砚屿页面打开时运行；启用后可能消耗模型额度。</small><p class="xy-purr-notice" role="status"></p></div></section>';
+      body.appendChild(dialog);
       feed=dialog.querySelector(".xy-purr-feed");notice=dialog.querySelector(".xy-purr-notice");
       dialog.addEventListener("click",e=>{
         if(e.target.closest("[data-purr-close]")){closeMoments();return}
@@ -228,10 +234,11 @@
       dialog.querySelector("#xyPurrAutoMoments").onchange=e=>{settings.autoMoments=!!e.target.checked;storeSettings();setNotice(settings.autoMoments?"自动互动已开启；只在页面打开时生效。":"自动互动已关闭。")};
     }
     dialog.querySelector("#xyPurrAutoMoments").checked=settings.autoMoments;
-    dialog.hidden=false;
+    panel.classList.add('open');
+    document.querySelector('#scrim')?.classList.add('show');
     renderFeed();
   }
-  function closeMoments(){if(dialog)dialog.hidden=true}
+  function closeMoments(){document.querySelector('#closePanel')?.click()}
 
   async function suggestNotes(card){
     const host=card.querySelector("#xyPurrSuggestedNotes");
@@ -283,15 +290,11 @@
   }
   const priorOpenPanel=openPanel;
   openPanel=function(type){
+    if(type==='moments')return openMoments();
     const result=priorOpenPanel.apply(this,arguments);
     if(type==="settings")requestAnimationFrame(()=>setTimeout(addSettings,0));
     return result;
   };
-  const side=document.querySelector("#sidebar .sidebar-bottom");
-  if(side){
-    const entry=document.createElement("button");entry.type="button";entry.className="nav-btn xy-purr-entry";
-    entry.textContent="朋友圈";entry.onclick=openMoments;side.insertBefore(entry,side.firstChild);
-  }
   function dayPlan(){
     const date=new Date().toLocaleDateString("sv-SE");
     let plan=read(PLAN_KEY,null);
