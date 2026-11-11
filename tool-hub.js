@@ -1,6 +1,7 @@
 (()=>{
   const tools=[
     {id:"memory",title:"记忆",subtitle:"整理记忆与偏好",symbol:"⌁",group:"日常"},
+    {id:"moments",title:"朋友圈",subtitle:"动态、点赞与评论",symbol:"◌",group:"日常"},
     {id:"quotes",title:"句子收藏",subtitle:"收藏喜欢的单句，随时翻看",symbol:"♡",group:"日常"},
     {id:"characters",title:"角色",subtitle:"角色资料、用户名字",symbol:"◇",group:"日常"},
     {id:"study",title:"书房",subtitle:"角色卡与故事预设",symbol:"▤",group:"创作"},
@@ -19,6 +20,7 @@
   // Small hand-drawn outline icon family: neutral, scalable, follows theme color.
   const strokes={
     memory:'<circle cx="12" cy="12" r="3.5"/><circle cx="5" cy="6" r="1.5"/><circle cx="19" cy="6" r="1.5"/><circle cx="5" cy="19" r="1.5"/><circle cx="19" cy="19" r="1.5"/><path d="M7 7.4 9.5 10M17 7.4 14.5 10M7 17.8l2.5-3.4M17 17.8l-2.5-3.4"/>',
+    moments:'<circle cx="5" cy="6" r="2"/><path d="M9 6h11M3 12h18M3 16h14M3 20h10"/>',
     quotes:'<path d="M20.5 5.8a4.6 4.6 0 0 0-6.5 0L12 7.9l-2-2.1a4.6 4.6 0 1 0-6.5 6.5L12 20.4l8.5-8.1a4.6 4.6 0 0 0 0-6.5Z"/><path d="M9 11.5h6"/>',
     characters:'<path d="M12 2.8c-4.7 0-8.5 3.8-8.5 8.5s3.8 8.5 8.5 8.5 8.5-3.8 8.5-8.5S16.7 2.8 12 2.8Z"/><circle cx="12" cy="9.7" r="3"/><path d="M5.5 18c.9-3 3.4-4.5 6.5-4.5s5.6 1.5 6.5 4.5"/>',
     study:'<path d="M12 20.2c-3.1-2.3-6-3-9.5-2V5c3.8-1.1 6.9-.4 9.5 1.9 2.5-2.3 5.7-3 9.5-1.9v13.2c-3.5-1-6.4-.3-9.5 2Z"/><path d="M12 7v13.2M5.5 9c1.6-.2 2.8 0 4.2.8m-4.2 2.6c1.6-.2 2.8 0 4.2.8m4.6-3.4c1.4-.8 2.7-1 4.2-.8"/>',
