@@ -2,7 +2,8 @@
   "use strict";
   const FORMAT="AevrenXYBackup", VERSION=1, DB_NAME="xy-data-safety-v1", BUCKET="snapshots";
   const PRIVATE_KEYS=new Set(["xy.endpoints","xy.mcps","xy.settings","xy.supabase.config","xy.supabase.session","xy.visionFallback.v1","xy.imageStudio.config.v1"]);
-  const AUTO_MS=60*60*1000, KEEP=8;
+  const AUTO_MS=60*60*1000, KEEP=8, COLD_BOOT_GRACE=8000;
+  const launchedAt=Date.now();
   let pendingImport=null, timer=0, snapshotBusy=false, dbPromise=null;
   const $=s=>document.querySelector(s);
   const html=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -80,10 +81,13 @@
     if(snapshotBusy)return false;
     snapshotBusy=true;
     try{
-      const values=collect(true),s=stats(values),existing=await listSnapshots(),latest=existing[0];
+      // Avoid serializing the entire chat history if a recent snapshot is already safe.
+      // This matters on Android devices with months of local conversation history.
+      const existing=await listSnapshots(),latest=existing[0];
+      if(!force&&latest&&Date.now()-Date.parse(latest.at)<AUTO_MS)return false;
+      const values=collect(true),s=stats(values);
       if(!force){
         if(!s.meaningful||!s.messages)return false;
-        if(latest&&Date.now()-Date.parse(latest.at)<AUTO_MS)return false;
         if(latest?.stats?.meaningful>=5&&s.meaningful<latest.stats.meaningful/2&&s.messages>=latest.stats.messages/2)return false;
       }
       await saveSnapshot({at:new Date().toISOString(),reason,values,stats:s});
@@ -94,7 +98,7 @@
   }
   function autoSnapshot(){
     clearTimeout(timer);
-    timer=setTimeout(()=>snapshot("自动保护").catch(()=>{}),1500);
+    timer=setTimeout(()=>snapshot("自动保护").catch(()=>{}),Math.max(1500,COLD_BOOT_GRACE-(Date.now()-launchedAt)));
   }
   function validate(values){
     if(!values||Array.isArray(values)||typeof values!=="object")throw new Error("备份没有有效数据");
@@ -318,6 +322,6 @@
   openPanel=function(type){if(type==="data")return openDataPanel();return priorOpenPanel(type)};
   const originalSave=save;
   save=function(){const result=originalSave.apply(this,arguments);autoSnapshot();return result};
-  setTimeout(()=>snapshot("打开砚屿时自动保护").catch(()=>{}),1800);
+  setTimeout(()=>snapshot("打开砚屿时自动保护").catch(()=>{}),12000);
   window.xyDataManager={stats:()=>stats(collect(true)),statsOf:stats,exportValues:()=>collect(false),createSnapshot:(reason="删除对话前")=>snapshot(reason,true),restoreValues:(values,mode="merge",label="云端备份")=>restore(values,mode,label),exportBackup:downloadBackup};
 })();
