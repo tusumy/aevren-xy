@@ -12,6 +12,7 @@
     {id:"avatar",title:"头像",subtitle:"聊天头像与角色头像",symbol:"◉",group:"外观与管理"},
     {id:"data",title:"数据管理",subtitle:"备份、导入与恢复",symbol:"▥",group:"外观与管理"},
     {id:"mcp",title:"MCP 工具",subtitle:"连接服务与查看状态",symbol:"⌘",group:"连接"},
+    {id:"assistant",title:"开发助手",subtitle:"交代代码任务 · 查看进度 · 确认变更",symbol:"✳",group:"连接"},
     {id:"settings",title:"模型与设置",subtitle:"接口、模型及参数",symbol:"⚙",group:"连接"},
     {id:"voice",title:"语音",subtitle:"语音播放与识别设置",symbol:"♪",group:"连接"}
   ];
@@ -25,6 +26,7 @@
     theme:'<circle cx="12" cy="12" r="4.3"/><path d="M12 2v2.3M12 19.7V22M2 12h2.3M19.7 12H22M4.9 4.9l1.7 1.7m10.8 10.8 1.7 1.7m0-14.2-1.7 1.7M6.6 17.4l-1.7 1.7"/>',
     data:'<rect x="6" y="4" width="14" height="16" rx="2"/><path d="M9.5 8h7M9.5 12h7M9.5 16H15M3 8v13h13"/>',
     mcp:'<rect x="3" y="3" width="6" height="6" rx="1.7"/><rect x="15" y="3" width="6" height="6" rx="1.7"/><rect x="9" y="15" width="6" height="6" rx="1.7"/><path d="M9 6h6M6 9v3l4.3 3.5M18 9v3l-4.3 3.5"/>',
+    assistant:'<rect x="4" y="5" width="16" height="12" rx="3"/><path d="M8 10h8M8 13h5M9 17l-2 3 6-3"/><path d="M17 2v4M15 4h4"/>',
     settings:'<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/><circle cx="16" cy="12" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/><circle cx="11" cy="18" r="2.2" fill="var(--xy-hub-icon-fill,#eef5ef)"/>',
     voice:'<path d="M10 17V4l10-2v12"/><circle cx="6.5" cy="18" r="3.5"/><circle cx="16.5" cy="15" r="3.5"/><path d="M10 7l10-2"/>',
     imagine:'<rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="m5 16 4-4 3.2 3.2 3.6-4 3.7 4.8"/><circle cx="9" cy="8.5" r="1.5"/><path d="M18 1v4M16 3h4"/>',
