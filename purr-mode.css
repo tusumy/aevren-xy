@@ -46,3 +46,18 @@
 .xy-purr-note-list{display:grid;gap:9px;margin:5px 0 10px}
 .xy-purr-note-list label{align-items:flex-start!important;color:var(--ink,#333)}
 .xy-purr-note-list input{margin-top:3px}
+
+/* Moments is an ordinary tool page, reached from the existing five-tab Tool Hub. */
+#panel:has(#xyPurrMoments) #panelBody{min-height:0;overflow:visible}
+.xy-purr-panel{width:100%;max-width:680px;margin-inline:auto;color:var(--ink,#292725)}
+.xy-purr-panel .xy-purr-sheet{display:block;width:100%;height:auto;max-height:none;overflow:visible;border:0;border-radius:0;background:transparent;box-shadow:none;padding:0}
+.xy-purr-panel .xy-purr-compose{padding:12px 0 18px}
+.xy-purr-panel .xy-purr-feed{overflow:visible;padding:4px 0 16px;min-height:140px}
+.xy-purr-panel .xy-purr-footer{padding:16px 0;gap:8px}
+.xy-purr-panel .xy-purr-compose textarea{width:100%;display:block}
+.xy-purr-panel .xy-purr-post:last-child{border-bottom:0}
+@media(max-width:600px){
+ .xy-purr-panel .xy-purr-sheet{height:auto!important;width:100%!important}
+ .xy-purr-panel .xy-purr-feed{padding:4px 0 14px}
+ .xy-purr-panel .xy-purr-footer{padding-bottom:16px}
+}
