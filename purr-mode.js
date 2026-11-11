@@ -194,6 +194,7 @@
     }).join(""):'<p class="xy-purr-empty">这里还没动态。可以自己写一条，或者让玄砚先发。</p>';
   }
   function openMoments(){
+    window.xyEnsureOverlayHistory?.();
     const body=document.querySelector('#panelBody'),panel=document.querySelector('#panel');
     if(!body||!panel)return;
     body.replaceChildren();
