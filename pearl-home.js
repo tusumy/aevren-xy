@@ -236,6 +236,11 @@ function showChat(){
  document.documentElement.classList.remove("xy-home-subroute","xy-island-visible");
  document.documentElement.classList.add("xy-tabs-chat");
  if(originalApp)originalApp.inert=originalInert;
+ if(window.xyInitialHomeBoot){
+  window.xyInitialHomeBoot=false;
+  // Only now build the potentially large message list; navigation remains instant.
+  try{renderChats();renderMessages()}catch(error){console.warn("[砚屿启动] 聊天延迟渲染失败",error)}
+ }
 }
 function showPanelRoute(type){
  root.hidden=true;
