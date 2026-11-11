@@ -16,8 +16,9 @@
   let posts=read(POSTS_KEY,[]);
   if(!Array.isArray(posts))posts=[];
   let pendingKey="",firstPendingAt=0,pendingTimer=null,replyAttemptAt=0;
-  const knownAssistant=new WeakSet(),revealStates=new WeakMap();
-  (Array.isArray(chats)?chats:[]).forEach(c=>(c.messages||[]).forEach(m=>{if(m&&m.role==="assistant")knownAssistant.add(m)}));
+  const knownAssistant=new WeakSet(),revealStates=new WeakMap(),initialMessageCount=new WeakMap();
+  // O(number of conversations), not O(all historical messages) on cold launch.
+  (Array.isArray(chats)?chats:[]).forEach(c=>initialMessageCount.set(c,c.messages?.length||0));
 
   function unresolved(c){
     if(!c||!Array.isArray(c.messages))return null;
@@ -86,7 +87,11 @@
     const c=chat(),list=c?.messages;
     if(!list?.length)return;
     const i=list.length-1,m=list[i];
+    const baseline=initialMessageCount.get(c);
+    if(baseline===undefined){initialMessageCount.set(c,list.length);return}
     if(!m||m.role!=="assistant"||m.localOnly||knownAssistant.has(m))return;
+    if(i<baseline&&!revealStates.has(m))return;
+    initialMessageCount.set(c,list.length);
     const nodes=Array.from(document.querySelectorAll('#messages .message[data-message="'+i+'"]'));
     if(nodes.length<2){knownAssistant.add(m);return}
     let state=revealStates.get(m);
