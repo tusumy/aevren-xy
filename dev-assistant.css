@@ -47,3 +47,6 @@
   #xyDevAssistant .xy-da-task { padding:12px; }
 }
 @media(prefers-reduced-motion:reduce){ #xyDevAssistant * { scroll-behavior:auto; } }
+#xyDevAssistant .xy-da-diff { border:1px solid color-mix(in srgb,currentColor 12%,transparent); border-radius:12px; padding:9px; }
+#xyDevAssistant .xy-da-diff summary { cursor:pointer; font-size:12px; font-weight:600; }
+#xyDevAssistant .xy-da-diff pre { margin:10px 0 0; padding:10px; overflow:auto; max-height:350px; white-space:pre; font-size:11px; line-height:1.45; background:color-mix(in srgb,currentColor 5%,transparent); border-radius:8px; }
