@@ -23,7 +23,14 @@ API proxy notes live in `workers/README.md`.
 - `purr-mode.js` adds a local, debounced auto-reply mode (5s by default, configurable in **Settings → 自然聊天**). The existing **直接回答** action remains available.
 - Replies containing multiple natural paragraphs are revealed in sequence; one backend assistant message is preserved for model history and regeneration. Markdown/code is not forcibly split.
 - New user messages can be queued while a request is running; if additional messages arrive, an obsolete model response is discarded and a fresh reply is scheduled.
-- The **朋友圈** sidebar entry supports local posts, likes and comments; users can explicitly ask the active character to write or reply. Automatic activity is opt-in and consumes model tokens when enabled.
+- **首页 → 工具 → 日常 → 朋友圈** is an ordinary nested tool page (also available from tool favorites), not a duplicate sidebar button. It supports local posts, likes and comments; users can explicitly ask the active character to write or reply. Automatic activity is opt-in and consumes model tokens when enabled.
 - **从当前聊天提炼便签** suggests up to three long-term memories. They are saved only after the user reviews and confirms them. Per-character notes are scoped to their character.
 - Data stays under `xy.purr.*` in localStorage (included in the existing XY data export). No Purr/Python backend, operating-system push, persistent background worker or cross-device synchronization is added. Scheduled actions run only while the page is open.
 - The chat rhythm and moments ideas are inspired by [purr](https://github.com/2005selene2005-a11y/purr) (MIT License, copyright 2026 purr contributors). This implementation is original JavaScript adapted to the existing XY frontend.
+
+## Startup and settings improvements (November 2026)
+
+- The cold-start home view no longer builds all chat bubbles or runs full legacy timestamp migration before entering the chat tab. Existing chats remain stored; each conversation is backfilled only when opened.
+- Local backup scans are deferred away from initial startup; hourly and manual backup protections remain available.
+- Settings → 自然聊天 is included in the collapsed advanced-settings accordion.
+- These changes reduce unnecessary startup work but are not an Android device benchmark. The app still loads existing frontend modules and requires a normal refresh to load updated assets.
