@@ -1,0 +1,49 @@
+/* 砚屿 · 开发助手：独立于聊天输入框的任务中心 */
+#xyDevAssistant { display:grid; gap:18px; padding-bottom:26px; color:var(--text,#26352e); }
+#xyDevAssistant *,#xyDevAssistant *::before,#xyDevAssistant *::after { box-sizing:border-box; }
+#xyDevAssistant .xy-da-intro { padding:22px 19px; border:1px solid color-mix(in srgb,currentColor 10%,transparent); border-radius:22px; background:linear-gradient(140deg,rgba(158,204,169,.16),rgba(246,248,241,.07) 65%); }
+#xyDevAssistant .xy-da-eyebrow { display:block; font-size:10px; letter-spacing:.2em; opacity:.65; text-transform:uppercase; margin-bottom:9px; }
+#xyDevAssistant h3 { font-size:17px; line-height:1.4; font-weight:650; margin:0 0 7px; }
+#xyDevAssistant p { margin:0; line-height:1.65; font-size:13px; }
+#xyDevAssistant .xy-da-intro p { opacity:.7; max-width:36em; }
+#xyDevAssistant .xy-da-form { display:grid; gap:10px; }
+#xyDevAssistant label { display:block; font-size:12px; font-weight:650; margin-top:2px; }
+#xyDevAssistant input,#xyDevAssistant textarea { display:block; width:100%; min-width:0; padding:12px 13px; font:inherit; font-size:14px; line-height:1.5; border:1px solid color-mix(in srgb,currentColor 16%,transparent); border-radius:13px; color:inherit; background:color-mix(in srgb,var(--panel-bg,#ffffff) 86%,transparent); outline-offset:2px; }
+#xyDevAssistant textarea { min-height:126px; resize:vertical; }
+#xyDevAssistant input:focus-visible,#xyDevAssistant textarea:focus-visible { outline:2px solid var(--accent,#75ad87); border-color:transparent; }
+#xyDevAssistant button { font:inherit; font-size:12px; line-height:1.4; color:inherit; border:1px solid color-mix(in srgb,currentColor 16%,transparent); background:color-mix(in srgb,var(--panel-bg,#fff) 76%,transparent); border-radius:12px; padding:9px 13px; cursor:pointer; touch-action:manipulation; }
+#xyDevAssistant button:focus-visible { outline:2px solid var(--accent,#75ad87); outline-offset:2px; }
+#xyDevAssistant button:disabled { opacity:.55; cursor:wait; }
+#xyDevAssistant .xy-da-primary { background:var(--accent,#72a886); color:#102b1b; border-color:transparent; font-weight:650; }
+#xyDevAssistant .xy-da-form .xy-da-primary { width:100%; padding:13px 16px; margin-top:4px; border-radius:14px; }
+#xyDevAssistant .xy-da-connect { border:1px solid color-mix(in srgb,currentColor 13%,transparent); border-radius:17px; padding:13px; }
+#xyDevAssistant .xy-da-connect summary { cursor:pointer; display:flex; gap:8px; align-items:center; justify-content:space-between; font-size:13px; font-weight:600; list-style-position:inside; }
+#xyDevAssistant .xy-da-connect summary span { color:var(--accent,#5b9472); font-size:11px; white-space:nowrap; }
+#xyDevAssistant .xy-da-connect[open] { display:grid; gap:10px; }
+#xyDevAssistant .xy-da-connect[open] summary { margin-bottom:2px; }
+#xyDevAssistant .xy-da-connect p,#xyDevAssistant .xy-da-connect small { color:inherit; opacity:.68; font-size:12px; line-height:1.65; }
+#xyDevAssistant .xy-da-actions { display:flex; flex-wrap:wrap; gap:7px; margin-top:2px; }
+#xyDevAssistant .xy-da-notice { min-height:1.5em; color:var(--accent,#438262); font-size:12px; }
+#xyDevAssistant .xy-da-records { display:grid; gap:10px; }
+#xyDevAssistant .xy-da-record-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+#xyDevAssistant .xy-da-record-head h3 { margin:0; font-size:15px; }
+#xyDevAssistant .xy-da-record-head h3 span { opacity:.55; font-size:12px; }
+#xyDevAssistant #xyDaHistory { display:grid; gap:10px; }
+#xyDevAssistant .xy-da-task { display:grid; gap:8px; padding:14px; border-radius:16px; border:1px solid color-mix(in srgb,currentColor 12%,transparent); background:color-mix(in srgb,var(--panel-bg,#fff) 73%,transparent); }
+#xyDevAssistant .xy-da-task-top { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
+#xyDevAssistant .xy-da-task time { font-size:10px; opacity:.55; }
+#xyDevAssistant .xy-da-state { border:1px solid color-mix(in srgb,currentColor 11%,transparent); padding:3px 8px; border-radius:999px; font-size:11px; background:rgba(141,178,152,.11); }
+#xyDevAssistant .xy-da-state[data-state="failed"] { background:rgba(193,91,91,.11); }
+#xyDevAssistant .xy-da-state[data-state="needs_approval"],#xyDevAssistant .xy-da-state[data-state="waiting_approval"],#xyDevAssistant .xy-da-state[data-state="review"] { background:rgba(205,165,79,.13); }
+#xyDevAssistant .xy-da-task strong { overflow-wrap:anywhere; font-size:13px; line-height:1.6; }
+#xyDevAssistant .xy-da-task small,#xyDevAssistant .xy-da-muted { font-size:11px; opacity:.63; overflow-wrap:anywhere; }
+#xyDevAssistant .xy-da-result { white-space:pre-wrap; overflow-wrap:anywhere; color:inherit; opacity:.77; }
+#xyDevAssistant .xy-da-task a { font-size:12px; color:var(--accent,#397a55); text-decoration:underline; text-underline-offset:3px; overflow-wrap:anywhere; }
+#xyDevAssistant .xy-da-footer { border-top:1px solid color-mix(in srgb,currentColor 10%,transparent); padding-top:12px; }
+@media(max-width:480px) {
+  #xyDevAssistant { gap:15px; }
+  #xyDevAssistant .xy-da-intro { padding:18px 15px; border-radius:18px; }
+  #xyDevAssistant .xy-da-record-head { align-items:flex-start; }
+  #xyDevAssistant .xy-da-task { padding:12px; }
+}
+@media(prefers-reduced-motion:reduce){ #xyDevAssistant * { scroll-behavior:auto; } }
