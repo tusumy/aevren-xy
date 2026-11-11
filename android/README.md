@@ -34,3 +34,7 @@ Install a newly built `app-debug.apk` over the currently installed `com.aevren.x
 ## Landscape island / portrait mobile update
 
 The online island now uses a full-width desktop scene with location navigation, synchronized touch panning, and landmark backgrounds inside selected tools. The native loading curtain draws the same island scene image, rather than a text-only intermediate screen. The package name remains `com.aevren.xy` for upgrade compatibility.
+
+## Pinch zoom / configurable HTML cards (2026-10-23)
+
+Android WebView now enables built-in pinch-to-zoom with hidden zoom buttons; the webpage also preserves `pinch-zoom` during horizontal island navigation. HTML and role-status card glass can be disabled or adjusted independently through the theme panel. The previous blanket blur was removed from large content surfaces. Installing the rebuilt APK is necessary for native WebView settings to take effect. The app id remains unchanged for in-place upgrades.
