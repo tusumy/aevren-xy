@@ -99,8 +99,6 @@
   const refreshList=()=>{
     const panel=currentPanel();
     if(!panel)return;
-    const tasks=$("#xyDevAssistant", "#none");
-    void tasks;
     const host=$(panel,"#xyDaHistory");
     if(host)host.innerHTML=state.tasks.length?state.tasks.map(taskMarkup).join(""):'<p class="xy-da-muted">还没有任务。先写一句想让助手做的事。</p>';
     const stateEl=$(panel,"#xyDaCount");
