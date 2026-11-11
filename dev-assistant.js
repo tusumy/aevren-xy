@@ -80,6 +80,7 @@
     const canRetry=status==="draft"&&!!state.endpoint;
     const link=String(task.prUrl||task.previewUrl||"");
     const validLink=/^https:\/\//.test(link)?link:"";
+    const reviewable=!!(task.diff||(/^https:\/\//.test(String(task.prUrl||""))));
     const info=safe(clamp(task.summary||"等待后端返回规划和执行结果。",1500));
     const created=new Date(task.createdAt||Date.now()).toLocaleString();
     return '<article class="xy-da-task" data-task="'+safe(task.localId)+'">'+
@@ -88,10 +89,12 @@
       '<small>'+safe(clamp(task.repository,120))+'</small>'+
       '<p class="xy-da-result">'+info+'</p>'+
       (validLink?'<a href="'+safe(validLink)+'" target="_blank" rel="noopener noreferrer">查看变更或预览 ↗</a>':"")+
+      (task.diff?'<details class="xy-da-diff"><summary>查看代码差异</summary><pre>'+safe(clamp(task.diff,10000))+'</pre></details>':"")+
+      (needsReview&&!reviewable?'<small>服务尚未返回可审阅的 PR 或代码差异，暂不能批准。</small>':"")+
       '<div class="xy-da-actions">'+
       (task.remoteId?'<button type="button" data-da-action="refresh" data-id="'+safe(task.localId)+'">刷新</button>':"")+
       (canRetry?'<button type="button" data-da-action="submit" data-id="'+safe(task.localId)+'">发送草稿</button>':"")+
-      (needsReview?'<button type="button" class="xy-da-primary" data-da-action="approve" data-id="'+safe(task.localId)+'">确认应用变更</button>':"")+
+      (needsReview&&reviewable?'<button type="button" class="xy-da-primary" data-da-action="approve" data-id="'+safe(task.localId)+'">确认应用变更</button>':"")+
       ((working||needsReview)&&task.remoteId?'<button type="button" data-da-action="cancel" data-id="'+safe(task.localId)+'">取消任务</button>':"")+
       '<button type="button" data-da-action="copy" data-id="'+safe(task.localId)+'">复制需求</button>'+
       '</div></article>';
@@ -175,7 +178,8 @@
     if(typeof remoteId!=="string"&&typeof remoteId!=="number")throw Error("服务没有返回 task_id，未确认任务是否创建，请先检查服务端记录。");
     editTask(task.localId,{
       remoteId:String(remoteId),status:clamp(result.status||"queued",40),
-      summary:clamp(result.summary||"任务已发出，等待规划结果。",1500)
+      summary:clamp(result.summary||"任务已发出，等待规划结果。",1500),
+      prUrl:clamp(result.pr_url||"",1000),diff:clamp(result.diff||"",10000)
     });
     notice="任务已交给云端服务。";
     refreshList();
@@ -207,7 +211,8 @@
       status:clamp(result.status||task.status,40),
       summary:clamp(result.summary||result.message||task.summary,1500),
       prUrl:clamp(result.pr_url||task.prUrl||"",1000),
-      previewUrl:clamp(result.preview_url||task.previewUrl||"",1000)
+      previewUrl:clamp(result.preview_url||task.previewUrl||"",1000),
+      diff:clamp(result.diff||task.diff||"",10000)
     });
   };
   async function refreshRemote(onlyId){
@@ -237,7 +242,7 @@
     }
     if(action==="refresh"){await refreshRemote(task.localId);return;}
     if(!state.endpoint){notice="尚未连接执行服务。";refreshList();return;}
-    if(action==="approve"&&(!REVIEW.has(task.status)||!task.remoteId))return;
+    if(action==="approve"&&(!REVIEW.has(task.status)||!task.remoteId||!(task.diff||/^https:\/\//.test(String(task.prUrl||""))))){notice="先取得并审阅代码差异或 PR，再进行确认。";refreshList();return;}
     if(action==="cancel"&&(!RUNNING.has(task.status)&&!REVIEW.has(task.status)))return;
     if(action==="approve"&&!confirm("确认让云端服务应用这个任务的变更？请先检查服务端生成的差异或 PR。"))return;
     busy=true;
