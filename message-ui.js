@@ -29,17 +29,19 @@
     if(Number.isNaN(d.getTime()))return "";
     return d.toLocaleString("zh-CN",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false});
   };
+  const timestampReady=new WeakSet();
   function migrateLegacyTimestamps(){
-    let changed=false;
-    const now=Date.now();
-    chats.forEach((c,ci)=>{
-      const missing=c.messages.filter(m=>!m.createdAt).length;
-      if(!missing)return;
-      let n=0;
-      const base=now-(missing-1)*1000-ci*100;
-      c.messages.forEach(m=>{if(!m.createdAt){m.createdAt=base+n*1000;n++;changed=true}});
-    });
-    if(changed)save();
+    // Backfill only the current conversation when it is actually opened.
+    // Old behavior rewrote every stored chat during every cold launch.
+    const c=chat();
+    if(!c||timestampReady.has(c)||!Array.isArray(c.messages))return;
+    timestampReady.add(c);
+    const missing=c.messages.reduce((n,m)=>n+(!m.createdAt?1:0),0);
+    if(!missing)return;
+    const now=Date.now(),base=now-(missing-1)*1000;
+    let n=0;
+    for(const m of c.messages)if(!m.createdAt)m.createdAt=base+n++*1000;
+    save();
   }
 
   function trimPlainEnding(text){
@@ -184,8 +186,10 @@
   }
 
   renderMessages=function(){
+    if(window.xyInitialHomeBoot)return;
     const c=chat(),box=document.querySelector("#messages");
     if(!box||!c)return;
+    migrateLegacyTimestamps();
     box.innerHTML='<div class="day">AEVREN · XY</div>'+c.messages.map(messageHtml).join("");
     window.xyStickerShelf?.hydrateRendered?.(box);
     box.scrollTop=box.scrollHeight;
@@ -324,6 +328,5 @@
     if(e.target.closest(".use-character")||e.target.id==="saveCharacter")requestAnimationFrame(()=>{updatePlaceholder();renderMessages()});
   });
 
-  migrateLegacyTimestamps();
   renderMessages();
 })();
