@@ -29,7 +29,7 @@ function unmountDestination(){
 }
 let fromHome=false;
 const NAV_ROOT="xyIslandRoot";
-const allowed=new Set(["chat","study","imagine","creation","groupchat","journal","toolhub","settings","voice","theme","memory","quotes"]);
+const allowed=new Set(["chat","study","imagine","creation","groupchat","journal","toolhub","settings","voice","theme","memory","quotes","assistant"]);
 const cards=[
   {label:"书房",description:"人物与角色卡",icon:"book",route:"study"},
   {label:"生图",description:"灵感画室",icon:"image",route:"imagine"},
@@ -121,7 +121,7 @@ function escapeHtml(value){
  return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 }
 const primaryRoutes=new Set(["home","chat","toolhub","favorites","me"]);
-const knownRoutes=new Set([...primaryRoutes,"study","imagine","creation","groupchat","journal","settings","mcp","voice","theme","memory","quotes","characters","avatar","data"]);
+const knownRoutes=new Set([...primaryRoutes,"study","imagine","creation","groupchat","journal","settings","mcp","voice","theme","memory","quotes","characters","avatar","data","assistant"]);
 let activeRoute="home",activeTab="home";
 
 function tabFor(type){
@@ -182,6 +182,7 @@ function renderMe(){
   '<div class="xy-my-section-title">连接与设置</div>'+
   pageLink("settings","高级设置","API 接口、模型与参数","gear")+
   pageLink("mcp","MCP 工具","已连接的服务与权限","toolbox")+
+  pageLink("assistant","开发助手","代码任务、进度与变更确认","toolbox")+
   pageLink("characters","角色与设定","角色资料与用户称呼","book")+
   '<p class="xy-my-foot">AEVREN · XY　砚屿</p>'+
   '</div>');
@@ -195,7 +196,7 @@ function pageLink(route,title,subtitle,icon){
 const favTools=[
  ["study","书房"],["memory","记忆"],["mcp","MCP 工具"],["quotes","句子收藏"],["characters","角色"],
  ["creation","创作角"],["groupchat","群聊"],["journal","日记"],["imagine","生图"],
- ["theme","主题"],["avatar","头像"],["data","数据管理"],["settings","模型设置"],["voice","语音"]
+ ["theme","主题"],["avatar","头像"],["data","数据管理"],["settings","模型设置"],["voice","语音"],["assistant","开发助手"]
 ];
 function getToolFavorites(){
  try{
