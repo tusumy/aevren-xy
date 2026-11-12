@@ -14,17 +14,22 @@ const textOf=m=>{if(!m)return "";const v=m.variants?.[Math.max(0,Math.min(m.vari
 const norm=t=>String(t||"").replace(/⟪(?:封存|泡|前情):[^⟫]*⟫/g,"").trim().slice(0,2200);
 const preview=(t,n=90)=>String(t||"").replace(/\s+/g," ").slice(0,n);
 const parts=m=>{const t=norm(textOf(m));if(!t)return [];if(t.includes("\x60\x60\x60")||/<(?:html|div|style|table|svg)\b/i.test(t))return [t];return t.split(/\n+/).map(x=>x.trim()).filter(Boolean).slice(0,24)};
-let bubbles=load(KEY,[]);if(!Array.isArray(bubbles))bubbles=[];
-bubbles=bubbles.filter(x=>x&&x.id&&Array.isArray(x.lines));
+let bubbles=null;
+function ready(){
+ if(bubbles!==null)return;
+ const saved=load(KEY,[]);
+ bubbles=(Array.isArray(saved)?saved:[]).filter(x=>x&&x.id&&Array.isArray(x.lines));
+}
 let opts={aiMaySave:true,...load(SET,{})},query="",detailId="",picker=null;
-const byId=id=>bubbles.find(x=>x.id===id);
-const all=()=>bubbles.slice();
-const count=()=>bubbles.length;
-const isExpandedQuote=id=>bubbles.some(x=>x.sourceQuoteId&&String(x.sourceQuoteId)===String(id));
-function persist(){localStorage.setItem(KEY,JSON.stringify(bubbles));window.dispatchEvent(new CustomEvent("xy-keepsake-change",{detail:{count:count()}}))}
+const byId=id=>{ready();return bubbles.find(x=>x.id===id)};
+const all=()=>{ready();return bubbles.slice()};
+const count=()=>{ready();return bubbles.length};
+const isExpandedQuote=id=>{ready();return bubbles.some(x=>x.sourceQuoteId&&String(x.sourceQuoteId)===String(id))};
+function persist(){ready();localStorage.setItem(KEY,JSON.stringify(bubbles));window.dispatchEvent(new CustomEvent("xy-keepsake-change",{detail:{count:count()}}))}
 function fog(x){return Math.max(0,Math.min(1,((Date.now()-(x.touchedAt||x.createdAt))/86400000-3)/80))}
 function clip(c,index,t,ctx=""){const m=c.messages[index];return {w:m.role==="assistant"?"me":"her",t:norm(t),index,mid:m.id??null,ctx}}
 function create(c,selected,config={}){
+ ready();
  if(!c||!selected.length)throw Error("至少选一段对话");
  const clips=selected.filter(x=>c.messages[x.index]&&["user","assistant"].includes(c.messages[x.index].role)&&norm(x.t)).sort((a,b)=>a.index-b.index||a.part-b.part).slice(0,30);
  if(!clips.length)throw Error("没有可收藏的文字");
@@ -76,6 +81,7 @@ function pool(list){
  return recent.concat(list.filter(x=>!recent.includes(x)).sort((a,b)=>fog(b)-fog(a)).slice(0,3));
 }
 function render(){
+ ready();
  const body=el("#panelBody");if(!body)return;
  const filtered=bubbles.filter(x=>(x.title+" "+x.lines.map(l=>l.t).join(" ")).toLocaleLowerCase().includes(query.toLocaleLowerCase()));
  const layout=pool(filtered);
