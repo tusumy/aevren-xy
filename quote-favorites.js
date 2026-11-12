@@ -29,9 +29,9 @@
    window.dispatchEvent(new CustomEvent("xy-quote-favorites-change",{detail:{count:saved.length}}));
    return {added:true,count:saved.length,item};
  }
- function count(){return read().length}
+ function count(){return read().filter(x=>!window.xyKeepsake?.isExpandedQuote?.(x.id)).length}
  function render(){
-   const list=read();
+   const list=read().filter(x=>!window.xyKeepsake?.isExpandedQuote?.(x.id));
    const bodyHtml=list.map(x=>
      '<article class="xy-q-item" data-xy-q-item="'+escapeHtml(x.id)+'">'+
        '<p>'+escapeHtml(x.text)+'</p>'+
@@ -41,6 +41,7 @@
        '<div class="xy-q-actions">'+
         '<button type="button" data-q-action="copy" data-q-id="'+escapeHtml(x.id)+'">复制</button>'+
         '<button type="button" data-q-action="jump" data-q-id="'+escapeHtml(x.id)+'" '+(!x.chatId||x.chatId.startsWith("group:")?'disabled title="群聊收藏暂不支持定位"':"")+'>原对话</button>'+
+        '<button type="button" data-q-action="grow" data-q-id="'+escapeHtml(x.id)+'">扩成泡泡</button>'+
         '<button type="button" class="xy-q-remove" data-q-action="remove" data-q-id="'+escapeHtml(x.id)+'">移除收藏</button>'+
        '</div></article>').join("");
    body.innerHTML='<div class="xy-q-library">'+
@@ -114,6 +115,7 @@
    }
    const item=read().find(x=>x.id===btn.dataset.qId);
    if(!item)return;
+   if(task==="grow"){window.xyKeepsake?.expandQuote?.(item);return}
    if(task==="copy"){
      try{await copy(item.text);btn.textContent="已复制"}catch{btn.textContent="复制失败"}
    }else if(task==="jump")jump(item);
