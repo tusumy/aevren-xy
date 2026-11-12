@@ -209,6 +209,7 @@
       else if(key==="xy.journals.v1"&&Array.isArray(a)&&Array.isArray(b))next[key]=JSON.stringify(uniqueMerge(a,b,x=>String(x?.id||"")));
       else if(key==="xy.memories"&&Array.isArray(a)&&Array.isArray(b))next[key]=JSON.stringify(uniqueMerge(a,b,x=>String(x?.characterId||"")+"|"+String(x?.tag||"")+"|"+String(x?.text||"")));
       else if(key==="xy.characters"&&Array.isArray(a)&&Array.isArray(b))next[key]=JSON.stringify(uniqueMerge(a,b,x=>String(x?.id||"")));
+      else if((key==="xy.quoteFavorites.v1"||key==="xy.keepsake.bubbles.v1")&&Array.isArray(a)&&Array.isArray(b))next[key]=JSON.stringify(uniqueMerge(a,b,x=>String(x?.id||"")));
     }
     return next;
   }
