@@ -96,7 +96,16 @@
     const raw=String(value??"");
     const quote=role==="user"?raw.match(/^引用([^\r\n：「]{1,40})：「([^\r\n]*)」(?:\r?\n|$)/):null;
     const body=quote?raw.slice(quote[0].length):raw;
-    const rendered=window.xyChatMarkdown?.render?.(body)??(window.xyStickerShelf?.renderText?.(body)??esc(body));
+    // Durable Keepsake markers become clickable cards; other text still uses the
+    // existing markdown/sticker renderer and is never inserted as raw HTML.
+    const renderChunk=part=>window.xyChatMarkdown?.render?.(part)??(window.xyStickerShelf?.renderText?.(part)??esc(part));
+    const rendered=String(body).split(/(⟦泡泡:k[a-z0-9]{4,30}⟧)/gi).map(part=>{
+      const hit=part.match(/^⟦泡泡:(k[a-z0-9]{4,30})⟧$/i);
+      if(!hit)return renderChunk(part);
+      const item=window.xyKeepsake?.find?.(hit[1]);
+      if(!item)return renderChunk(part);
+      return '<button type="button" class="xy-keepsake-card" data-xy-keepsake-card="'+esc(item.id)+'">◌ 已封存《'+esc(item.title)+'》 · 打开泡泡</button>';
+    }).join("");
     if(!quote)return `<span class="bubble-text">${rendered}</span>`;
     const who=quote[1].trim(),excerpt=quote[2];
     const target=quotedSourceIndex(excerpt,who,index);
