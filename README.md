@@ -44,3 +44,13 @@ API proxy notes live in `workers/README.md`.
 - Existing home/chat wallpaper imagery is used as the initial app image by reference. Only when the chat picture is changed for the first time does the app snapshot the former image, avoiding duplicate large data URLs on first startup. The app base color follows the theme palette until manually changed.
 - Image imports reuse `theme-core.js` compression; saved image configuration uses `xy.appBackground.v1` in localStorage, included in existing XY backups. No remote image service or extra model call is required.
 - This is a static frontend change; end-to-end Android WebView wallpaper rendering and memory usage have not been benchmarked.
+
+## 对话泡泡 · Keepsake（2026-11-12）
+
+- 首页底部 **收藏 → 对话泡泡 → 泡泡池**。原单句收藏、表情包和工具收藏不动；旧的 xy.quoteFavorites.v1 数据仍然保留。单句收藏提供「扩成泡泡」。
+- 聊天长按消息 → **存成泡泡 · 多选**，最多勾 30 段；可以写名字、前情，并决定下次聊天是否通知角色。独立数据键 xy.keepsake.bubbles.v1 储存原文快照、原聊天/消息指针、前后文、双方前情、留言和回复关系。
+- AI 角色可以在自然回复末尾使用 ⟪封存:标题|原文开头|原文结尾|当时经过⟫ 自己封存；⟪泡:kID|留言⟫ 留言；⟪前情:kID|经过⟫ 补前情。一次最多执行两个标记；成功返回可打开的泡泡卡，失败留下明确的「没封上」原因。没有定时催促。
+- **发给角色**是单独的选项；只留在泡泡里的私人留言不会发送给模型。收到有效 AI 留言时会实际保存至本地，而不是仅口头承诺。无需增加额外的模型调用轮次。
+- 泡泡池为轻量 CSS 漂浮动画，只在打开页面时建立；展示最近最多六颗和起雾较重最多三颗，并配搜索列表。3 天后开始起雾、83 天达到最大；打开或留言会清亮。保留深浅色、减少动态效果兼容。这不是原项目的 three.js 物理玻璃版本。
+- 数据管理器支持按 ID 合并导入收藏泡泡和旧单句收藏；备份依然可导出全部 xy. 数据。
+- 设计参考开源项目 [Cheiineeey/keepsake](https://github.com/Cheiineeey/keepsake)（MIT）；砚屿针对现有本地数据模型重新实现。尚未经过用户安卓 WebView 实机回归。
