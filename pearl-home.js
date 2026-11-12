@@ -49,6 +49,7 @@ const icons={
   journal:'<rect x="5.5" y="3.4" width="13" height="17" rx="2"/><path d="M9 2.5v3M15 2.5v3M8.6 10h6.8M8.6 13.4h6.8M8.6 16.8h4.4"/>',
   home:'<path d="m3.5 10 8.5-7 8.5 7v9.7c0 .8-.6 1.4-1.4 1.4H4.9c-.8 0-1.4-.6-1.4-1.4Z"/><path d="M9 21v-7h6v7"/>',
   toolbox:'<rect x="3" y="7" width="18" height="14" rx="2.5"/><path d="M9 7V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v3M3 12h18M10 11.9v2.1h4v-2.1"/>',
+  moments:'<circle cx="12" cy="12" r="8.7"/><circle cx="8.6" cy="11" r="1.1"/><circle cx="15.4" cy="11" r="1.1"/><path d="M8.2 15.1c2.3 2 5.3 2 7.6 0M19 5.2l1.5-1.5M4.9 5.2 3.5 3.8"/>',
   user:'<circle cx="12" cy="8" r="4"/><path d="M4 20.3a8 8 0 0 1 16 0"/>',
   arrow:'<path d="m9 5 7 7-7 7"/>'
 };
@@ -67,7 +68,7 @@ const cardMarkup=cards.map(item=>
 const tabs=[
  {label:"首页",icon:"home",route:"home"},
  {label:"对话",icon:"chat",route:"chat"},
- {label:"工具",icon:"toolbox",route:"toolhub"},
+ {label:"朋友圈",icon:"moments",route:"moments"},
  {label:"收藏",icon:"heart",route:"favorites"},
  {label:"我",icon:"user",route:"me"}
 ];
@@ -120,7 +121,7 @@ window.addEventListener("xy-user-profile-change",syncName);
 function escapeHtml(value){
  return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 }
-const primaryRoutes=new Set(["home","chat","toolhub","favorites","me"]);
+const primaryRoutes=new Set(["home","chat","moments","favorites","me"]);
 const knownRoutes=new Set([...primaryRoutes,"study","imagine","creation","groupchat","journal","settings","mcp","voice","theme","memory","quotes","characters","avatar","data","assistant","moments"]);
 let activeRoute="home",activeTab="home";
 
