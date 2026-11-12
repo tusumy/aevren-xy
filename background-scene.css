@@ -1,0 +1,86 @@
+/* Single application-wide backdrop. Chat retains #themeBackdrop.
+   The image is mounted once, not copied into each page during navigation. */
+#xyAppBackdrop{
+ position:fixed;inset:0;z-index:49990;display:none;overflow:hidden;
+ background:var(--xy-app-bg-color,var(--theme-bg,#edf2ed));
+ pointer-events:none;contain:layout paint;
+}
+html.xy-island-visible #xyAppBackdrop,
+html.xy-home-subroute #xyAppBackdrop{display:block}
+#xyAppBackdrop::before{
+ content:"";position:absolute;inset:-3%;pointer-events:none;
+ background-image:var(--xy-app-bg-image,none),
+  radial-gradient(ellipse 70% 40% at 110% 12%,color-mix(in srgb,var(--theme-accent,#5e8260) 15%,transparent),transparent 76%),
+  radial-gradient(ellipse 70% 38% at -18% 75%,color-mix(in srgb,var(--theme-accent,#5e8260) 12%,transparent),transparent 76%);
+ background-position:center;background-size:cover;background-repeat:no-repeat;
+ filter:blur(var(--xy-app-bg-blur,0px));transform:scale(1.04);
+}
+#xyAppBackdrop::after{
+ content:"";position:absolute;inset:0;pointer-events:none;
+ background:var(--xy-app-bg-overlay,rgba(237,242,237,.56));
+}
+/* Home and every home subroute reveal the same stationary backdrop. */
+html.xy-island-visible #xyIslandHome,
+html.xy-island-visible[data-xy-custom-background="1"] #xyIslandHome{
+ background:transparent!important;
+}
+html.xy-island-visible #xyIslandHome .xy-pearl-ambient,
+html.xy-island-visible[data-xy-custom-background="1"] #xyIslandHome .xy-pearl-ambient{
+ background:transparent!important;background-image:none!important;
+}
+html.xy-island-visible #xyIslandHome .xy-pearl-ambient::after{display:none!important}
+html.xy-home-subroute #xyHomeDestination,
+html.xy-home-subroute #xyHomeDestination #panel,
+html.xy-home-subroute #xyHomeDestination #panel.xy-my-panel,
+html.xy-home-subroute[data-theme-mode="dark"] #xyHomeDestination,
+html.xy-home-subroute[data-theme-mode="dark"] #xyHomeDestination #panel{
+ background:transparent!important;
+}
+html.xy-home-subroute #xyHomeDestination #panel{
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+html.xy-home-subroute #xyHomeDestination #panel .panel-head,
+html.xy-home-subroute[data-theme-mode="dark"] #xyHomeDestination #panel .panel-head{
+ background:color-mix(in srgb,var(--xy-app-bg-color,#edf2ed) 86%,transparent)!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+html.xy-home-subroute #xyHomeDestination #panel #panelBody{
+ background:transparent!important;
+}
+/* Cards and reading surfaces stay legible above detailed backgrounds. */
+html.xy-home-subroute #xyHomeDestination #panel :is(
+ .xy-fav-section,.xy-hub-card,.xy-purr-compose,.xy-purr-post,
+ .setting-card,.theme-setting-card,.memory-card,.journal-card
+ ){
+ -webkit-backdrop-filter:none;
+ backdrop-filter:none;
+}
+html.xy-home-subroute[data-xy-app-has-image="1"] #xyHomeDestination #panel :is(
+ .setting-card,.theme-setting-card,.memory-card,.journal-card
+ ){
+ background:color-mix(in srgb,var(--xy-app-bg-color,#edf2ed) 66%,rgba(255,255,255,.66));
+}
+html.xy-home-subroute[data-theme-mode="dark"][data-xy-app-has-image="1"] #xyHomeDestination #panel :is(
+ .setting-card,.theme-setting-card,.memory-card,.journal-card
+ ){
+ background:color-mix(in srgb,var(--xy-app-bg-color,#15231d) 80%,rgba(22,30,25,.76));
+}
+/* A denser content treatment is deliberate; the wallpaper stays fixed. */
+html.xy-home-subroute[data-xy-app-has-image="1"] #xyHomeDestination #panel .xy-purr-post{
+ background:color-mix(in srgb,var(--xy-app-bg-color,#edf2ed) 18%,rgba(255,255,255,.48));
+ border-radius:14px;padding-inline:12px;margin-top:7px;
+}
+/* App and chat background controls in the existing theme accordion. */
+.xy-app-bg-settings{display:grid;gap:10px}
+.xy-app-bg-title{font-size:13px;font-weight:650;margin:0;color:var(--ink)}
+.xy-app-bg-help,.xy-chat-bg-hint{font-size:11px;line-height:1.6;color:var(--muted);margin:0}
+.xy-app-bg-color{display:flex!important;align-items:center;justify-content:space-between;gap:12px}
+.xy-app-bg-color input[type="color"]{width:44px;height:36px;border:1px solid var(--line);border-radius:9px;padding:3px;background:transparent}
+.xy-app-follow{display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:10px!important;padding:11px 0 3px}
+.xy-app-follow input{width:17px;height:17px;accent-color:var(--theme-accent,#5e8260)}
+.xy-chat-bg-hint{margin-bottom:8px}
+.xy-chat-bg-follow{opacity:.68}
+.xy-chat-bg-follow input,.xy-chat-bg-follow button,.xy-chat-bg-follow .theme-upload-button{
+ pointer-events:none;
+}
+@media(prefers-reduced-motion:reduce){#xyAppBackdrop::before{transform:none}}
