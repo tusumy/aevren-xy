@@ -70,6 +70,21 @@ html.xy-home-subroute[data-xy-app-has-image="1"] #xyHomeDestination #panel .xy-p
  background:color-mix(in srgb,var(--xy-app-bg-color,#edf2ed) 18%,rgba(255,255,255,.48));
  border-radius:14px;padding-inline:12px;margin-top:7px;
 }
+/* The five-tab glass bar is tinted by the app background, not chat colors. */
+html.xy-island-visible .xy-app-tabs,
+html.xy-home-subroute .xy-app-tabs{
+ background:linear-gradient(180deg,
+  color-mix(in srgb,var(--xy-app-bg-color,#edf2ed) 47%,rgba(255,255,255,.30)),
+  color-mix(in srgb,var(--xy-app-bg-color,#edf2ed) 61%,rgba(255,255,255,.36))
+ )!important;
+}
+html[data-theme-mode="dark"].xy-island-visible .xy-app-tabs,
+html[data-theme-mode="dark"].xy-home-subroute .xy-app-tabs{
+ background:linear-gradient(180deg,
+  color-mix(in srgb,var(--xy-app-bg-color,#15231d) 68%,rgba(23,30,26,.22)),
+  color-mix(in srgb,var(--xy-app-bg-color,#15231d) 83%,rgba(10,18,13,.3))
+ )!important;
+}
 /* App and chat background controls in the existing theme accordion. */
 .xy-app-bg-settings{display:grid;gap:10px}
 .xy-app-bg-title{font-size:13px;font-weight:650;margin:0;color:var(--ink)}
