@@ -195,7 +195,7 @@ function pageLink(route,title,subtitle,icon){
   '<span class="xy-my-chevron">›</span></button>';
 }
 const favTools=[
- ["study","书房"],["memory","记忆"],["moments","朋友圈"],["mcp","MCP 工具"],["quotes","句子收藏"],["characters","角色"],
+ ["study","书房"],["memory","记忆"],["mcp","MCP 工具"],["quotes","句子收藏"],["characters","角色"],
  ["creation","创作角"],["groupchat","群聊"],["journal","日记"],["imagine","生图"],
  ["theme","主题"],["avatar","头像"],["data","数据管理"],["settings","模型设置"],["voice","语音"],["assistant","开发助手"]
 ];
