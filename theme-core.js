@@ -126,6 +126,8 @@
     const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;const ctx=canvas.getContext('2d',{alpha:false});ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);ctx.drawImage(img,0,0,width,height);const blob=await canvasBlob(canvas,'image/jpeg',.38);if(!blob)throw new Error('压缩失败');return {dataUrl:await blobToDataURL(blob),bytes:blob.size,width,height};
   }
   const humanSize=n=>n>=1048576?(n/1048576).toFixed(1)+'MB':Math.max(1,Math.round(n/1024))+'KB';
+  // Share the tested compression path with the application background editor.
+  window.xyThemeBackgroundTools={compress:compressBackground,size:humanSize};
 
   function themePanel(){
     document.querySelector('#sidebar')?.classList.remove('open');
@@ -179,9 +181,9 @@
     paintRange(overlay,0,.85,theme.overlay);paintRange(blur,0,24,theme.blur);
     overlay?.addEventListener('input',()=>{theme.overlay=Number(overlay.value);body.querySelector('#themeOverlayValue').textContent=Math.round(theme.overlay*100)+'%';paintRange(overlay,0,.85,theme.overlay);applyTheme()});
     blur?.addEventListener('input',()=>{theme.blur=Number(blur.value);body.querySelector('#themeBlurValue').textContent=theme.blur+'px';paintRange(blur,0,24,theme.blur);applyTheme()});
-    body.querySelector('#themeBgUrl')?.addEventListener('change',e=>{const url=e.target.value.trim();theme.bgImage=url;applyTheme()});
+    body.querySelector('#themeBgUrl')?.addEventListener('change',e=>{const url=e.target.value.trim();theme.bgImage=url;persist();applyTheme()});
     body.querySelector('#themeBgFile')?.addEventListener('change',async e=>{const file=e.target.files?.[0],status=body.querySelector('#themeImageStatus');if(!file)return;if(status)status.textContent='正在压缩背景图…';try{const packed=await compressBackground(file);theme.bgImage=packed.dataUrl;persist();applyTheme();if(status)status.textContent=`已压缩 ${humanSize(file.size)} → ${humanSize(packed.bytes)} · ${packed.width}×${packed.height}`;const url=body.querySelector('#themeBgUrl');if(url)url.value=''}catch(err){if(status)status.textContent=err.message||'图片处理失败'}e.target.value=''});
-    body.querySelector('#clearThemeImage')?.addEventListener('click',()=>{theme.bgImage='';applyTheme();const url=body.querySelector('#themeBgUrl');if(url)url.value='';const s=body.querySelector('#themeImageStatus');if(s)s.textContent='当前没有背景图'});
+    body.querySelector('#clearThemeImage')?.addEventListener('click',()=>{theme.bgImage='';persist();applyTheme();const url=body.querySelector('#themeBgUrl');if(url)url.value='';const s=body.querySelector('#themeImageStatus');if(s)s.textContent='当前没有背景图'});
     body.querySelector('#saveTheme')?.addEventListener('click',()=>{persist();applyTheme();const s=body.querySelector('#themeImageStatus');if(s)s.textContent=theme.bgImage?'主题已保存 · 背景图已设置':'主题已保存'});
     body.querySelector('#resetTheme')?.addEventListener('click',()=>{theme={...DEFAULT_THEME};persist();applyTheme();themePanel()});
   }
