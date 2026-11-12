@@ -26,8 +26,8 @@
    {key:"glass-bubble",title:"气泡玻璃材质",matches:card=>card.matches(".xy-bubble-glass-card")},
    {key:"fine-colors",title:"气泡与背景颜色",matches:card=>!!card.querySelector("[data-color-row]")},
    {key:"bubble-layout",title:"气泡与文字设置",matches:card=>!!card.querySelector("#themeBubbleGlass")},
-   {key:"wallpaper",title:"背景图片",matches:card=>!!card.querySelector("#themeBgUrl")},
-   {key:"background-effects",title:"背景遮罩与模糊",matches:card=>!!card.querySelector("#themeOverlay")}
+   {key:"wallpaper",title:"聊天壁纸",matches:card=>!!card.querySelector("#themeBgUrl")},
+   {key:"background-effects",title:"聊天遮罩与模糊",matches:card=>!!card.querySelector("#themeOverlay")}
  ];
  function identify(card){
    const known=GROUPS.find(group=>group.matches(card));
