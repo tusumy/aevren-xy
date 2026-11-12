@@ -31,7 +31,10 @@ function create(c,selected,config={}){
  const first=clips[0].index,last=clips[clips.length-1].index;
  const key=(config.who==="ai"?"ai":"user")+"|"+String(c.id)+"|"+first+"|"+last+"|"+clips.map(x=>norm(x.t)).join("").slice(0,240);
  const old=bubbles.find(x=>x.signature===key&&Date.now()-x.createdAt<600000);
- if(old)return {bubble:old,created:false};
+ if(old){
+  if(config.sourceQuoteId&&!old.sourceQuoteId){old.sourceQuoteId=config.sourceQuoteId;try{persist()}catch(e){old.sourceQuoteId=null;throw e}}
+  return {bubble:old,created:false};
+ }
  const context=[];
  if(first>0&&["user","assistant"].includes(c.messages[first-1]?.role))context.push(clip(c,first-1,textOf(c.messages[first-1]),"before"));
  if(last<c.messages.length-1&&["user","assistant"].includes(c.messages[last+1]?.role))context.push(clip(c,last+1,textOf(c.messages[last+1]),"after"));
@@ -49,10 +52,12 @@ function create(c,selected,config={}){
 function comment(item,value,author="user",parentId=null,sent=false){
  const text=String(value||"").trim().slice(0,2000);if(!text)throw Error("请先写一句");
  const c={id:"c"+uid(),author,text,parentId:parentId||null,sent:author==="ai"||!!sent,at:Date.now()};
+ const previous={touchedAt:item.touchedAt,sendToAI:item.sendToAI,pending:item.pending};
  item.comments.push(c);item.touchedAt=c.at;
  if(author==="user"&&sent){item.sendToAI=true;item.pending={type:"comment",commentId:c.id,at:c.at}}
  if(author==="ai")item.pending=null;
- persist();return c;
+ try{persist()}catch(error){item.comments.pop();Object.assign(item,previous);throw error}
+ return c;
 }
 function ping(text,error){const n=document.createElement("div");n.className="xy-k-toast"+(error?" is-error":"");n.textContent=text;document.body.append(n);setTimeout(()=>n.remove(),2800)}
 function goChat(item){
@@ -171,7 +176,7 @@ body?.addEventListener("click",e=>{
  if(action==="cancel-reply"){const label=body.querySelector("#xyKReplying");label.hidden=true;delete label.dataset.parent;return}
  const item=byId(detailId);if(!item)return;
  if(action==="jump"){goChat(item);return}
- if(action==="note"){const value=prompt("写下你记得的经过",item.prefaceUser||"");if(value===null)return;item.prefaceUser=value.trim().slice(0,1200);try{persist();detail(item)}catch(err){ping("没存上："+err.message,true)}return}
+ if(action==="note"){const value=prompt("写下你记得的经过",item.prefaceUser||"");if(value===null)return;const before=item.prefaceUser;item.prefaceUser=value.trim().slice(0,1200);try{persist();detail(item)}catch(err){item.prefaceUser=before;ping("没存上："+err.message,true)}return}
  if(action==="ask"){item.sendToAI=true;item.pending={type:"backstory",at:Date.now()};try{persist();ping("已记录，下次聊天玄砚会看到");detail(item)}catch(err){ping("没存上："+err.message,true)}return}
  if(action==="delete"){if(!confirm("删除这颗泡泡？原聊天不会删除。"))return;const i=bubbles.indexOf(item);bubbles.splice(i,1);try{persist();detailId="";render()}catch(err){bubbles.splice(i,0,item);ping("删除失败："+err.message,true)}}
 });
