@@ -29,7 +29,7 @@ function unmountDestination(){
 }
 let fromHome=false;
 const NAV_ROOT="xyIslandRoot";
-const allowed=new Set(["chat","study","imagine","creation","groupchat","journal","toolhub","settings","voice","theme","memory","quotes","assistant","moments"]);
+const allowed=new Set(["chat","study","imagine","creation","groupchat","journal","toolhub","settings","voice","theme","memory","quotes","keepsake","assistant","moments"]);
 const cards=[
   {label:"书房",description:"人物与角色卡",icon:"book",route:"study"},
   {label:"生图",description:"灵感画室",icon:"image",route:"imagine"},
@@ -122,12 +122,12 @@ function escapeHtml(value){
  return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 }
 const primaryRoutes=new Set(["home","chat","moments","favorites","me"]);
-const knownRoutes=new Set([...primaryRoutes,"study","imagine","creation","groupchat","journal","settings","mcp","voice","theme","memory","quotes","characters","avatar","data","assistant","moments"]);
+const knownRoutes=new Set([...primaryRoutes,"study","imagine","creation","groupchat","journal","settings","mcp","voice","theme","memory","quotes","keepsake","characters","avatar","data","assistant","moments"]);
 let activeRoute="home",activeTab="home";
 
 function tabFor(type){
  if(primaryRoutes.has(type))return type;
- if(type==="quotes")return "favorites";
+ if(type==="quotes"||type==="keepsake")return "favorites";
  return activeTab||"home";
 }
 function setTabSelection(tab){
@@ -145,7 +145,7 @@ function clearOverlays(){
  document.querySelector("#scrim")?.classList.remove("show");
 }
 function cleanPanelClasses(){
- panel?.classList.remove("xy-creative-panel","xy-quote-panel","xy-from-toolhub");
+ panel?.classList.remove("xy-creative-panel","xy-quote-panel","xy-keepsake-panel","xy-from-toolhub");
 }
 function panelHeading(eyebrow,title){
  const e=document.querySelector("#panelEyebrow"),t=document.querySelector("#panelTitle");
@@ -206,9 +206,11 @@ function getToolFavorites(){
  }catch{return ["study","memory","mcp"]}
 }
 function renderFavorites(){
- const quotes=window.xyQuoteFavorites?.all?.()||[];
+ const quotes=(window.xyQuoteFavorites?.all?.()||[]).filter(x=>!window.xyKeepsake?.isExpandedQuote?.(x.id));
+ const keepsakes=window.xyKeepsake?.all?.()||[];
  const pinned=getToolFavorites();
  const stickerCount=window.xyStickerShelf?.count?.()||0;
+ const keepsakeSnippet=keepsakes.length?keepsakes.slice(0,2).map(k=>'<div class="xy-fav-quote">'+escapeHtml(String(k.title||"").slice(0,100))+'</div>').join(""):'<p class="xy-fav-empty">长按聊天消息，选择「存成泡泡」。</p>';
  const quoteSnippet=quotes.length?quotes.slice(0,2).map(q=>'<div class="xy-fav-quote">'+escapeHtml(String(q.text||"").slice(0,115))+'</div>').join(""):'<p class="xy-fav-empty">收藏的句子会出现在这里。</p>';
  const toolSnippet=pinned.length?pinned.slice(0,8).map(id=>{
   const title=favTools.find(t=>t[0]===id)?.[1]||id;
@@ -216,7 +218,8 @@ function renderFavorites(){
  }).join(""):'<p class="xy-fav-empty">暂时还没有收藏工具。</p>';
  showCustomPage("收藏","MY FAVORITES",
   '<div class="xy-fav-page">'+
-   '<div class="xy-fav-hero"><span>COLLECTED MOMENTS</span><h2>喜欢的，都放在一起。</h2><p>收藏的句子、表情包和常用工具，分开保存，统一从这里进入。</p></div>'+
+   '<div class="xy-fav-hero"><span>COLLECTED MOMENTS</span><h2>喜欢的，都放在一起。</h2><p>对话泡泡、句子、表情包和常用工具，各自保留，一起翻看。</p></div>'+
+   '<section class="xy-fav-section"><div class="xy-fav-head"><strong>对话泡泡 <small>'+keepsakes.length+' 颗</small></strong><button type="button" data-xy-subroute="keepsake">打开泡泡池 ›</button></div>'+keepsakeSnippet+'</section>'+
    '<section class="xy-fav-section"><div class="xy-fav-head"><strong>句子收藏 <small>'+quotes.length+' 句</small></strong><button type="button" data-xy-subroute="quotes">全部查看 ›</button></div>'+quoteSnippet+'</section>'+
    '<section class="xy-fav-section"><div class="xy-fav-head"><strong>表情包 <small>'+stickerCount+' 张</small></strong><button type="button" data-xy-sticker-library>打开图库 ›</button></div><p class="xy-fav-muted">沿用已经保存的表情包和收藏记录，不会重复建立图库。</p></section>'+
    '<section class="xy-fav-section"><div class="xy-fav-head"><strong>常用工具 <small>'+pinned.length+' 项</small></strong><button type="button" data-xy-subroute="toolhub" data-xy-tool-favorites>管理工具 ›</button></div><div class="xy-fav-tools">'+toolSnippet+'</div></section>'+
