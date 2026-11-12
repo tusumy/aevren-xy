@@ -1,0 +1,142 @@
+/* 砚屿：共享页面外壳。修复主导航内页的巨型旧标题区、夜间浅色底+白字。
+   仅覆盖从首页五栏打开的 #xyHomeDestination，不影响聊天页面或原始侧栏。 */
+html.xy-home-subroute #xyHomeDestination{
+ --xy-page-ink:#263b31;
+ --xy-page-muted:#536d60;
+ --xy-page-stroke:rgba(49,85,65,.20);
+ --xy-page-card:rgba(247,251,247,.92);
+ --xy-page-secondary:rgba(227,239,231,.88);
+ --xy-page-input:rgba(251,253,250,.95);
+ --xy-page-link:color-mix(in srgb,var(--theme-accent,#527d5c) 73%,#253d2b);
+ color:var(--xy-page-ink)!important;
+}
+html.xy-home-subroute[data-theme-mode="dark"] #xyHomeDestination{
+ --xy-page-ink:#eef6ef;
+ --xy-page-muted:#b6cbbd;
+ --xy-page-stroke:rgba(200,230,208,.21);
+ --xy-page-card:rgba(24,43,33,.92);
+ --xy-page-secondary:rgba(41,66,51,.89);
+ --xy-page-input:rgba(18,34,26,.94);
+ --xy-page-link:color-mix(in srgb,var(--theme-accent,#a5cba8) 50%,#eff8f0);
+ color:var(--xy-page-ink)!important;
+ color-scheme:dark;
+}
+html.xy-home-subroute #xyHomeDestination #panel{
+ color:var(--xy-page-ink)!important;
+}
+/* One compact page heading, not a huge rectangular hero reused on every tab. */
+html.xy-home-subroute #xyHomeDestination #panel > .panel-head{
+ position:relative!important;top:auto!important;left:auto!important;
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ height:49px!important;max-height:49px!important;min-height:49px!important;
+ width:100%;box-sizing:border-box;
+ margin:0 0 15px!important;padding:0 2px 10px!important;
+ border:0!important;border-bottom:1px solid var(--xy-page-stroke)!important;
+ border-radius:0!important;box-shadow:none!important;
+ background:transparent!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+ color:var(--xy-page-ink)!important;
+}
+html.xy-home-subroute #xyHomeDestination #panel > .panel-head > div{
+ display:flex;align-items:center;min-width:0;
+}
+html.xy-home-subroute #xyHomeDestination #panel > .panel-head #panelEyebrow{
+ display:none!important;
+}
+html.xy-home-subroute #xyHomeDestination #panel > .panel-head #panelTitle{
+ margin:0!important;padding:0!important;line-height:1.35!important;
+ font-family:system-ui,-apple-system,"PingFang SC","Noto Sans SC",sans-serif!important;
+ font-size:15px!important;font-weight:650!important;
+ letter-spacing:.035em!important;color:var(--xy-page-ink)!important;
+ text-shadow:none!important;
+}
+html.xy-home-subroute #xyHomeDestination #panel > .panel-head #closePanel{
+ flex:0 0 34px!important;display:grid!important;place-items:center!important;
+ width:34px!important;height:34px!important;min-width:34px!important;
+ padding:0!important;border:0!important;border-radius:11px!important;
+ color:var(--xy-page-muted)!important;background:var(--xy-page-secondary)!important;
+ box-shadow:none!important;font:400 21px/1 system-ui,sans-serif!important;
+}
+html.xy-home-subroute #xyHomeDestination #panel > .panel-head #closePanel:focus-visible{
+ outline:2px solid var(--xy-page-link)!important;outline-offset:2px;
+}
+/* The same typography system for My / Favorites, independent of glass recipes. */
+html.xy-home-subroute #xyHomeDestination :is(.xy-my-page,.xy-fav-page){
+ color:var(--xy-page-ink)!important;
+}
+html.xy-home-subroute #xyHomeDestination :is(.xy-my-intro strong,.xy-my-name,.xy-my-link-label strong,.xy-fav-hero h2,.xy-fav-head strong,.xy-fav-quote,.xy-fav-tool){
+ color:var(--xy-page-ink)!important;
+}
+html.xy-home-subroute #xyHomeDestination :is(.xy-my-intro small,.xy-my-note,.xy-my-section-title,.xy-my-link-label small,.xy-my-chevron,.xy-my-foot,.xy-fav-hero p,.xy-fav-muted,.xy-fav-empty,.xy-fav-head small){
+ color:var(--xy-page-muted)!important;
+}
+html.xy-home-subroute #xyHomeDestination :is(.xy-fav-head button,.xy-fav-hero > span){
+ color:var(--xy-page-link)!important;
+}
+/* The profile and favorites panels must not be light glass in dark mode. */
+html.xy-home-subroute #xyHomeDestination .xy-my-profile{
+ background:var(--xy-page-card)!important;
+ border:1px solid var(--xy-page-stroke)!important;
+ color:var(--xy-page-ink)!important;
+}
+html.xy-home-subroute #xyHomeDestination .xy-my-avatar,
+html.xy-home-subroute #xyHomeDestination .xy-my-link-icon{
+ background:var(--xy-page-secondary)!important;color:var(--xy-page-link)!important;
+}
+html.xy-home-subroute #xyHomeDestination .xy-my-link{
+ border-bottom:1px solid var(--xy-page-stroke)!important;color:var(--xy-page-ink)!important;
+}
+html.xy-home-subroute #xyHomeDestination .xy-my-name-row input{
+ background:var(--xy-page-input)!important;border:1px solid var(--xy-page-stroke)!important;
+ color:var(--xy-page-ink)!important;caret-color:var(--xy-page-ink)!important;
+}
+html.xy-home-subroute #xyHomeDestination .xy-my-name-row button{
+ color:#fff!important;
+}
+html.xy-home-subroute #xyHomeDestination :is(.xy-fav-hero,.xy-fav-section){
+ background:var(--xy-page-card)!important;
+ border:1px solid var(--xy-page-stroke)!important;
+ color:var(--xy-page-ink)!important;
+ box-shadow:none!important;
+}
+html.xy-home-subroute #xyHomeDestination .xy-fav-quote{
+ background:var(--xy-page-secondary)!important;
+ border:1px solid transparent;
+ overflow-wrap:anywhere;
+}
+html.xy-home-subroute #xyHomeDestination .xy-fav-tool{
+ background:var(--xy-page-secondary)!important;
+ border-color:var(--xy-page-stroke)!important;
+}
+/* Other routes sharing the same page shell: readable card and supporting text.
+   Do not force a dark palette onto content with its own independent art/theme. */
+html.xy-home-subroute #xyHomeDestination :is(.xy-q-library,.xy-k-page,.xy-purr-panel){
+ color:var(--xy-page-ink)!important;
+}
+html.xy-home-subroute[data-theme-mode="dark"] #xyHomeDestination .xy-k-dialogue{
+ background:var(--xy-page-card)!important;
+ border-color:var(--xy-page-stroke)!important;
+}
+html.xy-home-subroute[data-theme-mode="dark"] #xyHomeDestination .xy-k-line{
+ background:var(--xy-page-secondary)!important;color:var(--xy-page-ink)!important;
+}
+html.xy-home-subroute[data-theme-mode="dark"] #xyHomeDestination .xy-k-line.is-context{
+ background:transparent!important;
+}
+html.xy-home-subroute[data-theme-mode="dark"] #xyHomeDestination .xy-purr-post{
+ background:var(--xy-page-card)!important;
+ color:var(--xy-page-ink)!important;
+ border-color:var(--xy-page-stroke)!important;
+}
+html.xy-home-subroute[data-theme-mode="dark"] #xyHomeDestination .xy-purr-panel :is(textarea,input){
+ color:var(--xy-page-ink)!important;
+}
+@media(max-width:480px){
+ html.xy-home-subroute #xyHomeDestination #panel{
+  padding-top:calc(9px + env(safe-area-inset-top,0px))!important;
+ }
+ html.xy-home-subroute #xyHomeDestination #panel > .panel-head{
+  height:44px!important;min-height:44px!important;max-height:44px!important;
+  margin-bottom:13px!important;
+ }
+}
