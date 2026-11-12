@@ -36,3 +36,11 @@ API proxy notes live in `workers/README.md`.
 - These changes reduce unnecessary startup work but are not an Android device benchmark. The app still loads existing frontend modules and requires a normal refresh to load updated assets.
 
 - Bottom navigation has five items: 首页、对话、朋友圈、收藏、我. The direct Moments entry uses normal page navigation and works when restoring a Moments route after reload.
+
+## Unified app background (November 2026)
+
+- `background-scene.js` / `background-scene.css` mount one fixed application backdrop for the home tab and all home subroutes (Moments, favorites, personal page, Tool Hub, settings and other panels), instead of painting a different wallpaper per page.
+- The chat keeps its original `#themeBackdrop`, wallpaper URL/upload, chat tint and blur controls. In **主题 → 应用背景**, the user can select a distinct URL/photo, choose an independent application base color, tune image overlay/blur, or opt into **聊天背景跟随应用背景**. This does not overwrite the saved chat wallpaper.
+- Existing home/chat wallpaper imagery is used as the initial app image by reference. Only when the chat picture is changed for the first time does the app snapshot the former image, avoiding duplicate large data URLs on first startup. The app base color follows the theme palette until manually changed.
+- Image imports reuse `theme-core.js` compression; saved image configuration uses `xy.appBackground.v1` in localStorage, included in existing XY backups. No remote image service or extra model call is required.
+- This is a static frontend change; end-to-end Android WebView wallpaper rendering and memory usage have not been benchmarked.
