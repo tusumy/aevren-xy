@@ -65,7 +65,7 @@
     // Even with no image, dark mode needs a dark physical surface, not the
     // user's light custom color peeking through a nearly transparent veil.
     root.style.setProperty("--xy-app-bg-overlay",
-      tint(night?"#0e1913":color,night?(image?Math.max(.59,state.overlay):.12):(image?state.overlay:.12)));
+      tint(night?"#0e1913":color,night?(image?Math.max(.68,state.overlay):.12):(image?state.overlay:.12)));
     root.dataset.xyAppHasImage=image?"1":"0";
     root.dataset.xyChatFollowsApp=state.chatFollow?"1":"0";
     const chatBackdrop=document.getElementById("themeBackdrop");
