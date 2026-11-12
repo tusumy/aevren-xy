@@ -20,22 +20,18 @@
   state.blur=clamp(state.blur,0,18);
   state.chatFollow=!!state.chatFollow;
   let lastChatImage=chatTheme().bgImage||"";
-  let lastChatColor=chatTheme().bgColor||"#edf2ed";
   function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){console.warn("[砚屿背景] 保存失败",e)}}
   function resolvedImage(){return state.imageMode==="custom"?state.image||"":chatTheme().bgImage||""}
   function resolvedColor(){return hex(state.colorMode==="custom"?state.color:chatTheme().bgColor)||"#edf2ed"}
   // A legacy home picture remains the application picture when the user
   // changes only the chat picture. Copy only at that moment, not on every boot.
   function freezeLegacyIfNeeded(){
-    const theme=chatTheme(),nextImage=theme.bgImage||"",nextColor=theme.bgColor||"#edf2ed";
+    const nextImage=chatTheme().bgImage||"";
     let changed=false;
     if(state.imageMode==="legacy"&&nextImage!==lastChatImage){
       state.imageMode="custom";state.image=lastChatImage;changed=true;
     }
-    if(state.colorMode==="legacy"&&nextColor!==lastChatColor){
-      state.colorMode="custom";state.color=lastChatColor;changed=true;
-    }
-    lastChatImage=nextImage;lastChatColor=nextColor;
+    lastChatImage=nextImage;
     if(changed)persist();
   }
   function ensureScene(){
@@ -54,7 +50,7 @@
     root.style.setProperty("--xy-app-bg-color",color);
     root.style.setProperty("--xy-app-bg-image",imageCss(image));
     root.style.setProperty("--xy-app-bg-blur",state.blur+"px");
-    root.style.setProperty("--xy-app-bg-overlay",tint(night?"#111c16":color,image?Math.max(state.overlay,night?.68:.45):.12));
+    root.style.setProperty("--xy-app-bg-overlay",tint(night?"#111c16":color,image?state.overlay:.12));
     root.dataset.xyAppHasImage=image?"1":"0";
     root.dataset.xyChatFollowsApp=state.chatFollow?"1":"0";
     const chatBackdrop=document.getElementById("themeBackdrop");
@@ -83,7 +79,7 @@
     section.className="theme-setting-card xy-app-bg-settings";section.id="xyAppBgSettings";
     section.innerHTML=
       '<p class="xy-app-bg-title">应用背景</p>'+
-      '<p class="xy-app-bg-help">首页、朋友圈、收藏、工具、设置共用同一张背景，页面切换时不会重复建立壁纸层。</p>'+
+      '<p class="xy-app-bg-help">首页、朋友圈、收藏、工具、设置共用同一张背景；应用底色默认随主题改变，设置后独立保存。</p>'+
       '<label class="theme-stack"><span>应用背景图片 URL</span><input type="url" id="xyAppBgUrl" placeholder="https://..." value="'+escape(resolvedImage().startsWith("data:")?"":resolvedImage())+'"></label>'+
       '<div class="theme-upload-row"><label class="theme-upload-button">从相册选择<input id="xyAppBgFile" type="file" accept="image/*" hidden></label><button type="button" class="theme-small-btn" id="xyAppBgClear">移除应用背景图</button></div>'+
       '<label class="xy-app-bg-color"><span>应用底色</span><input type="color" id="xyAppBgColor" value="'+escape(resolvedColor())+'"></label>'+
