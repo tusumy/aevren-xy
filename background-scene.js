@@ -5,7 +5,11 @@
   const KEY="xy.appBackground.v1";
   const defaults={imageMode:"legacy",image:"",colorMode:"legacy",color:"",overlay:.56,blur:0,chatFollow:false};
   const read=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key))??fallback}catch{return fallback}};
-  const chatTheme=()=>read("xy.theme",{});
+  // Large data-URL wallpapers can make JSON.parse expensive on Android.
+  // Read only when the theme actually changes, not on every slider frame.
+  let cachedTheme=read("xy.theme",{});
+  const chatTheme=()=>cachedTheme;
+  const refreshTheme=()=>{cachedTheme=read("xy.theme",{})};
   const hex=v=>/^#[0-9a-f]{6}$/i.test(String(v||""))?v:null;
   const clamp=(x,a,b)=>Math.max(a,Math.min(b,Number(x)||0));
   const imageCss=v=>v?`url(${JSON.stringify(v)})`:"none";
@@ -135,9 +139,13 @@
     });
   }
   window.addEventListener("xy-theme-changed",()=>{
-    freezeLegacyIfNeeded();apply();
+    refreshTheme();freezeLegacyIfNeeded();apply();
     // Theme preset and light/dark toggles rebuild their panel synchronously.
     queueMicrotask(mountSettings);
+  });
+  window.addEventListener("storage",event=>{
+    if(event.key==="xy.theme"){refreshTheme();freezeLegacyIfNeeded();apply()}
+    if(event.key===KEY){state={...defaults,...read(KEY,{})};apply()}
   });
   const beforeOpenPanel=openPanel;
   openPanel=function(type){
