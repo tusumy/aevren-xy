@@ -47,14 +47,25 @@
     }
     return scene;
   }
+  function shadeForNight(color){
+    // The original image/color stays saved unchanged. Only the night-mode
+    // presentation is shaded, otherwise light wallpapers + white text clash.
+    const base=hex(color)||"#edf2ed",night="#152820",amount=.84;
+    const rgb=[1,3,5].map(i=>Math.round(parseInt(base.slice(i,i+2),16)*(1-amount)+parseInt(night.slice(i,i+2),16)*amount));
+    return "#"+rgb.map(x=>x.toString(16).padStart(2,"0")).join("");
+  }
   function apply(){
     ensureScene();
     const root=document.documentElement,color=resolvedColor(),image=resolvedImage();
     const night=root.dataset.themeMode==="dark";
-    root.style.setProperty("--xy-app-bg-color",color);
+    const shownColor=night?shadeForNight(color):color;
+    root.style.setProperty("--xy-app-bg-color",shownColor);
     root.style.setProperty("--xy-app-bg-image",imageCss(image));
     root.style.setProperty("--xy-app-bg-blur",state.blur+"px");
-    root.style.setProperty("--xy-app-bg-overlay",tint(night?"#111c16":color,image?state.overlay:.12));
+    // Even with no image, dark mode needs a dark physical surface, not the
+    // user's light custom color peeking through a nearly transparent veil.
+    root.style.setProperty("--xy-app-bg-overlay",
+      tint(night?"#0e1913":color,night?(image?Math.max(.59,state.overlay):.12):(image?state.overlay:.12)));
     root.dataset.xyAppHasImage=image?"1":"0";
     root.dataset.xyChatFollowsApp=state.chatFollow?"1":"0";
     const chatBackdrop=document.getElementById("themeBackdrop");
