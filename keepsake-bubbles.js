@@ -29,7 +29,7 @@ function create(c,selected,config={}){
  const clips=selected.filter(x=>c.messages[x.index]&&["user","assistant"].includes(c.messages[x.index].role)&&norm(x.t)).sort((a,b)=>a.index-b.index||a.part-b.part).slice(0,30);
  if(!clips.length)throw Error("没有可收藏的文字");
  const first=clips[0].index,last=clips[clips.length-1].index;
- const key=String(c.id)+"|"+first+"|"+last+"|"+clips.map(x=>norm(x.t)).join("").slice(0,240);
+ const key=(config.who==="ai"?"ai":"user")+"|"+String(c.id)+"|"+first+"|"+last+"|"+clips.map(x=>norm(x.t)).join("").slice(0,240);
  const old=bubbles.find(x=>x.signature===key&&Date.now()-x.createdAt<600000);
  if(old)return {bubble:old,created:false};
  const context=[];
@@ -167,7 +167,7 @@ body?.addEventListener("click",e=>{
  const reply=e.target.closest("[data-k-reply]");if(reply){const label=body.querySelector("#xyKReplying");label.hidden=false;label.dataset.parent=reply.dataset.kReply;body.querySelector("#xyKCommentText")?.focus();return}
  const action=e.target.closest("[data-k-act]")?.dataset.kAct;if(!action)return;
  if(action==="back"){detailId="";render();return}
- if(action==="quotes"){window.xyIslandHome?.navigate?.("quotes")||openPanel("quotes");return}
+ if(action==="quotes"){if(window.xyIslandHome?.navigate)window.xyIslandHome.navigate("quotes");else openPanel("quotes");return}
  if(action==="cancel-reply"){const label=body.querySelector("#xyKReplying");label.hidden=true;delete label.dataset.parent;return}
  const item=byId(detailId);if(!item)return;
  if(action==="jump"){goChat(item);return}
