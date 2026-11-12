@@ -235,6 +235,7 @@
       ${assistant?'<button type="button" data-context-act="quote-one">引用一句</button>':''}
       <button type="button" data-context-act="edit">编辑</button>
       <button type="button" data-context-act="favorite-one">☆ 收藏一句</button>
+      <button type="button" data-context-act="keepsake">◌ 存成泡泡 · 多选</button>
       <button type="button" data-context-act="remember">记住</button>
       ${assistant?'<button type="button" data-context-act="voice">'+(voiceActive?'停止播放':'播放语音')+'</button>':''}
       ${assistant?'<button type="button" data-context-act="retry">重新生成</button>':''}
@@ -264,6 +265,7 @@
       else if(act==='quote-one'){showQuotePicker(index,point);return}
       else if(act==='edit')editMessage(index);
       else if(act==='favorite-one'){showQuotePicker(index,point,'favorite');return}
+      else if(act==='keepsake'){if(window.xyKeepsake?.choose)window.xyKeepsake.choose(index);else showNotice('对话泡泡未加载',true);return}
       else if(act==='remember')rememberMessage(index);
       else if(act==='voice'){if(window.AevrenVoice?.speakMessage)window.AevrenVoice.speakMessage(index,currentChat());else showNotice('语音模块还没准备好',true)}
       else if(act==='retry')regenerate(index);
