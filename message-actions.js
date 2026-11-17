@@ -156,6 +156,26 @@
     return out.length?out:[raw];
   }
 
+  function paragraphUnits(text){
+    const raw=String(text||'').trim();
+    return raw?raw.split(/\n\s*\n|\n/).map(x=>x.trim()).filter(Boolean):[];
+  }
+
+  function rememberPart(index,text,kind='聊天'){
+    const c=currentChat(),m=c?.messages?.[index],value=String(text||'').trim();
+    if(!m||!value)return;
+    const characterId=String(c.characterId||window.xyCurrentCharacter?.()?.id||'');
+    if(memories.some(x=>String(x.text||'').trim()===value&&String(x.characterId||'')===characterId)){
+      showNotice('这段已经记住了');return;
+    }
+    memories.unshift({
+      text:value,tag:kind,characterId,createdAt:Date.now(),
+      sourceChatId:c.id,sourceMessageIndex:index,sourceRole:m.role
+    });
+    save();renderChats();
+    showNotice(kind==='摘句'?'已记住这一句':kind==='摘段'?'已记住这一段':'已加入记忆');
+  }
+
   function favoriteUnit(index,text){
     const c=currentChat(),m=c?.messages?.[index],quote=String(text||"").trim();
     if(!m||!quote)return;
@@ -172,10 +192,12 @@
   }
   function showQuotePicker(index,point,mode='quote'){
     closeLayers();const m=currentChat()?.messages?.[index];if(!m)return;
-    const units=quoteUnits(messageText(m));
-    if(units.length<=1){(mode==='favorite'?favoriteUnit:insertQuote)(index,units[0]||messageText(m));return}
+    const remembering=mode==='remember-sentence'||mode==='remember-paragraph';
+    const units=mode==='remember-paragraph'?paragraphUnits(messageText(m)):quoteUnits(messageText(m));
+    const apply=text=>remembering?rememberPart(index,text,mode==='remember-paragraph'?'摘段':'摘句'):(mode==='favorite'?favoriteUnit:insertQuote)(index,text);
+    if(units.length<=1){apply(units[0]||messageText(m));return}
     const wrap=document.createElement('div');wrap.className='xy-context-backdrop';
-    wrap.innerHTML=`<div class="xy-context-menu xy-quote-menu" role="menu" aria-label="${mode==='favorite'?'选择收藏句子':'选择引用句子'}">${units.map((x,i)=>`<button type="button" data-quote-unit="${i}">${esc(x.length>44?x.slice(0,44)+'…':x)}</button>`).join('')}</div>`;
+    wrap.innerHTML=`<div class="xy-context-menu xy-quote-menu" role="menu" aria-label="${remembering?'选择要记住的文字':mode==='favorite'?'选择收藏句子':'选择引用句子'}">${units.map((x,i)=>`<button type="button" data-quote-unit="${i}">${esc(x.length>44?x.slice(0,44)+'…':x)}</button>`).join('')}</div>`;
     document.body.appendChild(wrap);
     const menu=wrap.querySelector('.xy-context-menu');
     requestAnimationFrame(()=>{
@@ -193,18 +215,12 @@
       if(e.target===wrap){closeLayers();return}
       const button=e.target.closest?.('[data-quote-unit]');if(!button)return;
       const selected=units[Number(button.dataset.quoteUnit)]||'';
-      closeLayers();(mode==='favorite'?favoriteUnit:insertQuote)(index,selected);
+      closeLayers();apply(selected);
     });
   }
 
   function rememberMessage(index){
-    const m=currentChat()?.messages?.[index];if(!m)return;
-    const text=messageText(m).trim();if(!text)return;
-    const characterId=window.xyCurrentCharacter?.()?.id;
-    const item={text,tag:'聊天'};
-    if(characterId)item.characterId=characterId;
-    memories.unshift(item);save();renderChats();
-    showNotice('已加入记忆');
+    rememberPart(index,messageText(currentChat()?.messages?.[index]),'聊天');
   }
 
   function deleteMessage(index){
@@ -236,7 +252,9 @@
       <button type="button" data-context-act="edit">编辑</button>
       <button type="button" data-context-act="favorite-one">☆ 收藏一句</button>
       <button type="button" data-context-act="keepsake">◌ 存成泡泡 · 多选</button>
-      <button type="button" data-context-act="remember">记住</button>
+      <button type="button" data-context-act="remember">记住整条</button>
+      <button type="button" data-context-act="remember-sentence">记住一句</button>
+      <button type="button" data-context-act="remember-paragraph">记住一段</button>
       ${assistant?'<button type="button" data-context-act="voice">'+(voiceActive?'停止播放':'播放语音')+'</button>':''}
       ${assistant?'<button type="button" data-context-act="retry">重新生成</button>':''}
       <button type="button" class="danger" data-context-act="delete">删除</button>
@@ -267,6 +285,7 @@
       else if(act==='favorite-one'){showQuotePicker(index,point,'favorite');return}
       else if(act==='keepsake'){if(window.xyKeepsake?.choose)window.xyKeepsake.choose(index);else showNotice('对话泡泡未加载',true);return}
       else if(act==='remember')rememberMessage(index);
+      else if(act==='remember-sentence'||act==='remember-paragraph')showQuotePicker(index,point,act);
       else if(act==='voice'){if(window.AevrenVoice?.speakMessage)window.AevrenVoice.speakMessage(index,currentChat());else showNotice('语音模块还没准备好',true)}
       else if(act==='retry')regenerate(index);
       else if(act==='delete')deleteMessage(index);
