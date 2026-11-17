@@ -63,6 +63,25 @@
     updateMemoryCount();
   }
 
+  // The study room and chat selector share this one character registry.
+  // Each conversation still owns its own characterId and history.
+  window.xyStudyCharacters=()=>characters.map(x=>({id:x.id,name:x.name}));
+  window.xyStudyUseCharacter=roleId=>{
+    const role=characters.find(x=>x.id===String(roleId)),c=chat();
+    if(!role||!c)return false;
+    c.characterId=role.id;save();renderChats();renderMessages();refreshCharacterLabels();
+    return true;
+  };
+  window.xyStudyCreateCharacter=name=>{
+    const label=String(name||'').trim().slice(0,120);
+    if(!label)throw Error('请填写角色名字');
+    const role={id:'role-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),name:label,system:''};
+    characters.push(role);
+    const c=chat();if(c)c.characterId=role.id;
+    save();renderChats();renderMessages();refreshCharacterLabels();
+    return {id:role.id,name:role.name};
+  };
+
   function characterPanel(editId=""){
     document.querySelector("#sidebar")?.classList.remove("open");
     const body=document.querySelector("#panelBody"),eyebrow=document.querySelector("#panelEyebrow"),title=document.querySelector("#panelTitle");
