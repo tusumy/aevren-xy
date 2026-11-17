@@ -48,7 +48,8 @@
       const row=document.createElement("label");row.className="row";row.textContent=label;const input=document.createElement("input");input.type="checkbox";input.checked=!!opts()[key];row.appendChild(input);
       input.onchange=()=>localStorage.setItem(PREF,JSON.stringify({...opts(),[key]:input.checked}));prefs.appendChild(row);
     }
-    const all=section("已保存的记忆 · "+scoped().length);
+    window.xyMemoryTimeline?.renderSection?.(outer,()=>panel());
+    const all=section("已保存的长期记忆 · "+scoped().length);
     button(all,"＋ 添加",()=>{const value=prompt("要保存的记忆");if(!value?.trim())return;memories.unshift({text:value.trim(),tag:"手动",characterId:character()});save();renderChats();panel()});
     for(const item of scoped()){
       const block=document.createElement("div");block.className="item";all.appendChild(block);
