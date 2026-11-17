@@ -302,6 +302,8 @@ async function run(c,{manual=false}={}){
         summary:result.summary,sourceTranscript:transcript,updated:Date.now(),
         generated:true,originChatId:chatId,range:[start+1,end]});
     });
+    // Reuse the already-paid-for study summary; no additional model call.
+    try{window.xyMemoryTimeline?.captureSummary?.(charId,activeChat,result.summary,result.title,result.board)}catch{}
     return true;
   }catch(e){setError(charId,chatId,e);return false}
   finally{busy.delete(chatId);refresh()}
