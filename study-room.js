@@ -55,6 +55,8 @@ function draw(){
     lore:b.lore.filter(x=>x.enabled!==false).length,
     chapters:b.chapters.length
   };
+  const cardStatus=c.enabled?"已启用":b.card?"未启用":"未添加";
+  const activeChatChapters=b.chapters.filter(x=>!x.generated||String(x.originChatId??"")===String(activeChat?.id??"")).length;
   // Avoid the app-wide header{height:72px} used for the chat title bar.
   // A book cover must grow with its title and overview stats.
   const hero='<section class="study-cover" aria-label="书房故事档案封面">'+
@@ -90,8 +92,8 @@ function draw(){
     (status?'<p class="study-status" role="status">'+escape(status)+'</p>':"")+
     '<details class="study-preview"><summary>这轮角色读到了什么 <span>核对上下文 ↗</span></summary>'+
     '<div class="study-preview-inner"><p>这里只展示当前对话实际可读的设定。未触发的世界书不会整本注入。</p>'+
-    '<p>角色卡 '+(c.enabled?"已启用":"未启用")+' · 预设 '+(p.enabled?"已启用":"未启用")+
-    ' · 世界书 '+counts.lore+' 条 · 章节 '+counts.chapters+' 篇</p>'+
+    '<p>角色卡 '+cardStatus+' · 预设 '+(p.enabled?"已启用":"未启用")+
+    ' · 世界书 '+counts.lore+' 条 · 共享章节 '+counts.chapters+' 篇 · 当前对话章节 '+activeChatChapters+' 篇</p>'+
     '<pre>'+escape(preview||"本轮暂无可注入的书房内容。")+'</pre></div></details>';
   if(tab==="card"){
     const openings=[c.first_mes,...arr(c.alternate_greetings)].filter(Boolean);
@@ -309,16 +311,19 @@ function context(options={}){
       .filter(x=>x[1]).map(x=>x[0]+"："+cap(x[1],x[0]==="描述"?800:400));
     if(fields.length)sections.push("【书房·角色卡】\n"+fields.join("\n"));
   }
-  // The model gets a bounded table of contents, not every page of the archive.
-  // This lets it know what can be looked up and explain gaps instead of inventing lore.
-  const visibleChapters=b.chapters.filter(x=>!x.generated||String(x.originChatId)===conversationId);
-  const titles=visibleChapters.slice(-10).map(x=>cap(x.name,30)).filter(Boolean);
+  // Books belong to characters, not to individual conversations. All chapters
+  // stay available across chats with the same character; only the running
+  // conversation history remains isolated.
+  const allChapters=b.chapters.filter(x=>x&&(x.summary||x.text));
+  const ownChapters=allChapters.filter(x=>!x.generated||String(x.originChatId??"")===conversationId);
+  const foreignChapters=allChapters.filter(x=>x.generated&&String(x.originChatId??"")!==conversationId);
+  const titles=allChapters.slice(-12).map(x=>cap(x.name||"未命名章节",30));
   const loreNames=b.lore.filter(x=>x.enabled!==false).slice(0,14).map(x=>cap(x.name,30)).filter(Boolean);
   if(titles.length||loreNames.length){
     const nav=[];
     if(loreNames.length)nav.push("世界书条目："+loreNames.join("、"));
-    if(titles.length)nav.push("章节："+titles.join("、"));
-    sections.push("【书房·可用目录（非正文）】\n"+cap(nav.join("\n"),520));
+    if(titles.length)nav.push("本角色书房章节（跨对话共 "+allChapters.length+" 篇）："+titles.join("、"));
+    sections.push("【书房·角色共享档案目录】\n"+cap(nav.join("\n"),760));
   }
   const matched=b.lore.filter(x=>{
     if(x.enabled===false||!x.content)return false;
@@ -329,16 +334,37 @@ function context(options={}){
     });
   }).slice(0,4);
   if(matched.length)sections.push("【书房·当前触发的世界书正文】\n"+matched.map(x=>(x.name||"设定")+"："+cap(x.content,550)).join("\n"));
-  const latest=visibleChapters[visibleChapters.length-1];
-  if(b.useSummary&&latest?.summary)sections.push("【书房·本对话最近剧情摘要】\n"+cap(latest.summary,750));
-  const relevant=[...visibleChapters].reverse().find(x=>{
+
+  const latestOwn=ownChapters[ownChapters.length-1];
+  const latestShared=foreignChapters[foreignChapters.length-1];
+  if(b.useSummary&&latestOwn?.summary){
+    sections.push("【书房·本对话最近剧情摘要】\n"+cap(latestOwn.summary,900));
+  }
+  // A fresh thread has no own auto-generated chapters, but should still know
+  // where the shared character story left off. Summaries are used rather than
+  // importing the raw messages of an unrelated conversation.
+  const hasOwnGenerated=ownChapters.some(x=>x.generated);
+  if(!hasOwnGenerated&&latestShared){
+    const recentShared=foreignChapters.slice(-2).map(x=>{
+      const summary=String(x.summary||x.text||"").trim();
+      return "《"+cap(x.name||"未命名章节",48)+"》："+cap(summary,850);
+    }).filter(Boolean);
+    if(recentShared.length)sections.push("【书房·跨对话剧情接续】\n这些是同一角色在其他对话里保存的章节摘要，并非本对话亲历记录；不要把旧对话误当成本轮聊天。\n"+recentShared.join("\n"));
+  }
+
+  const recallRequested=/书房|章节|前一章|上一章|回顾|前面发生|之前的剧情|上次|还记得|继续|接着/.test(q);
+  const matchedChapter=[...allChapters].reverse().find(x=>{
     const name=String(x.name||"").trim().toLowerCase();
-    return name.length>=2&&q.includes(name);
-  })||((/书房|章节|前一章|上一章|回顾|前面发生|之前的剧情/.test(q))?latest:null);
+    return name.length>=2&&(q.includes(name)||recent.includes(name));
+  });
+  const relevant=matchedChapter||(recallRequested?(latestOwn||latestShared||allChapters[allChapters.length-1]):null);
   if(relevant&&(relevant.text||relevant.summary)){
-    // Only provide an excerpt when the user asks for a chapter/topic.
-    const body=cap(relevant.text||relevant.summary,1450);
-    sections.push("【书房·查询到的章节："+cap(relevant.name,60)+"】\n"+body);
+    const isForeign=relevant.generated&&String(relevant.originChatId??"")!==conversationId;
+    const body=cap(relevant.summary||relevant.text,1450);
+    const heading=isForeign?"【书房·跨对话查到的章节：":"【书房·查到的章节：";
+    if(!(!hasOwnGenerated&&latestShared===relevant&&(!matchedChapter||matchedChapter===latestShared))){
+      sections.push(heading+cap(relevant.name||"未命名章节",60)+"】\n"+body);
+    }
   }
   return cap(sections.join("\n\n"),7200);
 }
