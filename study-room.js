@@ -62,7 +62,22 @@ function draw(){
     '<strong>'+escape(charName())+'的故事档案</strong>'+
     '<p>'+escape(bindingNote)+'</p>'+
     '<span class="xy-study-hero-art" aria-hidden="true"></span></section>';
-  let html='<div id="xyStudy">'+hero+
+  const roles=arr(window.xyStudyCharacters?.());
+  const registered=new Set(roles.map(x=>x.id));
+  const archives=Object.entries(load().byCharacter||{}).filter(([key,entry])=>!registered.has(key)&&entry&&typeof entry==="object");
+  const shelf='<section class="study-role-shelf" aria-label="书房人物目录">'+
+    '<div class="study-role-head"><strong>书房人物</strong><small>切换人物不会改动其他对话</small></div>'+
+    '<div class="study-role-list">'+roles.map(role=>{
+      const entry=load().byCharacter?.[role.id],card=entry?.card;
+      const detail=card?.name&&card.name!==role.name?' · 角色卡：'+card.name:card?' · 已存角色卡':' · 尚无角色卡';
+      return '<button type="button" data-study="switchRole" data-key="'+escape(role.id)+'" class="study-role-item'+(role.id===id()?' selected':'')+'" aria-pressed="'+(role.id===id())+'"><strong>'+escape(role.name)+'</strong><small>'+escape(detail)+'</small></button>';
+    }).join('')+'</div>'+
+    '<div class="study-role-actions">'+btn("newRole","＋ 新建人物")+
+      (c.name?btn("saveAsRole","把「"+c.name+"」另存为独立人物"):'')+'</div>'+
+    (archives.length?'<details class="study-role-archives"><summary>历史档案 · '+archives.length+' 份</summary>'+
+      archives.map(([key,entry])=>'<button type="button" data-study="restoreRole" data-key="'+escape(key)+'">'+escape(entry.card?.name||key)+' · 找回人物</button>').join('')+'</details>':'')+
+    '</section>';
+  let html='<div id="xyStudy">'+hero+shelf+
     '<details class="xy-study-sections" id="xyStudySections" '+(studySectionsOpen?'open':'')+'>'+
     '<summary class="xy-study-sections-summary"><span><strong>展开书房内容</strong><small>'+counts.greetings+' 种开场 · '+counts.lore+' 条设定 · '+counts.chapters+' 篇章节</small></span><span class="xy-study-sections-chevron" aria-hidden="true">⌄</span></summary>'+
     '<div class="xy-study-sections-body">'+
@@ -372,6 +387,41 @@ host?.addEventListener("click",event=>{
     if(menu)menu.open=false;
     return;
   }
+  if(action==="switchRole"){
+    if(!window.xyStudyUseCharacter?.(key)){status="切换角色失败";draw();return}
+    greetingChoice=0;editLore="";editChapter="";status="已切换到这位人物，其他对话保持原样";draw();return;
+  }
+  if(action==="newRole"){
+    const name=prompt("新人物叫什么名字？");if(!name?.trim())return;
+    try{window.xyStudyCreateCharacter(name);greetingChoice=0;editLore="";editChapter="";
+      status="已创建独立人物，可以在这里导入角色卡，之后也能在其他对话使用";draw()}
+    catch(error){status="创建失败："+String(error?.message||error);draw()}
+    return;
+  }
+  if(action==="saveAsRole"){
+    const source=JSON.parse(JSON.stringify(currentBook()));
+    if(!source.card?.name){status="当前没有角色卡可以另存";draw();return}
+    try{
+      const role=window.xyStudyCreateCharacter?.(source.card.name);
+      if(!role)throw Error("角色列表尚未加载");
+      const db=load();db.byCharacter[role.id]=source;localStorage.setItem(KEY,JSON.stringify(db));
+      greetingChoice=0;editLore="";editChapter="";
+      status="角色卡已另存为「"+role.name+"」，以后换对话也能选到";draw();
+    }catch(error){status="另存失败："+String(error?.message||error);draw()}
+    return;
+  }
+  if(action==="restoreRole"){
+    const archived=load().byCharacter?.[key];if(!archived){status="找不到历史档案";draw();return}
+    try{
+      const name=archived.card?.name||"找回的人物";
+      const role=window.xyStudyCreateCharacter?.(name);
+      if(!role)throw Error("角色列表尚未加载");
+      const db=load();db.byCharacter[role.id]=JSON.parse(JSON.stringify(archived));
+      localStorage.setItem(KEY,JSON.stringify(db));
+      status="已找回「"+name+"」的书房档案";draw();
+    }catch(error){status="找回失败："+String(error?.message||error);draw()}
+    return;
+  }
   if(action==="tab"){tab=key;editLore="";editChapter="";status="";draw();return}
   if(action==="saveCard"){
     const saved=arr(currentBook().card?.alternate_greetings);
@@ -432,6 +482,18 @@ const style=document.createElement("style");
 style.textContent=String.raw`
 #xyStudy{display:grid;gap:12px;color:#3d5244;font-size:13px;padding-bottom:30px}#xyStudy *{box-sizing:border-box}
 #xyStudy .study-cover{padding:15px;border-radius:16px;background:linear-gradient(135deg,#e5eee4,#f6f8f2);display:grid;gap:7px}
+#xyStudy .study-role-shelf{padding:12px;border:1px solid #d8e3da;border-radius:14px;background:#ffffffaf;display:grid;gap:10px}
+#xyStudy .study-role-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#xyStudy .study-role-head strong{font-size:13px}#xyStudy .study-role-head small{font-size:11px;color:#748378}
+#xyStudy .study-role-list{display:flex;gap:8px;overflow-x:auto;padding-bottom:3px;overscroll-behavior-x:contain}
+#xyStudy .study-role-item{min-width:115px;max-width:205px;flex:none;display:grid;gap:5px;text-align:left;border:1px solid #d7e1d7;border-radius:11px;background:#f9fbf8;color:#47614b;padding:10px}
+#xyStudy .study-role-item.selected{border-color:#4a785b;background:#e7f0e7}
+#xyStudy .study-role-item strong{font-size:12px}
+#xyStudy .study-role-item small{font-size:10px;color:#788779;overflow-wrap:anywhere}
+#xyStudy .study-role-actions{display:flex;gap:8px;flex-wrap:wrap}
+#xyStudy .study-role-actions button,#xyStudy .study-role-archives button{padding:8px 10px;border:1px solid #ceddce;border-radius:9px;background:#fff;color:#47614b;font-size:11px}
+#xyStudy .study-role-archives summary{cursor:pointer;color:#667b69;font-size:11px}
+#xyStudy .study-role-archives button{display:block;margin:6px 0}
 #xyStudy .study-cover strong{font-size:15px}#xyStudy .study-cover small,#xyStudy .study-tip,#xyStudy .study-footer small{color:#748378;line-height:1.6;font-size:11px}
 #xyStudy .study-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
 #xyStudy .study-preview{border:1px solid #cedbd0;border-radius:12px;background:#f7faf5;padding:10px 12px;overflow-wrap:anywhere}
