@@ -3,16 +3,19 @@
   const read=k=>{try{return JSON.parse(localStorage.getItem(k)||"{}")||{}}catch{return {}}};
   const character=()=>window.xyCurrentCharacter?.()?.id||chat()?.characterId||"xuan-yan";
   const scoped=()=>memories.filter(m=>!m.characterId||m.characterId===character());
-  // Switch existing installs to manual-only memory once. Do not erase any
-  // user-written or previously saved memories; the toggles remain reversible.
-  const MANUAL_KEY="xy.memory-summary-manual-20261119-v1";
+  // Repair the accidental 2026-11-19 migration that disabled existing
+  // preference capture and old-chat lookup. Restore those two toggles once
+  // only on devices that actually ran that migration; leave other installs'
+  // user-saved settings untouched. This never changes stored memories.
+  const ACCIDENTAL_PAUSE="xy.memory-summary-manual-20261119-v1";
+  const REPAIR_KEY="xy.memory-summary-restore-20261119-v1";
   try{
-    if(localStorage.getItem(MANUAL_KEY)!=="1"){
-      localStorage.setItem(PREF,JSON.stringify({...read(PREF),auto:false,history:false}));
-      localStorage.setItem(MANUAL_KEY,"1");
+    if(localStorage.getItem(ACCIDENTAL_PAUSE)==="1"&&localStorage.getItem(REPAIR_KEY)!=="1"){
+      localStorage.setItem(PREF,JSON.stringify({...read(PREF),auto:true,history:true}));
+      localStorage.setItem(REPAIR_KEY,"1");
     }
   }catch{}
-  const opts=()=>({auto:false,history:false,...read(PREF)});
+  const opts=()=>({auto:true,history:true,...read(PREF)});
   const normalized=s=>String(s||"").trim().replace(/[\s。！!，,]/g,"");
   const privateData=/密码|密钥|api.?key|验证码|银行卡|身份证|病历|诊断|宗教|政治|家庭住址/i;
   const summary=id=>{
@@ -55,7 +58,7 @@
     const prefs=section("记忆设置");
     const note=document.createElement("p");
     note.className="subtle";
-    note.textContent=opts().auto||opts().history?"自动记录或旧聊天检索已重新启用；你仍可随时关闭。":"手动记忆模式：不自动提取偏好，也不检索旧对话。手动保存与已有长期记忆继续保留。";
+    note.textContent="原有的偏好记录与旧聊天检索保持独立，可分别开关；早上新增的「整段聊天时间记忆」另外暂停，不影响这里。";
     prefs.appendChild(note);
     for(const [label,key] of [["自动记录明确要求记住的偏好","auto"],["参考旧聊天","history"]]){
       const row=document.createElement("label");row.className="row";row.textContent=label;const input=document.createElement("input");input.type="checkbox";input.checked=!!opts()[key];row.appendChild(input);
