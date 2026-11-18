@@ -24,6 +24,17 @@ function currentIds(){
   const c=typeof chat==="function"?chat():null;
   return {c,charId:label(c?.characterId||window.xyCurrentCharacter?.()?.id||"xuan-yan"),chatId:label(c?.id||"")};
 }
+// Match the chat request's actual model selection. A conversation can choose
+// a non-default endpoint/model through the unified model hub.
+function selectedEndpoint(c){
+  const resolved=window.xyApiHub?.resolveEndpoint?.(c);
+  if(resolved?.base&&resolved?.model)return resolved;
+  const choice=c?.xyApiChoice;
+  const target=choice?.endpointId&&typeof endpoints!=="undefined"
+    ?endpoints.find(x=>x.id===choice.endpointId&&x.base):null;
+  if(target&&choice.model)return {...target,model:choice.model};
+  return typeof endpoints!=="undefined"?(endpoints.find(x=>x.active)||endpoints[0]):null;
+}
 function completedPairs(c){
   const out=[],msgs=Array.isArray(c?.messages)?c.messages:[];
   let users=[];
@@ -74,6 +85,9 @@ function panelHTML(){
   const percent=Math.round(finished/MIN_TURNS*100);
   const lastDate=record.updated?new Date(record.updated).toLocaleString("zh-CN",{hour12:false}):"";
   const hasResults=!!(record.digest||record.board);
+  const activeModel=selectedEndpoint(c);
+  const modelLabel=activeModel?.model?cap(activeModel.model,100):"尚未选择模型";
+  const modelChannel=activeModel?.name?cap(activeModel.name,48):"";
   return '<section id="xyStudyAuto" class="study-card study-auto-panel">'+
     '<div class="study-auto-head">'+
       '<div class="study-auto-title"><span class="study-eyebrow">CHAPTER / AUTO MEMORY</span>'+
@@ -85,6 +99,7 @@ function panelHTML(){
       '<span style="width:'+percent+'%"></span></div>'+
     '<p class="study-progress-note">'+(auto.enabled?(remaining?"再聊 "+remaining+" 轮将自动整理":"可以整理新的剧情了"):"自动整理已关闭 · 可以手动整理")+
        (lastDate?" · 上次 "+html(lastDate):"")+'</p>'+
+    '<p class="study-progress-note">本次整理模型：'+html(modelLabel)+(modelChannel?' · '+html(modelChannel):"")+'</p>'+
     '<div class="study-auto-action">'+
       '<button type="button" class="study-auto-trigger" data-study-auto="manual" '+(busy.has(chatId)?"disabled":"")+'>'+
        (busy.has(chatId)?"正在整理…":"✦ 整理最近 8 轮")+'</button>'+
@@ -236,7 +251,14 @@ async function requestJsonWithDeadline(url,headers,body){
       if(!response.ok)throw Error("整理接口返回 HTTP "+response.status+"，但不是 JSON 响应");
       throw Error("模型接口返回了非 JSON 响应");
     }
-    if(!response.ok||data?.error)throw Error(data?.error?.message||"HTTP "+response.status);
+    if(!response.ok||data?.error){
+      const status=Number(response.status)||0;
+      const detail=String(data?.error?.message||data?.message||"").slice(0,180);
+      if(status===401||status===403)throw Error("整理接口鉴权失败（HTTP "+status+"），请检查当前模型渠道权限。"+(detail?" "+detail:""));
+      if(status===429)throw Error("整理接口请求额度或速率受限（HTTP 429）。"+(detail?" "+detail:""));
+      if(status===502||status===503||status===504)throw Error("整理接口或中转暂时不可用（HTTP "+status+"）。"+(detail?" "+detail:""));
+      throw Error((status?"HTTP "+status+" · ":"")+(detail||"模型接口返回了错误"));
+    }
     return data;
   }catch(error){
     if(timedOut)throw Error("整理超过 150 秒，砚屿已终止本次请求。模型或中转可能太慢；没有自动重试，请确认接口后再手动整理。");
@@ -295,7 +317,7 @@ async function run(c,{manual=false}={}){
   const end=Math.min(total,start+MIN_TURNS);
   const excerpt=pairs.slice(start,end);
   const transcript=excerpt.map((p,i)=>(start+i+1)+". 用户："+p.user+"\n角色："+p.assistant).join("\n\n").slice(0,20000);
-  const ep=typeof endpoints!=="undefined"?(endpoints.find(x=>x.active)||endpoints[0]):null;
+  const ep=selectedEndpoint(c);
   busy.add(chatId);refresh();
   try{
     const result=await requestModel(ep,transcript,record);
