@@ -108,7 +108,7 @@ function refresh(){
 function setError(charId,chatId,error){
   const raw=String(error?.message||error||"未知错误");
   const message=error?.name==="AbortError"||/operation was aborted|aborted|aborterror/i.test(raw)
-    ?"整理请求被网络或中转中断了。若模型响应较慢，可检查接口后手动重试；不会自动重复扣费。"
+    ?"整理请求被网络或中转中断了。若模型响应较慢，可检查接口后手动重试；砚屿不会自动重复发起请求。"
     :raw;
   try{saveEdit(charId,a=>{const r=a.byChat[chatId]||{};a.byChat[chatId]={...r,error:cap(message,300),failedAt:Date.now()}})}catch{}
   refresh();
