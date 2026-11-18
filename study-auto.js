@@ -43,6 +43,20 @@ function completedPairs(c){
   return out;
 }
 function recordFor(auto,chatId){return auto.byChat[chatId]&&typeof auto.byChat[chatId]==="object"?auto.byChat[chatId]:{}}
+// Keep every one of the eight turns even when individual messages are long.
+// The previous global .slice(0,20000) discarded the latest turns first.
+function keepEnds(value,limit){
+  const str=String(value||"");
+  if(str.length<=limit)return str;
+  const marker="\n[中间内容因长度限制省略]\n";
+  const budget=Math.max(0,limit-marker.length),front=Math.ceil(budget*.62);
+  return str.slice(0,front)+marker+str.slice(-(budget-front));
+}
+function formatExcerpt(excerpt,start){
+  return excerpt.map((pair,i)=>
+    (start+i+1)+". 用户："+keepEnds(pair.user,650)+"\n角色："+keepEnds(pair.assistant,850)
+  ).join("\n\n");
+}
 function firstSentencePreview(value){
   const oneLine=String(value||"").replace(/\s+/g," ").trim();
   const punctuation=oneLine.search(/[。！？!?]/);
@@ -106,7 +120,13 @@ function refresh(){
   if(target)target.outerHTML=panelHTML();
 }
 function setError(charId,chatId,error){
-  try{saveEdit(charId,a=>{const r=a.byChat[chatId]||{};a.byChat[chatId]={...r,error:cap(error?.message||error,300),failedAt:Date.now()}})}catch{}
+  const raw=String(error?.message||error||"未知错误");
+  // A no-candidates error originates from the model provider rather than
+  // local chapter storage. Never silently retry the paid request.
+  const message=/model returned no candidates|no candidates/i.test(raw)
+    ?"模型接口没有生成候选回复（Model returned no candidates）。本次没有归档，也没有自动重试；请不要连续重复调用。"
+    :raw;
+  try{saveEdit(charId,a=>{const r=a.byChat[chatId]||{};a.byChat[chatId]={...r,error:cap(message,300),failedAt:Date.now()}})}catch{}
   refresh();
 }
 function apiEndpoint(raw){
@@ -282,7 +302,7 @@ async function run(c,{manual=false}={}){
   // Bound every extra API call to eight pairs, even after returning to a long-untouched conversation.
   const end=Math.min(total,start+MIN_TURNS);
   const excerpt=pairs.slice(start,end);
-  const transcript=excerpt.map((p,i)=>(start+i+1)+". 用户："+p.user+"\n角色："+p.assistant).join("\n\n").slice(0,20000);
+  const transcript=formatExcerpt(excerpt,start);
   const ep=typeof endpoints!=="undefined"?(endpoints.find(x=>x.active)||endpoints[0]):null;
   busy.add(chatId);refresh();
   try{
