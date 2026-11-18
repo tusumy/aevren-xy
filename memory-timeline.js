@@ -4,7 +4,16 @@
 // invented timestamps: only capture a successfully completed exchange.
 const KEY="xy.memory-timeline.v1", PREF="xy.memory-timeline-options.v1", LIMIT=500;
 const parse=(key,fallback)=>{try{return JSON.parse(localStorage.getItem(key)||"null")??fallback}catch{return fallback}};
-const options=()=>({enabled:true,recall:true,...parse(PREF,{})});
+// Put existing installs into manual-only mode once. Preserve all archived
+// entries, and let the user explicitly opt back in from the memory panel.
+const PAUSED_KEY="xy.memory-timeline-paused-20261119-v1";
+try{
+  if(localStorage.getItem(PAUSED_KEY)!=="1"){
+    localStorage.setItem(PREF,JSON.stringify({...parse(PREF,{}),enabled:false,recall:false}));
+    localStorage.setItem(PAUSED_KEY,"1");
+  }
+}catch{}
+const options=()=>({enabled:false,recall:false,...parse(PREF,{})});
 const list=()=>{const value=parse(KEY,[]);return Array.isArray(value)?value:[]};
 const dateKey=stamp=>{
   const d=new Date(stamp),p=n=>String(n).padStart(2,"0");
@@ -85,25 +94,31 @@ function renderSection(outer,onRefresh){
   const charId=String(window.xyCurrentCharacter?.()?.id||"");
   const all=find(charId,{limit:LIMIT});
   const block=document.createElement("section");block.className="xy-timeline";
-  const heading=document.createElement("h3");heading.textContent="按时间保存的经历 · "+all.length;block.appendChild(heading);
+  const heading=document.createElement("h3");heading.textContent="时间记忆 · "+(options().enabled?"正在记录":"已暂停");block.appendChild(heading);
   const row=document.createElement("label");row.className="row";
   row.append(document.createTextNode("自动记录真实聊天（本机存储，不额外调用模型）"));
   const check=document.createElement("input");check.type="checkbox";check.checked=options().enabled;
-  check.addEventListener("change",()=>{localStorage.setItem(PREF,JSON.stringify({...options(),enabled:check.checked}))});
+  check.addEventListener("change",()=>{localStorage.setItem(PREF,JSON.stringify({...options(),enabled:check.checked}));onRefresh?.()});
   row.append(check);block.appendChild(row);
   const recallRow=document.createElement("label");recallRow.className="row";
   recallRow.append(document.createTextNode("换对话时参考时间记忆"));
   const recallCheck=document.createElement("input");recallCheck.type="checkbox";recallCheck.checked=options().recall;
-  recallCheck.addEventListener("change",()=>{localStorage.setItem(PREF,JSON.stringify({...options(),recall:recallCheck.checked}))});
+  recallCheck.addEventListener("change",()=>{localStorage.setItem(PREF,JSON.stringify({...options(),recall:recallCheck.checked}));onRefresh?.()});
   recallRow.append(recallCheck);block.appendChild(recallRow);
   const tip=document.createElement("p");tip.className="subtle";
-  tip.textContent="每次成功聊天后保存双方原话片段；按实际归档时间排序。开启书房的八轮整理后，生成的摘要也会出现在这里。自动记录不等于模型提炼事实，原聊天仍单独保留。";
+  tip.textContent=options().enabled
+    ?"目前只会保存真实聊天片段，并不能自动判断重要事实。你可以随时关闭；手动记忆独立保存。"
+    :"已经暂停自动复制聊天，也不会将旧时间记录送入新对话。以前的记录保留为可选查看的存档，不影响手动保存记忆。";
   block.appendChild(tip);
   if(!all.length){
     const p=document.createElement("p");p.className="subtle";
-    p.textContent="还没有新归档。从更新后的下一轮成功对话开始自动记录；旧聊天原文不会被改写或伪造日期。";
+    p.textContent="没有旧时间记录。现在只保留你自己手动保存的记忆。";
     block.appendChild(p);
   }
+  const archive=document.createElement("details");archive.className="xy-timeline-archive";
+  const archiveTitle=document.createElement("summary");
+  archiveTitle.textContent="查看以前保存的聊天记录摘录 · "+all.length+" 条";
+  archive.appendChild(archiveTitle);
   const groups=new Map();
   for(const entry of all.slice(0,visible)){
     const day=entry.date||"日期未知";
@@ -135,17 +150,19 @@ function renderSection(outer,onRefresh){
       });
       item.appendChild(remove);dayBox.appendChild(item);
     }
-    block.appendChild(dayBox);
+    archive.appendChild(dayBox);
   }
   if(all.length>visible){
     const more=document.createElement("button");more.type="button";more.textContent="再看更早的记忆";
     more.addEventListener("click",()=>{visible+=48;onRefresh?.()});
-    block.appendChild(more);
+    archive.appendChild(more);
   }
+  if(all.length)block.appendChild(archive);
   outer.appendChild(block);
 }
 const style=document.createElement("style");
-style.textContent=`.xy-timeline-day{margin-top:8px;border-top:1px solid rgba(112,139,115,.22);padding-top:9px}
+style.textContent=`.xy-timeline-archive>summary{cursor:pointer;opacity:.8;padding:8px 0}
+.xy-timeline-day{margin-top:8px;border-top:1px solid rgba(112,139,115,.22);padding-top:9px}
 .xy-timeline-day>summary{cursor:pointer;color:inherit;font-weight:600;padding:5px 0}
 .xy-timeline-entry{padding:10px 0 9px;border-bottom:1px solid rgba(112,139,115,.15)}
 .xy-timeline-entry-head{margin-bottom:6px;opacity:.76;font-size:11px}
