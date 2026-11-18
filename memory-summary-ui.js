@@ -3,7 +3,16 @@
   const read=k=>{try{return JSON.parse(localStorage.getItem(k)||"{}")||{}}catch{return {}}};
   const character=()=>window.xyCurrentCharacter?.()?.id||chat()?.characterId||"xuan-yan";
   const scoped=()=>memories.filter(m=>!m.characterId||m.characterId===character());
-  const opts=()=>({auto:true,history:true,...read(PREF)});
+  // Switch existing installs to manual-only memory once. Do not erase any
+  // user-written or previously saved memories; the toggles remain reversible.
+  const MANUAL_KEY="xy.memory-summary-manual-20261119-v1";
+  try{
+    if(localStorage.getItem(MANUAL_KEY)!=="1"){
+      localStorage.setItem(PREF,JSON.stringify({...read(PREF),auto:false,history:false}));
+      localStorage.setItem(MANUAL_KEY,"1");
+    }
+  }catch{}
+  const opts=()=>({auto:false,history:false,...read(PREF)});
   const normalized=s=>String(s||"").trim().replace(/[\s。！!，,]/g,"");
   const privateData=/密码|密钥|api.?key|验证码|银行卡|身份证|病历|诊断|宗教|政治|家庭住址/i;
   const summary=id=>{
@@ -44,6 +53,10 @@
     const help=document.createElement("p");help.className="subtle";help.textContent="可编辑；空白保存会恢复按当前角色已存记忆生成的摘要。";sum.appendChild(help);
     button(sum,"保存摘要",()=>{const values=read(KEY);if(area.value.trim())values[character()]=area.value.trim().slice(0,1800);else delete values[character()];localStorage.setItem(KEY,JSON.stringify(values));panel()});
     const prefs=section("记忆设置");
+    const note=document.createElement("p");
+    note.className="subtle";
+    note.textContent="已切换成手动记忆：聊天不会自动抄入记忆，旧对话也不会被自动检索；你手动记住的一句、一段和已有记忆仍然保留。";
+    prefs.appendChild(note);
     for(const [label,key] of [["自动记录明确要求记住的偏好","auto"],["参考旧聊天","history"]]){
       const row=document.createElement("label");row.className="row";row.textContent=label;const input=document.createElement("input");input.type="checkbox";input.checked=!!opts()[key];row.appendChild(input);
       input.onchange=()=>localStorage.setItem(PREF,JSON.stringify({...opts(),[key]:input.checked}));prefs.appendChild(row);
