@@ -55,7 +55,7 @@
     const prefs=section("记忆设置");
     const note=document.createElement("p");
     note.className="subtle";
-    note.textContent="已切换成手动记忆：聊天不会自动抄入记忆，旧对话也不会被自动检索；你手动记住的一句、一段和已有记忆仍然保留。";
+    note.textContent=opts().auto||opts().history?"自动记录或旧聊天检索已重新启用；你仍可随时关闭。":"手动记忆模式：不自动提取偏好，也不检索旧对话。手动保存与已有长期记忆继续保留。";
     prefs.appendChild(note);
     for(const [label,key] of [["自动记录明确要求记住的偏好","auto"],["参考旧聊天","history"]]){
       const row=document.createElement("label");row.className="row";row.textContent=label;const input=document.createElement("input");input.type="checkbox";input.checked=!!opts()[key];row.appendChild(input);
