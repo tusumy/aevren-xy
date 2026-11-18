@@ -1,6 +1,6 @@
 (()=>{
 "use strict";
-const KEY="xy.study.v1",MIN_TURNS=8,FAILURE_COOLDOWN=30*60*1000;
+const KEY="xy.study.v1",MIN_TURNS=8,FAILURE_COOLDOWN=30*60*1000,REQUEST_TIMEOUT_MS=150000;
 const html=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const cap=(x,n)=>String(x??"").trim().slice(0,n);
 const uid=()=>"auto-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,8);
@@ -91,8 +91,8 @@ function panelHTML(){
       '<label class="study-auto-toggle"><input type="checkbox" id="studyAutoToggle" '+(auto.enabled?"checked":"")+'><span>自动整理</span></label>'+
     '</div>'+
     '<details class="study-auto-help"><summary>整理规则和调用费用</summary>'+
-       '<p>每新增 8 轮有效聊天归档一次，只整理本对话。通常额外请求模型 1 次；格式异常时最多重试 1 次，可能产生额外费用。失败后自动暂停 30 分钟，手动重试不受限制。</p></details>'+
-    (busy.has(chatId)?'<p class="study-status" role="status">正在翻阅这八轮聊天，请稍等…</p>':"")+
+       '<p>每新增 8 轮有效聊天归档一次，只整理本对话。每次最长等待 150 秒；通常额外请求模型 1 次，仅格式异常时最多重试 1 次。超时或网络中断不自动重试，避免重复费用。失败后自动暂停 30 分钟，仍可手动重试。</p></details>'+
+    (busy.has(chatId)?'<p class="study-status" role="status">正在用当前模型整理八轮聊天… 网络或模型较慢时可能需要更久。</p>':"")+
     (record.error?'<p class="study-status study-error" role="alert">上次整理失败：'+html(cap(record.error,210))+'。原聊天没有被覆盖。</p>':"")+
     (hasResults?'<div class="study-summary-pages">'+
       foldedSummaryCard("01","剧情脉络","上次故事说到这里",record.digest)+
@@ -106,7 +106,11 @@ function refresh(){
   if(target)target.outerHTML=panelHTML();
 }
 function setError(charId,chatId,error){
-  try{saveEdit(charId,a=>{const r=a.byChat[chatId]||{};a.byChat[chatId]={...r,error:cap(error?.message||error,300),failedAt:Date.now()}})}catch{}
+  const raw=String(error?.message||error||"未知错误");
+  const message=error?.name==="AbortError"||/operation was aborted|aborted|aborterror/i.test(raw)
+    ?"整理请求被网络或中转中断了。若模型响应较慢，可检查接口后手动重试；不会自动重复扣费。"
+    :raw;
+  try{saveEdit(charId,a=>{const r=a.byChat[chatId]||{};a.byChat[chatId]={...r,error:cap(message,300),failedAt:Date.now()}})}catch{}
   refresh();
 }
 function apiEndpoint(raw){
@@ -219,6 +223,27 @@ function parseResult(text){
   if(headings)return headings;
   throw Error("模型未提供完整的剧情摘要 JSON 或带标题的摘要，请检查当前模型的输出格式");
 }
+async function requestJsonWithDeadline(url,headers,body){
+  const controller=new AbortController();
+  let timedOut=false;
+  const timer=setTimeout(()=>{timedOut=true;controller.abort()},REQUEST_TIMEOUT_MS);
+  try{
+    const response=await fetch(url,{method:"POST",headers,body:JSON.stringify(body),signal:controller.signal});
+    const raw=await response.text();
+    let data;
+    try{data=JSON.parse(raw)}
+    catch{
+      if(!response.ok)throw Error("整理接口返回 HTTP "+response.status+"，但不是 JSON 响应");
+      throw Error("模型接口返回了非 JSON 响应");
+    }
+    if(!response.ok||data?.error)throw Error(data?.error?.message||"HTTP "+response.status);
+    return data;
+  }catch(error){
+    if(timedOut)throw Error("整理超过 150 秒，砚屿已终止本次请求。模型或中转可能太慢；没有自动重试，请确认接口后再手动整理。");
+    if(error?.name==="AbortError")throw Error("整理请求被网络或中转中断，未保存本次结果。可检查接口和连接后手动重试。");
+    throw error;
+  }finally{clearTimeout(timer)}
+}
 async function requestModel(ep,transcript,prior){
   const url=apiEndpoint(ep?.base);
   if(!url||!ep.model)throw Error("请先配置可用的聊天接口和模型");
@@ -231,14 +256,7 @@ async function requestModel(ep,transcript,prior){
     "\n\n本次需要归档的真实聊天记录：\n"+transcript;
   const body={model:ep.model,stream:false,temperature:0.2,max_tokens:2400,
     messages:[{role:"system",content:instructions},{role:"user",content:prompt}]};
-  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),60000);
-  let response;
-  try{response=await fetch(url,{method:"POST",headers,body:JSON.stringify(body),signal:controller.signal})}
-  finally{clearTimeout(timeout)}
-  const raw=await response.text();let data;
-  try{data=JSON.parse(raw)}catch{throw Error("模型接口返回了非 JSON 响应")}
-  if(!response.ok||data?.error)throw Error(data?.error?.message||"HTTP "+response.status);
-  const first=textFrom(data);
+  const first=textFrom(await requestJsonWithDeadline(url,headers,body));
   try{return parseResult(first)}
   catch(formatErr){
     // Retry only malformed model output, not network/API errors.
@@ -248,15 +266,9 @@ async function requestModel(ep,transcript,prior){
       "标题：不超过20字\n摘要：用100到250字概括真实交流\n人物与场景：已知人物关系、地点和未解决事项\n章节正文：把真实发生的内容写为连贯故事段落，切勿编造事件。\n不要解释、不要代码块。";
     const retryBody={...body,max_tokens:2400,temperature:0.1,
       messages:[{role:"system",content:easy},{role:"user",content:prompt}]};
-    const retryController=new AbortController();
-    const retryTimer=setTimeout(()=>retryController.abort(),60000);
-    let secondResponse;
-    try{
-      secondResponse=await fetch(url,{method:"POST",headers,body:JSON.stringify(retryBody),signal:retryController.signal});
-    }finally{clearTimeout(retryTimer)}
-    const secondRaw=await secondResponse.text();let secondData;
-    try{secondData=JSON.parse(secondRaw)}catch{throw Error("模型重试时接口没有返回 JSON")}
-    if(!secondResponse.ok||secondData?.error)throw Error(secondData?.error?.message||"重试 HTTP "+secondResponse.status);
+    // Only retry a valid response that could not be parsed; never retry a
+    // timeout/abort (the upstream may still have billed for the first call).
+    const secondData=await requestJsonWithDeadline(url,headers,retryBody);
     try{return parseResult(textFrom(secondData))}
     catch{throw Error("模型两次都未生成可识别的摘要。可换一个擅长总结的聊天模型，再点「整理最近 8 轮」")}
   }
